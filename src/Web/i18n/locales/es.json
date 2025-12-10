@@ -1,0 +1,62 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "search": "Buscar",
+    "close": "Cerrar",
+    "refresh": "Actualizar",
+    "yes": "Sí",
+    "no": "No"
+  },
+  "tabs": {
+    "installed": "Instalados",
+    "search": "Explorar"
+  },
+  "packages": {
+    "noPackages": "No se encontraron paquetes",
+    "install": "Instalar",
+    "update": "Actualizar",
+    "uninstall": "Desinstalar",
+    "version": "Versión",
+    "latestVersion": "Última versión",
+    "installedVersion": "Versión instalada",
+    "selectProject": "Seleccionar un proyecto",
+    "selectVersion": "Seleccionar versión",
+    "installing": "Instalando...",
+    "updating": "Actualizando...",
+    "uninstalling": "Desinstalando...",
+    "installed": "Instalado",
+    "availableUpdates": "Actualizaciones disponibles",
+    "upToDate": "Actualizado",
+    "authors": "Autores",
+    "downloads": "Descargas"
+  },
+  "search": {
+    "placeholder": "Buscar paquetes NuGet...",
+    "results": "{{count}} resultados",
+    "noResults": "No se encontraron resultados para \"{{query}}\"",
+    "searching": "Buscando..."
+  },
+  "errors": {
+    "loadFailed": "Error al cargar la solución",
+    "installFailed": "Error al instalar el paquete",
+    "updateFailed": "Error al actualizar el paquete",
+    "uninstallFailed": "Error al desinstalar el paquete",
+    "searchFailed": "Error al buscar paquetes",
+    "networkError": "Ocurrió un error de red",
+    "unknown": "Ocurrió un error desconocido"
+  },
+  "messages": {
+    "installSuccess": "Paquete instalado exitosamente",
+    "updateSuccess": "Paquete actualizado exitosamente",
+    "uninstallSuccess": "Paquete desinstalado exitosamente"
+  },
+  "projects": {
+    "noProjects": "No se encontraron proyectos en la solución",
+    "allProjects": "Todos los proyectos",
+    "project": "Proyecto",
+    "projects": "Proyectos"
+  }
+}

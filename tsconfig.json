@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "module": "ESNext",
+    "target": "ESNext",
+    "lib": ["ESNext", "DOM"],
+    "sourceMap": true,
+    "rootDir": "src",
+    "strict": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@Web/*": ["./src/Web/*"],
+      "@Application/*": ["./src/Host/Application/*"],
+      "@Infrastructure/*": ["./src/Host/Infrastructure/*"],
+      "@Domain/*": ["./src/Host/Domain/*"],
+      "@Presentation/*": ["./src/Host/Presentation/*"],
+      "@Shared/*": ["./src/Shared/*"],
+      "@Queries/*": ["./src/Shared/Features/Queries/*"],
+      "@Commands/*": ["./src/Shared/Features/Commands/*"]
+    }
+  },
+  "exclude": ["./vite.config.ts", "vite.config.webview.ts", "vite.config.extension.ts"]
+}

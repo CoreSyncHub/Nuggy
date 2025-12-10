@@ -1,0 +1,133 @@
+{
+  "name": "nuget-explorer",
+  "publisher": "coresync",
+  "displayName": "NuGet Explorer",
+  "description": "Explore and manage NuGet packages in your .NET projects",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.106.1"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/*.csproj",
+    "workspaceContains:**/*.sln",
+    "workspaceContains:**/*.cs"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "nuget-panel",
+          "title": "NuGet Explorer",
+          "icon": "$(package)"
+        }
+      ]
+    },
+    "views": {
+      "nuget-panel": [
+        {
+          "type": "webview",
+          "id": "nuget-explorer.webview",
+          "name": "NuGet"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "nuget-explorer.openPanel",
+        "title": "Open NuGet Panel",
+        "category": "NuGet"
+      },
+      {
+        "command": "nuget-explorer.refresh",
+        "title": "Refresh Packages",
+        "category": "NuGet",
+        "icon": "$(refresh)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "nuget-explorer.refresh",
+          "when": "view == nuget-explorer.webview",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "NuGet Explorer",
+      "properties": {
+        "nuget-explorer.language": {
+          "type": "string",
+          "default": "en",
+          "enum": [
+            "en",
+            "fr",
+            "es",
+            "de"
+          ],
+          "enumDescriptions": [
+            "English",
+            "Français",
+            "Español",
+            "Deutsch"
+          ],
+          "description": "Display language for NuGet Explorer"
+        },
+        "nuget-explorer.selectedSolution": {
+          "type": "string",
+          "default": null,
+          "description": "Path to the currently selected solution file (.sln or .slnx)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "npm run check-types && npm run lint && npm run build",
+    "build": "node scripts/build.js",
+    "build:extension": "vite build --config vite.config.extension.ts",
+    "build:webview": "vite build --config vite.config.webview.ts",
+    "watch": "npm-run-all -p watch:build watch:tsc",
+    "watch:build": "node scripts/watch.js",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+    "package": "cross-env NODE_ENV=production npm run build",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "check-types": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint src --ignore-pattern src/Web",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:vscode": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@types/vscode": "^1.106.1",
+    "@types/ws": "^8.18.1",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
+    "cross-env": "^7.0.3",
+    "eslint": "^9.39.1",
+    "jest": "^30.2.0",
+    "npm-run-all": "^4.1.5",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.48.1",
+    "vite": "^7.3.0",
+    "ws": "^8.18.3"
+  },
+  "dependencies": {
+    "@fluentui/web-components": "^2.6.1",
+    "fast-xml-parser": "^5.3.3",
+    "lit": "^3.3.1",
+    "reflect-metadata": "^0.2.2",
+    "tsyringe": "^4.10.0"
+  }
+}

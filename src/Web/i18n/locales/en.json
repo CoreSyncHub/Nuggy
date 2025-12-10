@@ -1,0 +1,62 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "cancel": "Cancel",
+    "save": "Save",
+    "search": "Search",
+    "close": "Close",
+    "refresh": "Refresh",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "tabs": {
+    "installed": "Installed",
+    "search": "Browse"
+  },
+  "packages": {
+    "noPackages": "No packages found",
+    "install": "Install",
+    "update": "Update",
+    "uninstall": "Uninstall",
+    "version": "Version",
+    "latestVersion": "Latest version",
+    "installedVersion": "Installed version",
+    "selectProject": "Select a project",
+    "selectVersion": "Select version",
+    "installing": "Installing...",
+    "updating": "Updating...",
+    "uninstalling": "Uninstalling...",
+    "installed": "Installed",
+    "availableUpdates": "Updates available",
+    "upToDate": "Up to date",
+    "authors": "Authors",
+    "downloads": "Downloads"
+  },
+  "search": {
+    "placeholder": "Search NuGet packages...",
+    "results": "{{count}} results",
+    "noResults": "No results found for \"{{query}}\"",
+    "searching": "Searching..."
+  },
+  "errors": {
+    "loadFailed": "Failed to load solution",
+    "installFailed": "Failed to install package",
+    "updateFailed": "Failed to update package",
+    "uninstallFailed": "Failed to uninstall package",
+    "searchFailed": "Failed to search packages",
+    "networkError": "Network error occurred",
+    "unknown": "An unknown error occurred"
+  },
+  "messages": {
+    "installSuccess": "Package installed successfully",
+    "updateSuccess": "Package updated successfully",
+    "uninstallSuccess": "Package uninstalled successfully"
+  },
+  "projects": {
+    "noProjects": "No projects found in solution",
+    "allProjects": "All projects",
+    "project": "Project",
+    "projects": "Projects"
+  }
+}
