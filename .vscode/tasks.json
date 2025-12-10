@@ -1,0 +1,125 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "watch",
+      "dependsOn": ["npm: watch:tsc", "npm: watch:build"],
+      "presentation": {
+        "reveal": "never"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "npm: watch:build",
+      "type": "shell",
+      "command": "npm run watch:build",
+      "group": "build",
+      "problemMatcher": {
+        "owner": "vite",
+        "fileLocation": "relative",
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+):\\s+(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "building",
+          "endsPattern": "(built in|Build complete)"
+        }
+      },
+      "isBackground": true,
+      "presentation": {
+        "group": "watch",
+        "reveal": "never"
+      },
+      "options": {
+        "shell": {
+          "executable": "cmd.exe",
+          "args": ["/c"]
+        }
+      }
+    },
+    {
+      "label": "npm: watch:tsc",
+      "type": "shell",
+      "command": "npm run watch:tsc",
+      "group": "build",
+      "problemMatcher": "$tsc-watch",
+      "isBackground": true,
+      "presentation": {
+        "group": "watch",
+        "reveal": "never"
+      },
+      "options": {
+        "shell": {
+          "executable": "cmd.exe",
+          "args": ["/c"]
+        }
+      }
+    },
+    {
+      "label": "npm: watch-tests",
+      "type": "shell",
+      "command": "npm run watch-tests",
+      "problemMatcher": "$tsc-watch",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "never",
+        "group": "watchers"
+      },
+      "group": "build",
+      "options": {
+        "shell": {
+          "executable": "C:\\Windows\\System32\\wsl.exe",
+          "args": ["-d", "Ubuntu-24.04", "--", "zsh", "-l", "-i", "-c"]
+        }
+      }
+    },
+    {
+      "label": "tasks: watch-tests",
+      "dependsOn": ["npm: watch", "npm: watch-tests"],
+      "problemMatcher": []
+    },
+    {
+      "label": "npm: build",
+      "type": "shell",
+      "command": "npm run build",
+      "group": "build",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "options": {
+        "shell": {
+          "executable": "cmd.exe",
+          "args": ["/c"]
+        }
+      }
+    },
+    {
+      "label": "npm: package",
+      "type": "shell",
+      "command": "npm run package",
+      "group": "build",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "options": {
+        "shell": {
+          "executable": "cmd.exe",
+          "args": ["/c"]
+        }
+      }
+    }
+  ]
+}

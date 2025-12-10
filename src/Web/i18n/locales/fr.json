@@ -1,0 +1,62 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "search": "Rechercher",
+    "close": "Fermer",
+    "refresh": "Actualiser",
+    "yes": "Oui",
+    "no": "Non"
+  },
+  "tabs": {
+    "installed": "Installés",
+    "search": "Parcourir"
+  },
+  "packages": {
+    "noPackages": "Aucun package trouvé",
+    "install": "Installer",
+    "update": "Mettre à jour",
+    "uninstall": "Désinstaller",
+    "version": "Version",
+    "latestVersion": "Dernière version",
+    "installedVersion": "Version installée",
+    "selectProject": "Sélectionner un projet",
+    "selectVersion": "Sélectionner la version",
+    "installing": "Installation...",
+    "updating": "Mise à jour...",
+    "uninstalling": "Désinstallation...",
+    "installed": "Installé",
+    "availableUpdates": "Mises à jour disponibles",
+    "upToDate": "À jour",
+    "authors": "Auteurs",
+    "downloads": "Téléchargements"
+  },
+  "search": {
+    "placeholder": "Rechercher des packages NuGet...",
+    "results": "{{count}} résultats",
+    "noResults": "Aucun résultat trouvé pour \"{{query}}\"",
+    "searching": "Recherche..."
+  },
+  "errors": {
+    "loadFailed": "Échec du chargement de la solution",
+    "installFailed": "Échec de l'installation du package",
+    "updateFailed": "Échec de la mise à jour du package",
+    "uninstallFailed": "Échec de la désinstallation du package",
+    "searchFailed": "Échec de la recherche de packages",
+    "networkError": "Erreur réseau survenue",
+    "unknown": "Une erreur inconnue s'est produite"
+  },
+  "messages": {
+    "installSuccess": "Package installé avec succès",
+    "updateSuccess": "Package mis à jour avec succès",
+    "uninstallSuccess": "Package désinstallé avec succès"
+  },
+  "projects": {
+    "noProjects": "Aucun projet trouvé dans la solution",
+    "allProjects": "Tous les projets",
+    "project": "Projet",
+    "projects": "Projets"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "common": {
+    "loading": "Laden...",
+    "error": "Fehler",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "search": "Suchen",
+    "close": "Schließen",
+    "refresh": "Aktualisieren",
+    "yes": "Ja",
+    "no": "Nein"
+  },
+  "tabs": {
+    "installed": "Installiert",
+    "search": "Durchsuchen"
+  },
+  "packages": {
+    "noPackages": "Keine Pakete gefunden",
+    "install": "Installieren",
+    "update": "Aktualisieren",
+    "uninstall": "Deinstallieren",
+    "version": "Version",
+    "latestVersion": "Neueste Version",
+    "installedVersion": "Installierte Version",
+    "selectProject": "Projekt auswählen",
+    "selectVersion": "Version auswählen",
+    "installing": "Installiere...",
+    "updating": "Aktualisiere...",
+    "uninstalling": "Deinstalliere...",
+    "installed": "Installiert",
+    "availableUpdates": "Aktualisierungen verfügbar",
+    "upToDate": "Auf dem neuesten Stand",
+    "authors": "Autoren",
+    "downloads": "Downloads"
+  },
+  "search": {
+    "placeholder": "NuGet-Pakete suchen...",
+    "results": "{{count}} Ergebnisse",
+    "noResults": "Keine Ergebnisse für \"{{query}}\" gefunden",
+    "searching": "Suche..."
+  },
+  "errors": {
+    "loadFailed": "Fehler beim Laden der Lösung",
+    "installFailed": "Fehler beim Installieren des Pakets",
+    "updateFailed": "Fehler beim Aktualisieren des Pakets",
+    "uninstallFailed": "Fehler beim Deinstallieren des Pakets",
+    "searchFailed": "Fehler beim Suchen von Paketen",
+    "networkError": "Netzwerkfehler aufgetreten",
+    "unknown": "Ein unbekannter Fehler ist aufgetreten"
+  },
+  "messages": {
+    "installSuccess": "Paket erfolgreich installiert",
+    "updateSuccess": "Paket erfolgreich aktualisiert",
+    "uninstallSuccess": "Paket erfolgreich deinstalliert"
+  },
+  "projects": {
+    "noProjects": "Keine Projekte in der Lösung gefunden",
+    "allProjects": "Alle Projekte",
+    "project": "Projekt",
+    "projects": "Projekte"
+  }
+}
