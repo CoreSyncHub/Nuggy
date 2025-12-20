@@ -6,7 +6,9 @@ import {
   PackageManagementDiagnosticDto,
   PackageVersionDto,
   PackageReferenceDto,
+  LegacyPackageDto,
   PackageDiagnosticDto,
+  ProjectTypeSummaryDto,
 } from '@Shared/Features/Dtos/PackageManagementDto';
 import { HandlerFor } from '@Shared/Infrastructure/Messaging/HandlerFor';
 import { SlnParser } from '@Infrastructure/Solution/SlnParser';
@@ -14,7 +16,8 @@ import { SlnxParser } from '@Infrastructure/Solution/SlnxParser';
 import { BuildConfigDetector } from '@Infrastructure/Build/BuildConfigDetector';
 import { BuildConfigParser } from '@Infrastructure/Build/BuildConfigParser';
 import { PackageReferenceParser } from '@Infrastructure/Packages/PackageReferenceParser';
-import { CpmDiagnosticService } from '@Infrastructure/Packages/CpmDiagnosticService';
+import { PackagesConfigParser } from '@Infrastructure/Packages/PackagesConfigParser';
+import { PackageManagementDiagnosticService } from '@Infrastructure/Packages/PackageManagementDiagnosticService';
 import { PackageDiagnosticSeverity } from '@Domain/Packages/Enums/PackageDiagnosticSeverity';
 
 /**
@@ -58,10 +61,14 @@ export class GetPackageManagementDiagnosticQueryHandler
     // 3. Extract PackageReference entries from all projects
     const packageReferences = PackageReferenceParser.parseMultiple(projectPaths);
 
-    // 4. Run diagnostic analysis (handles hierarchical Directory.Packages.props)
-    const diagnosticResult = CpmDiagnosticService.analyze(
+    // 4. Extract legacy packages from packages.config files
+    const legacyPackages = PackagesConfigParser.parseMultiple(projectPaths);
+
+    // 5. Run diagnostic analysis (handles both SDK-style and legacy projects)
+    const diagnosticResult = PackageManagementDiagnosticService.analyze(
       buildConfigFiles,
-      packageReferences
+      packageReferences,
+      legacyPackages
     );
 
     // 6. Convert to DTOs
@@ -82,6 +89,17 @@ export class GetPackageManagementDiagnosticQueryHandler
       }));
     }
 
+    const legacyPackagesByProject: Record<string, LegacyPackageDto[]> = {};
+    for (const [projectPath, packages] of diagnosticResult.legacyPackages) {
+      legacyPackagesByProject[projectPath] = packages.map((pkg) => ({
+        name: pkg.name,
+        version: pkg.version,
+        projectPath: pkg.projectPath,
+        configPath: pkg.configPath,
+        targetFramework: pkg.targetFramework,
+      }));
+    }
+
     const diagnosticDtos: PackageDiagnosticDto[] = diagnosticResult.diagnostics.map((diag) => ({
       severity: diag.severity,
       message: diag.message,
@@ -98,16 +116,26 @@ export class GetPackageManagementDiagnosticQueryHandler
       infos: diagnosticDtos.filter((d) => d.severity === PackageDiagnosticSeverity.Info).length,
     };
 
+    const projectTypeSummaryDto: ProjectTypeSummaryDto = {
+      legacyFrameworkProjects: diagnosticResult.projectTypeSummary.legacyFrameworkProjects,
+      sdkStyleProjects: diagnosticResult.projectTypeSummary.sdkStyleProjects,
+      cpmEnabledProjects: diagnosticResult.projectTypeSummary.cpmEnabledProjects,
+    };
+
     return {
       isCpmEnabled: diagnosticResult.isCpmEnabled,
       mode: diagnosticResult.mode,
+      isTransitional: diagnosticResult.isTransitional,
+      projectTypeSummary: projectTypeSummaryDto,
       cpmFilePath: diagnosticResult.cpmFilePath,
       packageVersions: packageVersionDtos,
       packageReferencesByProject,
+      legacyPackagesByProject,
       diagnostics: diagnosticDtos,
       summary: {
         totalCentralPackages: packageVersionDtos.length,
         totalProjects: projectPaths.length,
+        totalLegacyProjects: diagnosticResult.legacyPackages.size,
         diagnosticsBySeverity,
       },
     };

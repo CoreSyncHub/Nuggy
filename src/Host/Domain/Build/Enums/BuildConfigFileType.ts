@@ -1,3 +1,5 @@
+import { ObjectEnumType } from '@/Shared/Types/ObjetEnumType';
+
 /**
  * Represents the type of MSBuild configuration file
  */
@@ -12,4 +14,4 @@ export const BuildConfigFileType = {
   DirectoryPackagesProps: 'Directory.Packages.props',
 } as const;
 
-export type BuildConfigFileType = (typeof BuildConfigFileType)[keyof typeof BuildConfigFileType];
+export type BuildConfigFileType = ObjectEnumType<typeof BuildConfigFileType>;

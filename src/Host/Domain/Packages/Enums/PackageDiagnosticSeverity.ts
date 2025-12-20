@@ -1,3 +1,5 @@
+import { ObjectEnumType } from '@/Shared/Types/ObjetEnumType';
+
 /**
  * Severity level for package diagnostics
  */
@@ -18,5 +20,4 @@ export const PackageDiagnosticSeverity = {
   Info: 'Info',
 } as const;
 
-export type PackageDiagnosticSeverity =
-  (typeof PackageDiagnosticSeverity)[keyof typeof PackageDiagnosticSeverity];
+export type PackageDiagnosticSeverity = ObjectEnumType<typeof PackageDiagnosticSeverity>;
