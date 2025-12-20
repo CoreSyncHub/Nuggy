@@ -7,6 +7,7 @@ import { container } from 'tsyringe';
 import { GetLanguageQuery } from '@/Shared/Features/Queries/GetLanguageQuery';
 import { GetWorkspaceSolutionsQuery } from '@/Shared/Features/Queries/GetWorkspaceSolutionsQuery';
 import { GetSolutionStructureQuery } from '@/Shared/Features/Queries/GetSolutionStructureQuery';
+import { GetBuildConfigurationFilesQuery } from '@/Shared/Features/Queries/GetBuildConfigurationFilesQuery';
 import { SelectSolutionCommand } from '@/Shared/Features/Commands/SelectSolutionCommand';
 
 /**
@@ -57,6 +58,10 @@ export class NuGetWebviewProvider implements vscode.WebviewViewProvider {
     this.webMediator.registerRequestType(
       'GetSolutionStructureQuery',
       GetSolutionStructureQuery
+    );
+    this.webMediator.registerRequestType(
+      'GetBuildConfigurationFilesQuery',
+      GetBuildConfigurationFilesQuery
     );
     this.webMediator.registerRequestType('SelectSolutionCommand', SelectSolutionCommand);
   }
