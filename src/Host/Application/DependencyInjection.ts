@@ -7,6 +7,7 @@ import { GetSolutionStructureQueryHandler } from './Handlers/Solution/GetSolutio
 import { SelectSolutionCommandHandler } from './Handlers/Solution/SelectSolutionCommandHandler';
 import { GetBuildConfigurationFilesQueryHandler } from './Handlers/Build/GetBuildConfigurationFilesQueryHandler';
 import { GetProjectsTfmQueryHandler } from './Handlers/Projects/GetProjectsTfmQueryHandler';
+import { GetPackageManagementDiagnosticQueryHandler } from './Handlers/Packages/GetPackageManagementDiagnosticQueryHandler';
 
 export class ApplicationDependencyInjection extends DependencyInjectionProvider {
   public Provide(): void {
@@ -15,6 +16,7 @@ export class ApplicationDependencyInjection extends DependencyInjectionProvider 
     this.ProvideSolution();
     this.ProvideBuild();
     this.ProvideProjects();
+    this.ProvidePackages();
   }
 
   private ProvideMediator(): void {
@@ -37,5 +39,9 @@ export class ApplicationDependencyInjection extends DependencyInjectionProvider 
 
   private ProvideProjects(): void {
     this.RegisterClass(GetProjectsTfmQueryHandler);
+  }
+
+  private ProvidePackages(): void {
+    this.RegisterClass(GetPackageManagementDiagnosticQueryHandler);
   }
 }
