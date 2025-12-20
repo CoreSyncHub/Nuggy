@@ -1,4 +1,5 @@
 import { injectable } from 'tsyringe';
+import * as path from 'path';
 import { IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
 import { GetBuildConfigurationFilesQuery } from '@Shared/Features/Queries/GetBuildConfigurationFilesQuery';
 import { BuildConfigStructureDto, BuildConfigFileDto } from '@Shared/Features/Dtos/BuildConfigDto';
@@ -6,6 +7,8 @@ import { HandlerFor } from '@Shared/Infrastructure/Messaging/HandlerFor';
 import { BuildConfigDetector } from '@Infrastructure/Build/BuildConfigDetector';
 import { BuildConfigParser } from '@Infrastructure/Build/BuildConfigParser';
 import { BuildConfigFileType } from '@Domain/Build/Enums/BuildConfigFileType';
+import { SlnParser } from '@Infrastructure/Solution/SlnParser';
+import { SlnxParser } from '@Infrastructure/Solution/SlnxParser';
 
 /**
  * Handler for GetBuildConfigurationFilesQuery
@@ -16,7 +19,7 @@ import { BuildConfigFileType } from '@Domain/Build/Enums/BuildConfigFileType';
 export class GetBuildConfigurationFilesQueryHandler
   implements IQueryHandler<GetBuildConfigurationFilesQuery, BuildConfigStructureDto>
 {
-  async Handle(_: GetBuildConfigurationFilesQuery): Promise<BuildConfigStructureDto> {
+  async Handle(query: GetBuildConfigurationFilesQuery): Promise<BuildConfigStructureDto> {
     // Find all configuration files
     const configFiles = await BuildConfigDetector.findAllConfigFiles();
 
@@ -28,9 +31,11 @@ export class GetBuildConfigurationFilesQueryHandler
       BuildConfigParser.parse(file.path, file);
     }
 
-    // TODO: Get project paths from the solution (for now, we'll leave affectedProjects empty)
-    // In a future iteration, we should integrate with GetSolutionStructureQuery
-    // to map which projects are affected by which configuration files
+    // Map affected projects if a solution path is provided
+    if (query.solutionPath) {
+      const projectPaths = this.getProjectPathsFromSolution(query.solutionPath);
+      await BuildConfigDetector.mapAffectedProjects(configFiles, projectPaths);
+    }
 
     // Convert to DTOs
     const fileDtos: BuildConfigFileDto[] = configFiles.map((file) => ({
@@ -73,5 +78,22 @@ export class GetBuildConfigurationFilesQueryHandler
       cpmFilePath: cpmFile?.path,
       summary,
     };
+  }
+
+  /**
+   * Extracts project paths from a solution file
+   */
+  private getProjectPathsFromSolution(solutionPath: string): string[] {
+    const solutionExt = path.extname(solutionPath).toLowerCase();
+
+    if (solutionExt === '.slnx') {
+      const parseResult = SlnxParser.parse(solutionPath);
+      return parseResult.projects.map((p) => p.path);
+    } else if (solutionExt === '.sln') {
+      const parseResult = SlnParser.parse(solutionPath);
+      return parseResult.projects.map((p) => p.path);
+    }
+
+    return [];
   }
 }

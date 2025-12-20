@@ -235,4 +235,87 @@ describe('BuildConfigDetector', () => {
       expect(result).toBeNull();
     });
   });
+
+  describe('mapAffectedProjects', () => {
+    it('should map projects to their affecting Directory.Build.props files', async () => {
+      const rootProps = new BuildConfigFile(
+        'C:\\Solution\\Directory.Build.props',
+        BuildConfigFileType.DirectoryBuildProps,
+        'C:\\Solution'
+      );
+
+      const nestedProps = new BuildConfigFile(
+        'C:\\Solution\\src\\Directory.Build.props',
+        BuildConfigFileType.DirectoryBuildProps,
+        'C:\\Solution\\src'
+      );
+
+      const configFiles = [rootProps, nestedProps];
+
+      const projectPaths = [
+        'C:\\Solution\\Project1\\Project1.csproj',
+        'C:\\Solution\\src\\Project2\\Project2.csproj',
+      ];
+
+      await BuildConfigDetector.mapAffectedProjects(configFiles, projectPaths);
+
+      // Project1 should be affected by root props
+      expect(rootProps.affectedProjects).toContain('C:\\Solution\\Project1\\Project1.csproj');
+
+      // Project2 should be affected by nested props (closer)
+      expect(nestedProps.affectedProjects).toContain(
+        'C:\\Solution\\src\\Project2\\Project2.csproj'
+      );
+    });
+
+    it('should map projects to Directory.Build.targets files', async () => {
+      const targetsFile = new BuildConfigFile(
+        'C:\\Solution\\Directory.Build.targets',
+        BuildConfigFileType.DirectoryBuildTargets,
+        'C:\\Solution'
+      );
+
+      const configFiles = [targetsFile];
+
+      const projectPaths = ['C:\\Solution\\Project\\Project.csproj'];
+
+      await BuildConfigDetector.mapAffectedProjects(configFiles, projectPaths);
+
+      expect(targetsFile.affectedProjects).toContain('C:\\Solution\\Project\\Project.csproj');
+    });
+
+    it('should map projects to Directory.Packages.props files', async () => {
+      const packagesFile = new BuildConfigFile(
+        'C:\\Solution\\Directory.Packages.props',
+        BuildConfigFileType.DirectoryPackagesProps,
+        'C:\\Solution'
+      );
+
+      const configFiles = [packagesFile];
+
+      const projectPaths = ['C:\\Solution\\Project\\Project.csproj'];
+
+      await BuildConfigDetector.mapAffectedProjects(configFiles, projectPaths);
+
+      expect(packagesFile.affectedProjects).toContain('C:\\Solution\\Project\\Project.csproj');
+    });
+
+    it('should handle projects with no affecting config files', async () => {
+      const propsFile = new BuildConfigFile(
+        'C:\\Solution\\src\\Directory.Build.props',
+        BuildConfigFileType.DirectoryBuildProps,
+        'C:\\Solution\\src'
+      );
+
+      const configFiles = [propsFile];
+
+      // Project outside the src directory
+      const projectPaths = ['C:\\OtherSolution\\Project\\Project.csproj'];
+
+      await BuildConfigDetector.mapAffectedProjects(configFiles, projectPaths);
+
+      // No projects should be affected
+      expect(propsFile.affectedProjects).toHaveLength(0);
+    });
+  });
 });
