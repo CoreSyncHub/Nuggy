@@ -9,6 +9,11 @@ export type PackageManagementMode = 'Central' | 'Local' | 'Mixed' | 'Unknown';
 export type PackageDiagnosticSeverity = 'Error' | 'Warning' | 'Info';
 
 /**
+ * Package source type
+ */
+export type PackageSourceType = 'CPM' | 'Local' | 'Legacy';
+
+/**
  * DTO for a package version (from Directory.Packages.props)
  */
 export interface PackageVersionDto {
@@ -43,6 +48,26 @@ export interface PackageReferenceDto {
 }
 
 /**
+ * DTO for a legacy package (from packages.config)
+ */
+export interface LegacyPackageDto {
+  /** Package name */
+  name: string;
+
+  /** Package version */
+  version: string | undefined;
+
+  /** Project path */
+  projectPath: string;
+
+  /** Path to packages.config */
+  configPath: string;
+
+  /** Target framework (if specified) */
+  targetFramework?: string;
+}
+
+/**
  * DTO for a package diagnostic message
  */
 export interface PackageDiagnosticDto {
@@ -63,6 +88,20 @@ export interface PackageDiagnosticDto {
 }
 
 /**
+ * Summary of project types in the solution
+ */
+export interface ProjectTypeSummaryDto {
+  /** Number of legacy .NET Framework projects (packages.config) */
+  legacyFrameworkProjects: number;
+
+  /** Number of SDK-style projects (.NET Core/.NET) */
+  sdkStyleProjects: number;
+
+  /** Number of SDK-style projects using CPM */
+  cpmEnabledProjects: number;
+}
+
+/**
  * DTO for package management diagnostic result
  */
 export interface PackageManagementDiagnosticDto {
@@ -72,6 +111,12 @@ export interface PackageManagementDiagnosticDto {
   /** Package management mode */
   mode: PackageManagementMode;
 
+  /** Indicates if this is a transitional solution (.NET Framework + .NET Core coexistence) */
+  isTransitional: boolean;
+
+  /** Summary of project types in the solution */
+  projectTypeSummary: ProjectTypeSummaryDto;
+
   /** Path to Directory.Packages.props (if exists) */
   cpmFilePath?: string;
 
@@ -80,6 +125,9 @@ export interface PackageManagementDiagnosticDto {
 
   /** All package references grouped by project */
   packageReferencesByProject: Record<string, PackageReferenceDto[]>;
+
+  /** All legacy packages grouped by project */
+  legacyPackagesByProject: Record<string, LegacyPackageDto[]>;
 
   /** Diagnostics (warnings, errors) */
   diagnostics: PackageDiagnosticDto[];
@@ -91,6 +139,9 @@ export interface PackageManagementDiagnosticDto {
 
     /** Total number of projects analyzed */
     totalProjects: number;
+
+    /** Total number of legacy projects */
+    totalLegacyProjects: number;
 
     /** Number of diagnostics by severity */
     diagnosticsBySeverity: {

@@ -1,3 +1,5 @@
+import { ObjectEnumType } from '@/Shared/Types/ObjetEnumType';
+
 /**
  * Represents how package versions are managed in a project
  */
@@ -24,4 +26,4 @@ export const PackageManagementMode = {
   Unknown: 'Unknown',
 } as const;
 
-export type PackageManagementMode = (typeof PackageManagementMode)[keyof typeof PackageManagementMode];
+export type PackageManagementMode = ObjectEnumType<typeof PackageManagementMode>;

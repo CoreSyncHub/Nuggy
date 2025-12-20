@@ -8,19 +8,19 @@ import { BuildConfigFileType } from '../../Domain/Build/Enums/BuildConfigFileTyp
 import { PackageVersionParser } from './PackageVersionParser';
 
 /**
- * Result of CPM diagnostic analysis
+ * Result of CPM diagnostic analysis for SDK-style projects only
  */
 export interface CpmDiagnosticResult {
   /** Whether CPM is enabled */
   isCpmEnabled: boolean;
 
-  /** The mode of package management */
+  /** The mode of package management (for SDK-style projects only) */
   mode: PackageManagementMode;
 
   /** All package versions defined in Directory.Packages.props */
   packageVersions: PackageVersion[];
 
-  /** All package references from projects */
+  /** All package references from SDK-style projects */
   packageReferences: Map<string, PackageReference[]>;
 
   /** Diagnostics found during analysis */
@@ -32,10 +32,11 @@ export interface CpmDiagnosticResult {
 
 /**
  * Service for diagnosing CPM (Central Package Management) configuration
+ * Handles SDK-style projects only (.NET Core / .NET)
  */
 export class CpmDiagnosticService {
   /**
-   * Analyzes CPM configuration and detects anomalies
+   * Analyzes CPM configuration and detects anomalies for SDK-style projects
    */
   public static analyze(
     buildConfigFiles: BuildConfigFile[],

@@ -1,3 +1,5 @@
+import { ObjectEnumType } from '@/Shared/Types/ObjetEnumType';
+
 /**
  * Represents the SDK type of a .NET project
  */
@@ -22,4 +24,4 @@ export const ProjectSdkType = {
   Unknown: 'Unknown',
 } as const;
 
-export type ProjectSdkType = (typeof ProjectSdkType)[keyof typeof ProjectSdkType];
+export type ProjectSdkType = ObjectEnumType<typeof ProjectSdkType>;
