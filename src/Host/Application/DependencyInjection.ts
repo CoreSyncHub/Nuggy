@@ -5,6 +5,7 @@ import { GetLanguageQueryHandler } from './Handlers/Language/GetLanguageQueryHan
 import { GetWorkspaceSolutionsQueryHandler } from './Handlers/Solution/GetWorkspaceSolutionsQueryHandler';
 import { GetSolutionStructureQueryHandler } from './Handlers/Solution/GetSolutionStructureQueryHandler';
 import { SelectSolutionCommandHandler } from './Handlers/Solution/SelectSolutionCommandHandler';
+import { GetBuildConfigurationFilesQueryHandler } from './Handlers/Build/GetBuildConfigurationFilesQueryHandler';
 import { container } from 'tsyringe';
 
 export class ApplicationDependencyInjection extends DependencyInjectionProvider {
@@ -23,6 +24,11 @@ export class ApplicationDependencyInjection extends DependencyInjectionProvider 
     });
     container.register(SelectSolutionCommandHandler, {
       useClass: SelectSolutionCommandHandler,
+    });
+
+    // Build configuration handlers
+    container.register(GetBuildConfigurationFilesQueryHandler, {
+      useClass: GetBuildConfigurationFilesQueryHandler,
     });
   }
 }
