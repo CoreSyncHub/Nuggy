@@ -1,17 +1,17 @@
 import { injectable } from 'tsyringe';
 import * as path from 'path';
-import { IQueryHandler } from '../../../../Shared/Abstractions/Messaging/IQueryHandler';
-import { GetSolutionStructureQuery } from '../../../../Shared/Features/Queries/GetSolutionStructureQuery';
+import { IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
+import { GetSolutionStructureQuery } from '@Shared/Features/Queries/GetSolutionStructureQuery';
 import {
   SolutionStructureDto,
   SolutionProjectDto,
   SolutionFolderDto,
-} from '../../../../Shared/Features/Dtos/SolutionDto';
-import { HandlerFor } from '../../../../Shared/Infrastructure/Messaging/HandlerFor';
-import { SlnParser } from '../../../Infrastructure/Solution/SlnParser';
-import { SlnxParser } from '../../../Infrastructure/Solution/SlnxParser';
-import { GlobalJsonParser } from '../../../Infrastructure/Solution/GlobalJsonParser';
-import { SolutionFolder, SolutionProject } from '../../../Domain/Solutions/Entities/SolutionFolder';
+} from '@Shared/Features/Dtos/SolutionDto';
+import { HandlerFor } from '@Shared/Infrastructure/Messaging/HandlerFor';
+import { SlnParser } from '@Infrastructure/Solution/SlnParser';
+import { SlnxParser } from '@Infrastructure/Solution/SlnxParser';
+import { GlobalJsonParser } from '@Infrastructure/Solution/GlobalJsonParser';
+import { SolutionFolder, SolutionProject } from '@Domain/Solutions/Entities/SolutionFolder';
 
 /**
  * Handler for GetSolutionStructureQuery

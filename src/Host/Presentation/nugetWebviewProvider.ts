@@ -8,6 +8,7 @@ import { GetLanguageQuery } from '@/Shared/Features/Queries/GetLanguageQuery';
 import { GetWorkspaceSolutionsQuery } from '@/Shared/Features/Queries/GetWorkspaceSolutionsQuery';
 import { GetSolutionStructureQuery } from '@/Shared/Features/Queries/GetSolutionStructureQuery';
 import { GetBuildConfigurationFilesQuery } from '@/Shared/Features/Queries/GetBuildConfigurationFilesQuery';
+import { GetProjectsTfmQuery } from '@/Shared/Features/Queries/GetProjectsTfmQuery';
 import { SelectSolutionCommand } from '@/Shared/Features/Commands/SelectSolutionCommand';
 
 /**
@@ -62,6 +63,10 @@ export class NuGetWebviewProvider implements vscode.WebviewViewProvider {
     this.webMediator.registerRequestType(
       'GetBuildConfigurationFilesQuery',
       GetBuildConfigurationFilesQuery
+    );
+    this.webMediator.registerRequestType(
+      'GetProjectsTfmQuery',
+      GetProjectsTfmQuery
     );
     this.webMediator.registerRequestType('SelectSolutionCommand', SelectSolutionCommand);
   }

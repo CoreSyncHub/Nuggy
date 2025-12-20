@@ -1,13 +1,15 @@
 /**
  * Represents the type of MSBuild configuration file
  */
-export enum BuildConfigFileType {
+export const BuildConfigFileType = {
   /** Directory.Build.props - Properties applied before project imports */
-  DirectoryBuildProps = 'Directory.Build.props',
+  DirectoryBuildProps: 'Directory.Build.props',
 
   /** Directory.Build.targets - Targets applied after project imports */
-  DirectoryBuildTargets = 'Directory.Build.targets',
+  DirectoryBuildTargets: 'Directory.Build.targets',
 
   /** Directory.Packages.props - Central Package Management (CPM) */
-  DirectoryPackagesProps = 'Directory.Packages.props',
-}
+  DirectoryPackagesProps: 'Directory.Packages.props',
+} as const;
+
+export type BuildConfigFileType = (typeof BuildConfigFileType)[keyof typeof BuildConfigFileType];

@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as fs from 'fs';
 import { BuildConfigFile } from '../../Domain/Build/Entities/BuildConfigFile';
 import { BuildConfigFileType } from '../../Domain/Build/Enums/BuildConfigFileType';
 
@@ -133,10 +132,7 @@ export class BuildConfigDetector {
 
     // Check root directory as well
     const rootFile = allFiles.find(
-      (f) =>
-        f !== file &&
-        f.directory === path.parse(fileDir).root &&
-        f.type === file.type
+      (f) => f !== file && f.directory === path.parse(fileDir).root && f.type === file.type
     );
 
     return rootFile || null;
@@ -161,11 +157,7 @@ export class BuildConfigDetector {
       ];
 
       for (const type of types) {
-        const affectingFile = this.findAffectingConfigFile(
-          projectDir,
-          configFiles,
-          type
-        );
+        const affectingFile = this.findAffectingConfigFile(projectDir, configFiles, type);
 
         if (affectingFile) {
           affectingFile.addAffectedProject(projectPath);
@@ -198,9 +190,7 @@ export class BuildConfigDetector {
     }
 
     // Check root directory
-    const rootFile = filesOfType.find(
-      (f) => f.directory === path.parse(projectDir).root
-    );
+    const rootFile = filesOfType.find((f) => f.directory === path.parse(projectDir).root);
 
     return rootFile || null;
   }
@@ -223,9 +213,6 @@ export class BuildConfigDetector {
    * Gets the CPM file (Directory.Packages.props) if it exists
    */
   public static getCpmFile(configFiles: BuildConfigFile[]): BuildConfigFile | null {
-    return (
-      configFiles.find((f) => f.type === BuildConfigFileType.DirectoryPackagesProps) ||
-      null
-    );
+    return configFiles.find((f) => f.type === BuildConfigFileType.DirectoryPackagesProps) || null;
   }
 }

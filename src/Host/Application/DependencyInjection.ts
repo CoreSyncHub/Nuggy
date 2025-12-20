@@ -6,29 +6,36 @@ import { GetWorkspaceSolutionsQueryHandler } from './Handlers/Solution/GetWorksp
 import { GetSolutionStructureQueryHandler } from './Handlers/Solution/GetSolutionStructureQueryHandler';
 import { SelectSolutionCommandHandler } from './Handlers/Solution/SelectSolutionCommandHandler';
 import { GetBuildConfigurationFilesQueryHandler } from './Handlers/Build/GetBuildConfigurationFilesQueryHandler';
-import { container } from 'tsyringe';
+import { GetProjectsTfmQueryHandler } from './Handlers/Projects/GetProjectsTfmQueryHandler';
 
 export class ApplicationDependencyInjection extends DependencyInjectionProvider {
   public Provide(): void {
+    this.ProvideMediator();
+    this.ProvideLanguage();
+    this.ProvideSolution();
+    this.ProvideBuild();
+    this.ProvideProjects();
+  }
+
+  private ProvideMediator(): void {
     this.Register<IDispatcher>(DISPATCHER, Dispatcher);
+  }
 
-    // Language handlers
-    container.register(GetLanguageQueryHandler, { useClass: GetLanguageQueryHandler });
+  private ProvideLanguage(): void {
+    this.RegisterClass(GetLanguageQueryHandler);
+  }
 
-    // Solution handlers
-    container.register(GetWorkspaceSolutionsQueryHandler, {
-      useClass: GetWorkspaceSolutionsQueryHandler,
-    });
-    container.register(GetSolutionStructureQueryHandler, {
-      useClass: GetSolutionStructureQueryHandler,
-    });
-    container.register(SelectSolutionCommandHandler, {
-      useClass: SelectSolutionCommandHandler,
-    });
+  private ProvideSolution(): void {
+    this.RegisterClass(GetWorkspaceSolutionsQueryHandler);
+    this.RegisterClass(GetSolutionStructureQueryHandler);
+    this.RegisterClass(SelectSolutionCommandHandler);
+  }
 
-    // Build configuration handlers
-    container.register(GetBuildConfigurationFilesQueryHandler, {
-      useClass: GetBuildConfigurationFilesQueryHandler,
-    });
+  private ProvideBuild(): void {
+    this.RegisterClass(GetBuildConfigurationFilesQueryHandler);
+  }
+
+  private ProvideProjects(): void {
+    this.RegisterClass(GetProjectsTfmQueryHandler);
   }
 }

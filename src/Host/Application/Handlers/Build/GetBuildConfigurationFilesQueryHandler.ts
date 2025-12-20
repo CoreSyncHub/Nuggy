@@ -1,14 +1,11 @@
 import { injectable } from 'tsyringe';
-import { IQueryHandler } from '../../../../Shared/Abstractions/Messaging/IQueryHandler';
-import { GetBuildConfigurationFilesQuery } from '../../../../Shared/Features/Queries/GetBuildConfigurationFilesQuery';
-import {
-  BuildConfigStructureDto,
-  BuildConfigFileDto,
-} from '../../../../Shared/Features/Dtos/BuildConfigDto';
-import { HandlerFor } from '../../../../Shared/Infrastructure/Messaging/HandlerFor';
-import { BuildConfigDetector } from '../../../Infrastructure/Build/BuildConfigDetector';
-import { BuildConfigParser } from '../../../Infrastructure/Build/BuildConfigParser';
-import { BuildConfigFileType } from '../../../Domain/Build/Enums/BuildConfigFileType';
+import { IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
+import { GetBuildConfigurationFilesQuery } from '@Shared/Features/Queries/GetBuildConfigurationFilesQuery';
+import { BuildConfigStructureDto, BuildConfigFileDto } from '@Shared/Features/Dtos/BuildConfigDto';
+import { HandlerFor } from '@Shared/Infrastructure/Messaging/HandlerFor';
+import { BuildConfigDetector } from '@Infrastructure/Build/BuildConfigDetector';
+import { BuildConfigParser } from '@Infrastructure/Build/BuildConfigParser';
+import { BuildConfigFileType } from '@Domain/Build/Enums/BuildConfigFileType';
 
 /**
  * Handler for GetBuildConfigurationFilesQuery
@@ -19,7 +16,7 @@ import { BuildConfigFileType } from '../../../Domain/Build/Enums/BuildConfigFile
 export class GetBuildConfigurationFilesQueryHandler
   implements IQueryHandler<GetBuildConfigurationFilesQuery, BuildConfigStructureDto>
 {
-  async Handle(query: GetBuildConfigurationFilesQuery): Promise<BuildConfigStructureDto> {
+  async Handle(_: GetBuildConfigurationFilesQuery): Promise<BuildConfigStructureDto> {
     // Find all configuration files
     const configFiles = await BuildConfigDetector.findAllConfigFiles();
 
@@ -50,9 +47,7 @@ export class GetBuildConfigurationFilesQueryHandler
 
     // Get root files
     const rootFiles = BuildConfigDetector.getRootFiles(configFiles);
-    const rootFileDtos = rootFiles.map((file) =>
-      fileDtos.find((dto) => dto.path === file.path)!
-    );
+    const rootFileDtos = rootFiles.map((file) => fileDtos.find((dto) => dto.path === file.path)!);
 
     // Check if CPM is enabled
     const isCpmEnabled = BuildConfigDetector.isCpmEnabled(configFiles);
@@ -61,12 +56,10 @@ export class GetBuildConfigurationFilesQueryHandler
     // Calculate summary statistics
     const summary = {
       totalFiles: configFiles.length,
-      propsFiles: configFiles.filter(
-        (f) => f.type === BuildConfigFileType.DirectoryBuildProps
-      ).length,
-      targetsFiles: configFiles.filter(
-        (f) => f.type === BuildConfigFileType.DirectoryBuildTargets
-      ).length,
+      propsFiles: configFiles.filter((f) => f.type === BuildConfigFileType.DirectoryBuildProps)
+        .length,
+      targetsFiles: configFiles.filter((f) => f.type === BuildConfigFileType.DirectoryBuildTargets)
+        .length,
       packagesPropsFiles: configFiles.filter(
         (f) => f.type === BuildConfigFileType.DirectoryPackagesProps
       ).length,

@@ -20,11 +20,17 @@ export abstract class DependencyInjectionProvider {
    * @param token - The injection token
    * @param implementation - The concrete class implementing T
    */
-  protected Register<T>(
-    token: InjectionToken<T>,
-    implementation: new (...args: any[]) => T
-  ): void {
+  protected Register<T>(token: InjectionToken<T>, implementation: new (...args: any[]) => T): void {
     container.register<T>(token.token, { useClass: implementation });
+  }
+
+  /**
+   * Registers a class by its own type in the tsyringe container.
+   * @template T - The class type being registered
+   * @param implementation - The concrete class
+   */
+  protected RegisterClass<T>(implementation: new (...args: any[]) => T): void {
+    container.register<T>(implementation, { useClass: implementation });
   }
 
   /**
@@ -33,10 +39,7 @@ export abstract class DependencyInjectionProvider {
    * @param token - The injection token
    * @param value - The value to register
    */
-  protected RegisterPrimitive<T extends PrimitiveTypes>(
-    token: InjectionToken<T>,
-    value: T
-  ): void {
+  protected RegisterPrimitive<T extends PrimitiveTypes>(token: InjectionToken<T>, value: T): void {
     container.registerInstance<T>(token.token, value);
   }
 }

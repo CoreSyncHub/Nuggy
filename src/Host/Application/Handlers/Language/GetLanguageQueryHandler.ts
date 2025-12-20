@@ -15,7 +15,7 @@ import { injectToken } from '@Shared/DependencyInjection/inject';
 export class GetLanguageQueryHandler implements IQueryHandler<GetLanguageQuery, string> {
   constructor(@injectToken(LOGGER) private readonly _logger: ILogger) {}
 
-  async Handle(query: GetLanguageQuery): Promise<string> {
+  async Handle(_: GetLanguageQuery): Promise<string> {
     try {
       const config = vscode.workspace.getConfiguration('nuget-explorer');
       const language = config.get<string>('language', 'en');

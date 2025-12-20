@@ -1,9 +1,9 @@
 import { injectable } from 'tsyringe';
-import { IQueryHandler } from '../../../../Shared/Abstractions/Messaging/IQueryHandler';
-import { GetWorkspaceSolutionsQuery } from '../../../../Shared/Features/Queries/GetWorkspaceSolutionsQuery';
-import { SolutionDto } from '../../../../Shared/Features/Dtos/SolutionDto';
-import { HandlerFor } from '../../../../Shared/Infrastructure/Messaging/HandlerFor';
-import { SolutionDetector } from '../../../Infrastructure/Solution/SolutionDetector';
+import { IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
+import { GetWorkspaceSolutionsQuery } from '@Shared/Features/Queries/GetWorkspaceSolutionsQuery';
+import { SolutionDto } from '@Shared/Features/Dtos/SolutionDto';
+import { HandlerFor } from '@Shared/Infrastructure/Messaging/HandlerFor';
+import { SolutionDetector } from '@Infrastructure/Solution/SolutionDetector';
 
 /**
  * Handler for GetWorkspaceSolutionsQuery
@@ -14,7 +14,7 @@ import { SolutionDetector } from '../../../Infrastructure/Solution/SolutionDetec
 export class GetWorkspaceSolutionsQueryHandler
   implements IQueryHandler<GetWorkspaceSolutionsQuery, SolutionDto[]>
 {
-  async Handle(query: GetWorkspaceSolutionsQuery): Promise<SolutionDto[]> {
+  async Handle(_: GetWorkspaceSolutionsQuery): Promise<SolutionDto[]> {
     // Find all solutions in the workspace
     const detectedSolutions = await SolutionDetector.findAllSolutions();
 
