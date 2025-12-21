@@ -1,0 +1,8 @@
+<Project>
+   <PropertyGroup>
+      <TargetFramework>net8.0</TargetFramework>
+      <MySharedFramework>net8.0</MySharedFramework>
+      <Nullable>enable</Nullable>
+      <ImplicitUsings>enable</ImplicitUsings>
+   </PropertyGroup>
+</Project>

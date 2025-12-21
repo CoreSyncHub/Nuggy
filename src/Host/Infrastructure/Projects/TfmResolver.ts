@@ -1,8 +1,8 @@
 import * as path from 'path';
-import { CsprojParser, ParsedCsproj } from './CsprojParser';
-import { BuildConfigFile } from '../../Domain/Build/Entities/BuildConfigFile';
-import { BuildConfigFileType } from '../../Domain/Build/Enums/BuildConfigFileType';
-import { ProjectSdkType } from '../../Domain/Projects/Enums/ProjectSdkType';
+import { CsprojParser } from './CsprojParser';
+import { BuildConfigFile } from '@Domain/Build/Entities/BuildConfigFile';
+import { BuildConfigFileType } from '@Domain/Build/Enums/BuildConfigFileType';
+import { ProjectSdkType } from '@Domain/Projects/Enums/ProjectSdkType';
 import { ObjectEnumType } from '@/Shared/Types/ObjetEnumType';
 
 /**
@@ -61,21 +61,29 @@ export class TfmResolver {
     // 1. Parse the .csproj file
     const parsedCsproj = CsprojParser.parse(csprojPath);
 
-    // 2. Check if TFM is defined in .csproj
+    // 2. Get all MSBuild properties from Directory.Build.props/targets for resolving references
+    const projectDir = path.dirname(csprojPath);
+    const allMSBuildProps = this.getAllMSBuildProperties(projectDir, buildConfigFiles);
+
+    // 3. Check if TFM is defined in .csproj
     const csprojTfms = CsprojParser.getAllTargetFrameworks(parsedCsproj);
     if (csprojTfms.length > 0) {
+      // Resolve any MSBuild property references in the TFMs
+      const resolvedTfms = csprojTfms.map((tfm) =>
+        this.resolveMSBuildProperty(tfm, allMSBuildProps)
+      );
+
       return {
-        targetFrameworks: csprojTfms,
-        isMultiTargeting: csprojTfms.length > 1,
-        primaryTargetFramework: csprojTfms[0],
+        targetFrameworks: resolvedTfms,
+        isMultiTargeting: resolvedTfms.length > 1,
+        primaryTargetFramework: resolvedTfms[0],
         source: TfmSource.CsprojFile,
         sdkType: parsedCsproj.sdkType,
         sdk: parsedCsproj.sdk,
       };
     }
 
-    // 3. If not in .csproj, check Directory.Build.targets
-    const projectDir = path.dirname(csprojPath);
+    // 4. If not in .csproj, check Directory.Build.targets
     const targetsTfm = this.findTfmInBuildConfig(
       projectDir,
       buildConfigFiles,
@@ -123,6 +131,69 @@ export class TfmResolver {
   }
 
   /**
+   * Gets all MSBuild properties available for a project
+   * by merging properties from Directory.Build.props and Directory.Build.targets
+   */
+  private static getAllMSBuildProperties(
+    projectDir: string,
+    buildConfigFiles: BuildConfigFile[]
+  ): Map<string, string> {
+    const allProps = new Map<string, string>();
+
+    // Collect properties from Directory.Build.props first
+    const propsFile = this.findClosestBuildConfigFile(
+      projectDir,
+      buildConfigFiles,
+      BuildConfigFileType.DirectoryBuildProps
+    );
+    if (propsFile) {
+      const props = propsFile.getAllProperties();
+      props.forEach((value, key) => allProps.set(key, value));
+    }
+
+    // Then from Directory.Build.targets (can override props)
+    const targetsFile = this.findClosestBuildConfigFile(
+      projectDir,
+      buildConfigFiles,
+      BuildConfigFileType.DirectoryBuildTargets
+    );
+    if (targetsFile) {
+      const props = targetsFile.getAllProperties();
+      props.forEach((value, key) => allProps.set(key, value));
+    }
+
+    return allProps;
+  }
+
+  /**
+   * Finds the closest build configuration file of a specific type
+   */
+  private static findClosestBuildConfigFile(
+    projectDir: string,
+    buildConfigFiles: BuildConfigFile[],
+    type: BuildConfigFileType
+  ): BuildConfigFile | null {
+    const filesOfType = buildConfigFiles.filter((f) => f.type === type);
+
+    let currentDir = projectDir;
+
+    // Search up the directory tree
+    while (currentDir && currentDir !== path.parse(currentDir).root) {
+      const file = filesOfType.find((f) => f.directory === currentDir);
+      if (file) {
+        return file;
+      }
+
+      currentDir = path.dirname(currentDir);
+    }
+
+    // Check root directory
+    const rootFile = filesOfType.find((f) => f.directory === path.parse(projectDir).root);
+
+    return rootFile || null;
+  }
+
+  /**
    * Finds TFM in build configuration files (Directory.Build.props/targets)
    * Searches up the directory tree to find the closest affecting file
    */
@@ -167,17 +238,54 @@ export class TfmResolver {
     if (targetFrameworks) {
       return targetFrameworks
         .split(';')
-        .map((f) => f.trim())
+        .map((f) => this.resolveMSBuildProperty(f.trim(), allProps))
         .filter(Boolean);
     }
 
     // Then check for TargetFramework (singular)
     const targetFramework = allProps.get('TargetFramework');
     if (targetFramework) {
-      return [targetFramework];
+      const resolved = this.resolveMSBuildProperty(targetFramework, allProps);
+      return resolved ? [resolved] : [];
     }
 
     return [];
+  }
+
+  /**
+   * Resolves MSBuild property references like $(PropertyName) in a value
+   * @param value The value that may contain property references
+   * @param properties All available MSBuild properties
+   * @returns The resolved value with all property references replaced
+   */
+  private static resolveMSBuildProperty(value: string, properties: Map<string, string>): string {
+    // Pattern to match $(PropertyName)
+    const propertyRefPattern = /\$\(([^)]+)\)/g;
+
+    let resolved = value;
+    let match;
+    let iterations = 0;
+    const maxIterations = 10; // Prevent infinite loops in case of circular references
+
+    // Keep resolving until no more property references are found
+    while ((match = propertyRefPattern.exec(resolved)) !== null && iterations < maxIterations) {
+      const fullMatch = match[0]; // $(PropertyName)
+      const propertyName = match[1]; // PropertyName
+
+      const propertyValue = properties.get(propertyName);
+      if (propertyValue) {
+        resolved = resolved.replace(fullMatch, propertyValue);
+        // Reset regex to start from beginning after replacement
+        propertyRefPattern.lastIndex = 0;
+      } else {
+        // Property not found, leave it as-is and move on
+        break;
+      }
+
+      iterations++;
+    }
+
+    return resolved;
   }
 
   /**

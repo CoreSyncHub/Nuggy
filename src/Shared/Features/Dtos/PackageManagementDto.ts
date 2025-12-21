@@ -132,6 +132,12 @@ export interface PackageManagementDiagnosticDto {
   /** Diagnostics (warnings, errors) */
   diagnostics: PackageDiagnosticDto[];
 
+  /** Solution type (SLNX or SLN) */
+  solutionType: 'SLNX' | 'SLN';
+
+  /** Solution name */
+  solutionName: string;
+
   /** Summary statistics */
   summary: {
     /** Total number of centrally managed packages */
