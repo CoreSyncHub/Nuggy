@@ -14,5 +14,5 @@
     "vite.config.extension.ts": "vite",
     "vite.config.webview.ts": "vite"
   },
-  "cSpell.words": ["dotnet", "Dtos", "Guids", "msbuild", "slnx", "Tfms", "tsyringe"]
+  "cSpell.words": ["dotnet", "Dtos", "Guids", "msbuild", "Nuggy", "slnx", "Tfms", "tsyringe"]
 }
