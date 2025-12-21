@@ -16,6 +16,7 @@ import { SlnxParser } from '@Infrastructure/Solution/SlnxParser';
 import { BuildConfigDetector } from '@Infrastructure/Build/BuildConfigDetector';
 import { BuildConfigParser } from '@Infrastructure/Build/BuildConfigParser';
 import { PackageReferenceParser } from '@Infrastructure/Packages/PackageReferenceParser';
+import { PackageReference } from '@Domain/Packages/Entities/PackageReference';
 import { PackagesConfigParser } from '@Infrastructure/Packages/PackagesConfigParser';
 import { PackageManagementDiagnosticService } from '@Infrastructure/Packages/PackageManagementDiagnosticService';
 import { PackageDiagnosticSeverity } from '@Domain/Packages/Enums/PackageDiagnosticSeverity';
@@ -29,19 +30,26 @@ import { PackageDiagnosticSeverity } from '@Domain/Packages/Enums/PackageDiagnos
 export class GetPackageManagementDiagnosticQueryHandler
   implements IQueryHandler<GetPackageManagementDiagnosticQuery, PackageManagementDiagnosticDto>
 {
-  async Handle(query: GetPackageManagementDiagnosticQuery): Promise<PackageManagementDiagnosticDto> {
+  async Handle(
+    query: GetPackageManagementDiagnosticQuery
+  ): Promise<PackageManagementDiagnosticDto> {
     const solutionPath = query.solutionPath;
     const solutionExt = path.extname(solutionPath).toLowerCase();
 
     // 1. Parse the solution to get project paths
     let projectPaths: string[];
+    let solutionType: 'SLNX' | 'SLN';
+
+    const solutionName = path.basename(solutionPath, solutionExt);
 
     if (solutionExt === '.slnx') {
       const parseResult = SlnxParser.parse(solutionPath);
+      solutionType = 'SLNX';
       projectPaths = parseResult.projects.map((p) => p.path);
     } else if (solutionExt === '.sln') {
       const parseResult = SlnParser.parse(solutionPath);
       projectPaths = parseResult.projects.map((p) => p.path);
+      solutionType = 'SLN';
     } else {
       throw new Error(`Unsupported solution format: ${solutionExt}`);
     }
@@ -59,12 +67,22 @@ export class GetPackageManagementDiagnosticQueryHandler
     await BuildConfigDetector.mapAffectedProjects(buildConfigFiles, projectPaths);
 
     // 3. Extract PackageReference entries from all projects
-    const packageReferences = PackageReferenceParser.parseMultiple(projectPaths);
+    const allPackageReferences = PackageReferenceParser.parseMultiple(projectPaths);
 
     // 4. Extract legacy packages from packages.config files
     const legacyPackages = PackagesConfigParser.parseMultiple(projectPaths);
 
-    // 5. Run diagnostic analysis (handles both SDK-style and legacy projects)
+    // 5. Filter out Legacy projects from packageReferences
+    // Legacy projects use packages.config, not PackageReference
+    const packageReferences = new Map<string, PackageReference[]>();
+    for (const [projectPath, references] of allPackageReferences) {
+      // Only include this project if it's NOT a legacy project
+      if (!legacyPackages.has(projectPath)) {
+        packageReferences.set(projectPath, references);
+      }
+    }
+
+    // 6. Run diagnostic analysis (handles both SDK-style and legacy projects)
     const diagnosticResult = PackageManagementDiagnosticService.analyze(
       buildConfigFiles,
       packageReferences,
@@ -132,6 +150,8 @@ export class GetPackageManagementDiagnosticQueryHandler
       packageReferencesByProject,
       legacyPackagesByProject,
       diagnostics: diagnosticDtos,
+      solutionName,
+      solutionType,
       summary: {
         totalCentralPackages: packageVersionDtos.length,
         totalProjects: projectPaths.length,

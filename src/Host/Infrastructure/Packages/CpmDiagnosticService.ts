@@ -65,7 +65,7 @@ export class CpmDiagnosticService {
     }
 
     // 3. Determine management mode
-    const mode = this.determineManagementMode(isCpmEnabled, packageReferences);
+    const mode = this.determineManagementMode(isCpmEnabled);
 
     // 4. Detect version conflicts (considering hierarchy)
     if (isCpmEnabled) {
@@ -97,37 +97,27 @@ export class CpmDiagnosticService {
 
   /**
    * Determines the package management mode based on the configuration
+   *
+   * For SDK-style projects only:
+   * - If CPM is enabled (Directory.Packages.props exists) → mode is "Central"
+   * - If CPM is not enabled → mode is "Local"
+   *
+   * Note: "Mixed" mode is reserved for solutions containing both:
+   * - Legacy .NET Framework projects (packages.config)
+   * - Modern SDK-style projects (.NET Core/.NET)
+   *
+   * If a project has local versions while CPM is enabled, it's a configuration error
+   * that generates a diagnostic warning, but the mode remains "Central".
    */
-  private static determineManagementMode(
-    isCpmEnabled: boolean,
-    packageReferences: Map<string, PackageReference[]>
-  ): PackageManagementMode {
-    if (!isCpmEnabled) {
-      return PackageManagementMode.Local;
-    }
-
-    // Check if any packages have local versions
-    let hasLocalVersions = false;
-    let hasPackagesWithoutLocalVersions = false;
-
-    for (const references of packageReferences.values()) {
-      for (const ref of references) {
-        if (ref.hasLocalVersion) {
-          hasLocalVersions = true;
-        } else {
-          hasPackagesWithoutLocalVersions = true;
-        }
-      }
-    }
-
-    if (hasLocalVersions && hasPackagesWithoutLocalVersions) {
-      return PackageManagementMode.Mixed;
-    } else if (hasLocalVersions) {
-      // CPM enabled but all packages have local versions - unusual
-      return PackageManagementMode.Mixed;
-    } else {
+  private static determineManagementMode(isCpmEnabled: boolean): PackageManagementMode {
+    // If CPM is enabled, the mode is always Central for SDK-style projects
+    // Any local versions with CPM enabled is a configuration error (handled by diagnostics)
+    if (isCpmEnabled) {
       return PackageManagementMode.Central;
     }
+
+    // No CPM - all versions are managed locally in each project
+    return PackageManagementMode.Local;
   }
 
   /**
@@ -247,16 +237,30 @@ export class CpmDiagnosticService {
       const centralPackageNames = new Set(packageVersions.map((pv) => pv.name));
 
       // Check for conflicts in this project
+      // When CPM is enabled, ANY local version is an error
       for (const ref of references) {
-        if (ref.hasLocalVersion && centralPackageNames.has(ref.name)) {
-          diagnostics.push(
-            PackageDiagnostic.warning(
-              `Package '${ref.name}' has a local version '${ref.version}' but is centrally managed in '${cpmFile.path}'. Remove the Version attribute from the PackageReference.`,
-              ref.name,
-              projectPath,
-              projectPath
-            )
-          );
+        if (ref.hasLocalVersion) {
+          if (centralPackageNames.has(ref.name)) {
+            // Package is centrally managed but has a local override
+            diagnostics.push(
+              PackageDiagnostic.warning(
+                `Package '${ref.name}' has a local version '${ref.version}' but is centrally managed in '${cpmFile.path}'. Remove the Version attribute from the PackageReference.`,
+                ref.name,
+                projectPath,
+                projectPath
+              )
+            );
+          } else {
+            // Package has a local version but CPM is enabled
+            diagnostics.push(
+              PackageDiagnostic.warning(
+                `Package '${ref.name}' has a local version '${ref.version}' but Central Package Management is enabled. Add this package to '${cpmFile.path}' and remove the Version attribute from the PackageReference.`,
+                ref.name,
+                projectPath,
+                projectPath
+              )
+            );
+          }
         }
       }
     }

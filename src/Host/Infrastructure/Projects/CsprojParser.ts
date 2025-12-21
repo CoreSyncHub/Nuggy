@@ -139,6 +139,7 @@ export class CsprojParser {
 
   /**
    * Extracts TargetFramework and TargetFrameworks from PropertyGroups
+   * Also handles Legacy .NET Framework projects (TargetFrameworkVersion)
    */
   private static extractTargetFrameworks(propertyGroups: PropertyGroup[]): {
     targetFramework?: string;
@@ -161,6 +162,12 @@ export class CsprojParser {
           // Single target
           targetFramework = group.properties.TargetFramework;
         }
+
+        // Legacy .NET Framework projects use TargetFrameworkVersion (e.g., "v4.8.1")
+        if (group.properties.TargetFrameworkVersion) {
+          const legacyVersion = group.properties.TargetFrameworkVersion;
+          targetFramework = this.convertLegacyFrameworkVersion(legacyVersion);
+        }
       }
     }
 
@@ -179,11 +186,38 @@ export class CsprojParser {
             targetFramework = group.properties.TargetFramework;
             break;
           }
+
+          // Legacy .NET Framework projects
+          if (group.properties.TargetFrameworkVersion) {
+            const legacyVersion = group.properties.TargetFrameworkVersion;
+            targetFramework = this.convertLegacyFrameworkVersion(legacyVersion);
+            break;
+          }
         }
       }
     }
 
     return { targetFramework, targetFrameworks };
+  }
+
+  /**
+   * Converts Legacy .NET Framework version to modern TFM format
+   * Examples:
+   *   v4.8.1 -> net481
+   *   v4.7.2 -> net472
+   *   v4.6.1 -> net461
+   *   v3.5 -> net35
+   */
+  private static convertLegacyFrameworkVersion(legacyVersion: string): string {
+    // Remove the 'v' prefix
+    const version = legacyVersion.replace(/^v/, '');
+
+    // Remove dots to get the TFM
+    // v4.8.1 -> 4.8.1 -> 481
+    // v4.7.2 -> 4.7.2 -> 472
+    const tfmNumber = version.replace(/\./g, '');
+
+    return `net${tfmNumber}`;
   }
 
   /**
