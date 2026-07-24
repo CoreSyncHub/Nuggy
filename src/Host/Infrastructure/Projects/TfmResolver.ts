@@ -163,7 +163,9 @@ export class TfmResolver {
         return file;
       }
 
-      currentDir = path.dirname(currentDir);
+      const parentDir = path.dirname(currentDir);
+      if (parentDir === currentDir) { break; }
+      currentDir = parentDir;
     }
 
     const rootFile = filesOfType.find((f) => f.directory === path.parse(projectDir).root);
@@ -186,7 +188,9 @@ export class TfmResolver {
         return this.extractTfmFromBuildConfig(file);
       }
 
-      currentDir = path.dirname(currentDir);
+      const parentDir = path.dirname(currentDir);
+      if (parentDir === currentDir) { break; }
+      currentDir = parentDir;
     }
 
     const rootFile = filesOfType.find((f) => f.directory === path.parse(projectDir).root);

@@ -118,15 +118,19 @@ export class RemoteBus implements IBus {
     };
 
     return new Promise<TResponse>((resolve, reject) => {
+      let timeoutId: ReturnType<typeof setTimeout>;
+
+      const cleanup = () => clearTimeout(timeoutId);
+
       this.locks.set(correlationId, {
-        resolve: (v: unknown) => resolve(v as TResponse),
-        reject,
+        resolve: (v: unknown) => { cleanup(); resolve(v as TResponse); },
+        reject: (e: Error) => { cleanup(); reject(e); },
       });
       this.logger.Debug('Sending message to Host', { envelope });
       vscode.postMessage(envelope);
 
       // Timeout after 30 seconds
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
         if (this.locks.has(correlationId)) {
           this.locks.delete(correlationId);
           reject(new Error(`Request timeout for ${commandName}`));
