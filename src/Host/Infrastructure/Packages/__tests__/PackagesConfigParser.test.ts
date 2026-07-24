@@ -1,14 +1,23 @@
 import * as fs from 'fs';
-import * as path from 'path';
 import { PackagesConfigParser } from '../PackagesConfigParser';
+import { ILogger } from '../../../Application/Abstractions/Log/ILogger';
 
 // Mock filesystem
 jest.mock('fs');
 const mockFs = fs as jest.Mocked<typeof fs>;
 
 describe('PackagesConfigParser', () => {
+  let parser: PackagesConfigParser;
+  const mockLogger: ILogger = {
+    Info: jest.fn(),
+    Warning: jest.fn(),
+    Error: jest.fn(),
+    Debug: jest.fn(),
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
+    parser = new PackagesConfigParser(mockLogger);
   });
 
   describe('parse', () => {
@@ -22,17 +31,17 @@ describe('PackagesConfigParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = PackagesConfigParser.parse(
-        'C:\\Solution\\Project1\\packages.config',
-        'C:\\Solution\\Project1\\Project1.csproj'
+      const result = parser.parse(
+        '/solution/Project1/packages.config',
+        '/solution/Project1/Project1.csproj'
       );
 
       expect(result).toHaveLength(3);
       expect(result[0].name).toBe('Newtonsoft.Json');
       expect(result[0].version).toBe('13.0.3');
       expect(result[0].targetFramework).toBe('net472');
-      expect(result[0].projectPath).toBe('C:\\Solution\\Project1\\Project1.csproj');
-      expect(result[0].configPath).toBe('C:\\Solution\\Project1\\packages.config');
+      expect(result[0].projectPath).toBe('/solution/Project1/Project1.csproj');
+      expect(result[0].configPath).toBe('/solution/Project1/packages.config');
 
       expect(result[1].name).toBe('Serilog');
       expect(result[1].version).toBe('3.1.1');
@@ -51,9 +60,9 @@ describe('PackagesConfigParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = PackagesConfigParser.parse(
-        'C:\\Solution\\Project1\\packages.config',
-        'C:\\Solution\\Project1\\Project1.csproj'
+      const result = parser.parse(
+        '/solution/Project1/packages.config',
+        '/solution/Project1/Project1.csproj'
       );
 
       expect(result).toHaveLength(1);
@@ -69,9 +78,9 @@ describe('PackagesConfigParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = PackagesConfigParser.parse(
-        'C:\\Solution\\Project1\\packages.config',
-        'C:\\Solution\\Project1\\Project1.csproj'
+      const result = parser.parse(
+        '/solution/Project1/packages.config',
+        '/solution/Project1/Project1.csproj'
       );
 
       expect(result).toHaveLength(0);
@@ -84,9 +93,9 @@ describe('PackagesConfigParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = PackagesConfigParser.parse(
-        'C:\\Solution\\Project1\\packages.config',
-        'C:\\Solution\\Project1\\Project1.csproj'
+      const result = parser.parse(
+        '/solution/Project1/packages.config',
+        '/solution/Project1/Project1.csproj'
       );
 
       expect(result).toHaveLength(0);
@@ -97,20 +106,16 @@ describe('PackagesConfigParser', () => {
         throw new Error('File not found');
       });
 
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
-      const result = PackagesConfigParser.parse(
-        'C:\\Solution\\Project1\\packages.config',
-        'C:\\Solution\\Project1\\Project1.csproj'
+      const result = parser.parse(
+        '/solution/Project1/packages.config',
+        '/solution/Project1/Project1.csproj'
       );
 
       expect(result).toHaveLength(0);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect(mockLogger.Error).toHaveBeenCalledWith(
         expect.stringContaining('Error parsing packages.config'),
         expect.any(Error)
       );
-
-      consoleErrorSpy.mockRestore();
     });
 
     it('should handle single package element', () => {
@@ -121,9 +126,9 @@ describe('PackagesConfigParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = PackagesConfigParser.parse(
-        'C:\\Solution\\Project1\\packages.config',
-        'C:\\Solution\\Project1\\Project1.csproj'
+      const result = parser.parse(
+        '/solution/Project1/packages.config',
+        '/solution/Project1/Project1.csproj'
       );
 
       expect(result).toHaveLength(1);
@@ -134,24 +139,24 @@ describe('PackagesConfigParser', () => {
 
   describe('findPackagesConfig', () => {
     it('should find packages.config in project directory', () => {
-      const projectPath = 'C:\\Solution\\Project1\\Project1.csproj';
-      const expectedConfigPath = 'C:\\Solution\\Project1\\packages.config';
+      const projectPath = '/solution/Project1/Project1.csproj';
+      const expectedConfigPath = '/solution/Project1/packages.config';
 
       mockFs.existsSync.mockImplementation((filePath) => {
         return filePath === expectedConfigPath;
       });
 
-      const result = PackagesConfigParser.findPackagesConfig(projectPath);
+      const result = parser.findPackagesConfig(projectPath);
 
       expect(result).toBe(expectedConfigPath);
     });
 
     it('should return undefined if packages.config does not exist', () => {
-      const projectPath = 'C:\\Solution\\Project1\\Project1.csproj';
+      const projectPath = '/solution/Project1/Project1.csproj';
 
       mockFs.existsSync.mockReturnValue(false);
 
-      const result = PackagesConfigParser.findPackagesConfig(projectPath);
+      const result = parser.findPackagesConfig(projectPath);
 
       expect(result).toBeUndefined();
     });
@@ -159,24 +164,24 @@ describe('PackagesConfigParser', () => {
 
   describe('isLegacyProject', () => {
     it('should return true if packages.config exists', () => {
-      const projectPath = 'C:\\Solution\\Project1\\Project1.csproj';
-      const expectedConfigPath = 'C:\\Solution\\Project1\\packages.config';
+      const projectPath = '/solution/Project1/Project1.csproj';
+      const expectedConfigPath = '/solution/Project1/packages.config';
 
       mockFs.existsSync.mockImplementation((filePath) => {
         return filePath === expectedConfigPath;
       });
 
-      const result = PackagesConfigParser.isLegacyProject(projectPath);
+      const result = parser.isLegacyProject(projectPath);
 
       expect(result).toBe(true);
     });
 
     it('should return false if packages.config does not exist', () => {
-      const projectPath = 'C:\\Solution\\Project1\\Project1.csproj';
+      const projectPath = '/solution/Project1/Project1.csproj';
 
       mockFs.existsSync.mockReturnValue(false);
 
-      const result = PackagesConfigParser.isLegacyProject(projectPath);
+      const result = parser.isLegacyProject(projectPath);
 
       expect(result).toBe(false);
     });
@@ -185,9 +190,9 @@ describe('PackagesConfigParser', () => {
   describe('parseMultiple', () => {
     it('should parse packages.config for multiple projects', () => {
       const projectPaths = [
-        'C:\\Solution\\Project1\\Project1.csproj',
-        'C:\\Solution\\Project2\\Project2.csproj',
-        'C:\\Solution\\Project3\\Project3.csproj',
+        '/solution/Project1/Project1.csproj',
+        '/solution/Project2/Project2.csproj',
+        '/solution/Project3/Project3.csproj',
       ];
 
       const packagesConfig1 = `<?xml version="1.0" encoding="utf-8"?>
@@ -202,45 +207,45 @@ describe('PackagesConfigParser', () => {
 
       mockFs.existsSync.mockImplementation((filePath) => {
         return (
-          filePath === 'C:\\Solution\\Project1\\packages.config' ||
-          filePath === 'C:\\Solution\\Project2\\packages.config'
+          filePath === '/solution/Project1/packages.config' ||
+          filePath === '/solution/Project2/packages.config'
         );
       });
 
       mockFs.readFileSync.mockImplementation((filePath) => {
-        if (filePath === 'C:\\Solution\\Project1\\packages.config') {
+        if (filePath === '/solution/Project1/packages.config') {
           return packagesConfig1;
-        } else if (filePath === 'C:\\Solution\\Project2\\packages.config') {
+        } else if (filePath === '/solution/Project2/packages.config') {
           return packagesConfig2;
         }
         throw new Error('File not found');
       });
 
-      const result = PackagesConfigParser.parseMultiple(projectPaths);
+      const result = parser.parseMultiple(projectPaths);
 
       expect(result.size).toBe(2);
-      expect(result.has('C:\\Solution\\Project1\\Project1.csproj')).toBe(true);
-      expect(result.has('C:\\Solution\\Project2\\Project2.csproj')).toBe(true);
-      expect(result.has('C:\\Solution\\Project3\\Project3.csproj')).toBe(false);
+      expect(result.has('/solution/Project1/Project1.csproj')).toBe(true);
+      expect(result.has('/solution/Project2/Project2.csproj')).toBe(true);
+      expect(result.has('/solution/Project3/Project3.csproj')).toBe(false);
 
-      const project1Packages = result.get('C:\\Solution\\Project1\\Project1.csproj');
+      const project1Packages = result.get('/solution/Project1/Project1.csproj');
       expect(project1Packages).toHaveLength(1);
       expect(project1Packages![0].name).toBe('Package1');
 
-      const project2Packages = result.get('C:\\Solution\\Project2\\Project2.csproj');
+      const project2Packages = result.get('/solution/Project2/Project2.csproj');
       expect(project2Packages).toHaveLength(1);
       expect(project2Packages![0].name).toBe('Package2');
     });
 
     it('should skip projects without packages.config', () => {
       const projectPaths = [
-        'C:\\Solution\\Project1\\Project1.csproj',
-        'C:\\Solution\\Project2\\Project2.csproj',
+        '/solution/Project1/Project1.csproj',
+        '/solution/Project2/Project2.csproj',
       ];
 
       mockFs.existsSync.mockReturnValue(false);
 
-      const result = PackagesConfigParser.parseMultiple(projectPaths);
+      const result = parser.parseMultiple(projectPaths);
 
       expect(result.size).toBe(0);
     });

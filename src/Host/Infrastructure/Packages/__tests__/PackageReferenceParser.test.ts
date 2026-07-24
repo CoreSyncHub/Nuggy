@@ -1,13 +1,23 @@
 import * as fs from 'fs';
 import { PackageReferenceParser } from '../PackageReferenceParser';
+import { ILogger } from '../../../Application/Abstractions/Log/ILogger';
 
 // Mock filesystem
 jest.mock('fs');
 const mockFs = fs as jest.Mocked<typeof fs>;
 
 describe('PackageReferenceParser', () => {
+  let parser: PackageReferenceParser;
+  const mockLogger: ILogger = {
+    Info: jest.fn(),
+    Warning: jest.fn(),
+    Error: jest.fn(),
+    Debug: jest.fn(),
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
+    parser = new PackageReferenceParser(mockLogger);
   });
 
   describe('parse', () => {
@@ -21,7 +31,7 @@ describe('PackageReferenceParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = PackageReferenceParser.parse('C:\\Solution\\Project\\Project.csproj');
+      const result = parser.parse('/Solution/Project/Project.csproj');
 
       expect(result).toHaveLength(2);
       expect(result[0].name).toBe('Newtonsoft.Json');
@@ -42,7 +52,7 @@ describe('PackageReferenceParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = PackageReferenceParser.parse('C:\\Solution\\Project\\Project.csproj');
+      const result = parser.parse('/Solution/Project/Project.csproj');
 
       expect(result).toHaveLength(2);
       expect(result[0].name).toBe('Newtonsoft.Json');
@@ -63,7 +73,7 @@ describe('PackageReferenceParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = PackageReferenceParser.parse('C:\\Solution\\Project\\Project.csproj');
+      const result = parser.parse('/Solution/Project/Project.csproj');
 
       expect(result).toHaveLength(2);
       expect(result[0].hasLocalVersion).toBe(true);
@@ -79,7 +89,7 @@ describe('PackageReferenceParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = PackageReferenceParser.parse('C:\\Solution\\Project\\Project.csproj');
+      const result = parser.parse('/Solution/Project/Project.csproj');
 
       expect(result).toHaveLength(0);
     });
@@ -100,41 +110,39 @@ describe('PackageReferenceParser', () => {
 </Project>`;
 
       mockFs.readFileSync.mockImplementation((path) => {
-        if (path === 'C:\\Solution\\Project1\\Project1.csproj') {
+        if (path === '/Solution/Project1/Project1.csproj') {
           return csprojContent1;
-        } else if (path === 'C:\\Solution\\Project2\\Project2.csproj') {
+        } else if (path === '/Solution/Project2/Project2.csproj') {
           return csprojContent2;
         }
         return '';
       });
 
       const projectPaths = [
-        'C:\\Solution\\Project1\\Project1.csproj',
-        'C:\\Solution\\Project2\\Project2.csproj',
+        '/Solution/Project1/Project1.csproj',
+        '/Solution/Project2/Project2.csproj',
       ];
 
-      const results = PackageReferenceParser.parseMultiple(projectPaths);
+      const results = parser.parseMultiple(projectPaths);
 
       expect(results.size).toBe(2);
-      expect(results.get('C:\\Solution\\Project1\\Project1.csproj')).toHaveLength(1);
-      expect(results.get('C:\\Solution\\Project2\\Project2.csproj')).toHaveLength(1);
+      expect(results.get('/Solution/Project1/Project1.csproj')).toHaveLength(1);
+      expect(results.get('/Solution/Project2/Project2.csproj')).toHaveLength(1);
     });
 
     it('should handle errors gracefully', () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
       mockFs.readFileSync.mockImplementation(() => {
         throw new Error('File not found');
       });
 
-      const projectPaths = ['C:\\Solution\\Project\\Project.csproj'];
+      const projectPaths = ['/Solution/Project/Project.csproj'];
 
-      const results = PackageReferenceParser.parseMultiple(projectPaths);
+      const results = parser.parseMultiple(projectPaths);
 
       expect(results.size).toBe(1);
-      expect(results.get('C:\\Solution\\Project\\Project.csproj')).toEqual([]);
+      expect(results.get('/Solution/Project/Project.csproj')).toEqual([]);
 
-      consoleErrorSpy.mockRestore();
+      expect(mockLogger.Error).toHaveBeenCalled();
     });
   });
 });

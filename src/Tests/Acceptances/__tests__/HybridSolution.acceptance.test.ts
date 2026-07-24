@@ -1,13 +1,11 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import { GetPackageManagementDiagnosticQueryHandler } from '@Application/Handlers/Packages/GetPackageManagementDiagnosticQueryHandler';
 import { GetPackageManagementDiagnosticQuery } from '@Shared/Features/Queries/GetPackageManagementDiagnosticQuery';
-import { GetProjectsTfmQueryHandler } from '@Application/Handlers/Projects/GetProjectsTfmQueryHandler';
 import { GetProjectsTfmQuery } from '@Shared/Features/Queries/GetProjectsTfmQuery';
 import { PackageManagementDiagnosticDto } from '@Shared/Features/Dtos/PackageManagementDto';
 import { ProjectsTfmDto } from '@Shared/Features/Dtos/ProjectTfmDto';
 import { findFilesRecursive } from '@/Tests/Helpers/findFilesRecursive';
+import { createDiagnosticHandler, createTfmHandler } from '@/Tests/Helpers/createHandlers';
 
 // Mock vscode module
 jest.mock(
@@ -73,8 +71,8 @@ describe('Acceptance: Hybrid Solution (Mixed Legacy + Modern)', () => {
     });
 
     // Execute handlers
-    const diagnosticHandler = new GetPackageManagementDiagnosticQueryHandler();
-    const tfmHandler = new GetProjectsTfmQueryHandler();
+    const diagnosticHandler = createDiagnosticHandler();
+    const tfmHandler = createTfmHandler();
 
     diagnosticResult = await diagnosticHandler.Handle(
       new GetPackageManagementDiagnosticQuery(solutionPath)

@@ -9,7 +9,7 @@ describe('NuGetSource', () => {
         'https://api.nuget.org/v3/index.json',
         true,
         NuGetConfigScope.MachineWide,
-        'C:\\NuGet.Config'
+        '/NuGet.Config'
       );
 
       expect(source.isPrivateFeed()).toBe(false);
@@ -21,7 +21,7 @@ describe('NuGetSource', () => {
         'https://example.com/nuget',
         true,
         NuGetConfigScope.SolutionLocal,
-        'C:\\Solution\\NuGet.Config'
+        '/Solution/NuGet.Config'
       );
 
       expect(source.isPrivateFeed()).toBe(true);
@@ -35,7 +35,7 @@ describe('NuGetSource', () => {
         'https://pkgs.dev.azure.com/myorg/_packaging/myfeed/nuget/v3/index.json',
         true,
         NuGetConfigScope.SolutionLocal,
-        'C:\\Solution\\NuGet.Config'
+        '/Solution/NuGet.Config'
       );
 
       expect(source.isAzureArtifacts()).toBe(true);
@@ -47,7 +47,7 @@ describe('NuGetSource', () => {
         'https://myorg.pkgs.visualstudio.com/_packaging/myfeed/nuget/v3/index.json',
         true,
         NuGetConfigScope.SolutionLocal,
-        'C:\\Solution\\NuGet.Config'
+        '/Solution/NuGet.Config'
       );
 
       expect(source.isAzureArtifacts()).toBe(true);
@@ -59,7 +59,7 @@ describe('NuGetSource', () => {
         'https://api.nuget.org/v3/index.json',
         true,
         NuGetConfigScope.MachineWide,
-        'C:\\NuGet.Config'
+        '/NuGet.Config'
       );
 
       expect(source.isAzureArtifacts()).toBe(false);
@@ -73,7 +73,7 @@ describe('NuGetSource', () => {
         'https://baget.example.com/v3/index.json',
         true,
         NuGetConfigScope.SolutionLocal,
-        'C:\\Solution\\NuGet.Config'
+        '/Solution/NuGet.Config'
       );
 
       expect(source.isBaGet()).toBe(true);
@@ -85,7 +85,7 @@ describe('NuGetSource', () => {
         'https://api.nuget.org/v3/index.json',
         true,
         NuGetConfigScope.MachineWide,
-        'C:\\NuGet.Config'
+        '/NuGet.Config'
       );
 
       expect(source.isBaGet()).toBe(false);
@@ -99,7 +99,7 @@ describe('NuGetSource', () => {
         'https://api.nuget.org/v3/index.json',
         true,
         NuGetConfigScope.MachineWide,
-        'C:\\NuGet.Config'
+        '/NuGet.Config'
       );
 
       expect(source.getFeedType()).toBe('NuGet.org');
@@ -111,7 +111,7 @@ describe('NuGetSource', () => {
         'https://pkgs.dev.azure.com/myorg/_packaging/myfeed/nuget/v3/index.json',
         true,
         NuGetConfigScope.SolutionLocal,
-        'C:\\Solution\\NuGet.Config'
+        '/Solution/NuGet.Config'
       );
 
       expect(source.getFeedType()).toBe('Azure Artifacts');
@@ -123,7 +123,7 @@ describe('NuGetSource', () => {
         'https://baget.example.com/v3/index.json',
         true,
         NuGetConfigScope.SolutionLocal,
-        'C:\\Solution\\NuGet.Config'
+        '/Solution/NuGet.Config'
       );
 
       expect(source.getFeedType()).toBe('BaGet (or compatible)');
@@ -135,7 +135,7 @@ describe('NuGetSource', () => {
         'https://custom.example.com/nuget',
         true,
         NuGetConfigScope.SolutionLocal,
-        'C:\\Solution\\NuGet.Config'
+        '/Solution/NuGet.Config'
       );
 
       expect(source.getFeedType()).toBe('Private Feed');
@@ -149,7 +149,7 @@ describe('NuGetSource', () => {
         'https://example.com/nuget',
         true,
         NuGetConfigScope.SolutionLocal,
-        'C:\\Solution\\NuGet.Config'
+        '/Solution/NuGet.Config'
       );
 
       expect(source.getIdentifier()).toBe('MyFeed@SolutionLocal');

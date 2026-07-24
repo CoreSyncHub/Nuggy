@@ -1,15 +1,15 @@
-import { html, css } from 'lit';
-import { customElement } from 'lit/decorators.js';
-import { BaseComponent } from './Shared/Components/BaseComponent';
-import { TranslationService } from './Core/Services/TranslationService';
-import { DISPATCHER, IDispatcher } from '@Shared/Abstractions/Messaging/IDispatcher';
-import { ILogger, LOGGER } from '@/Host/Application/Abstractions/Log/ILogger';
-import { container } from 'tsyringe';
+import { html, css } from "lit";
+import { customElement } from "lit/decorators.js";
+import { BaseComponent } from "./Shared/Components/BaseComponent";
+import { TranslationService } from "./Core/Services/TranslationService";
+import { DISPATCHER, IDispatcher } from "@Shared/Abstractions/Messaging/IDispatcher";
+import { ILogger, LOGGER } from "@/Host/Application/Abstractions/Log/ILogger";
+import { container } from "tsyringe";
 
 /**
  * Main App Component
  */
-@customElement('nuget-app')
+@customElement("nuget-app")
 export class App extends BaseComponent {
   private i18n!: TranslationService;
   private dispatcher!: IDispatcher;
@@ -143,6 +143,6 @@ export class App extends BaseComponent {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'nuget-app': App;
+    "nuget-app": App;
   }
 }

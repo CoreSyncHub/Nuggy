@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import * as path from 'path';
 import { SlnParser } from '../SlnParser';
 import { SolutionProject } from '../../../Domain/Solutions/Entities/SolutionFolder';
 
@@ -8,17 +7,19 @@ jest.mock('fs');
 const mockFs = fs as jest.Mocked<typeof fs>;
 
 describe('SlnParser', () => {
-  const mockSolutionPath = 'C:\\Projects\\MySolution.sln';
+  let parser: SlnParser;
+  const mockSolutionPath = '/Projects/MySolution.sln';
 
   beforeEach(() => {
     jest.clearAllMocks();
+    parser = new SlnParser();
   });
 
   describe('isValidSlnFile', () => {
     it('should return false if file does not exist', () => {
       mockFs.existsSync.mockReturnValue(false);
 
-      const result = SlnParser.isValidSlnFile('nonexistent.sln');
+      const result = parser.isValidSlnFile('nonexistent.sln');
 
       expect(result).toBe(false);
     });
@@ -26,7 +27,7 @@ describe('SlnParser', () => {
     it('should return false if file extension is not .sln', () => {
       mockFs.existsSync.mockReturnValue(true);
 
-      const result = SlnParser.isValidSlnFile('file.txt');
+      const result = parser.isValidSlnFile('file.txt');
 
       expect(result).toBe(false);
     });
@@ -35,7 +36,7 @@ describe('SlnParser', () => {
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue('Invalid content');
 
-      const result = SlnParser.isValidSlnFile('test.sln');
+      const result = parser.isValidSlnFile('test.sln');
 
       expect(result).toBe(false);
     });
@@ -44,7 +45,7 @@ describe('SlnParser', () => {
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue('Microsoft Visual Studio Solution File, Format Version 12.00');
 
-      const result = SlnParser.isValidSlnFile('test.sln');
+      const result = parser.isValidSlnFile('test.sln');
 
       expect(result).toBe(true);
     });
@@ -62,7 +63,7 @@ EndGlobal
 
       mockFs.readFileSync.mockReturnValue(slnContent);
 
-      const result = SlnParser.parse(mockSolutionPath);
+      const result = parser.parse(mockSolutionPath);
 
       expect(result.projects).toHaveLength(1);
       expect(result.projects[0].name).toBe('MyProject');
@@ -87,7 +88,7 @@ EndGlobal
 
       mockFs.readFileSync.mockReturnValue(slnContent);
 
-      const result = SlnParser.parse(mockSolutionPath);
+      const result = parser.parse(mockSolutionPath);
 
       expect(result.folders).toHaveLength(1);
       expect(result.folders[0].name).toBe('Libraries');
@@ -124,7 +125,7 @@ EndGlobal
 
       mockFs.readFileSync.mockReturnValue(slnContent);
 
-      const result = SlnParser.parse(mockSolutionPath);
+      const result = parser.parse(mockSolutionPath);
 
       expect(result.folders).toHaveLength(2);
       expect(result.projects).toHaveLength(1);
@@ -159,7 +160,7 @@ EndGlobal
 
       mockFs.readFileSync.mockReturnValue(slnContent);
 
-      const result = SlnParser.parse(mockSolutionPath);
+      const result = parser.parse(mockSolutionPath);
 
       expect(result.rootItems).toHaveLength(2);
       expect(result.folders).toHaveLength(1);

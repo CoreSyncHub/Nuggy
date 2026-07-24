@@ -1,13 +1,11 @@
 import * as path from 'path';
-import * as fs from 'fs';
 import * as vscode from 'vscode';
-import { GetPackageManagementDiagnosticQueryHandler } from '@Application/Handlers/Packages/GetPackageManagementDiagnosticQueryHandler';
 import { GetPackageManagementDiagnosticQuery } from '@Shared/Features/Queries/GetPackageManagementDiagnosticQuery';
-import { GetProjectsTfmQueryHandler } from '@/Host/Application/Handlers/Projects/GetProjectsTfmQueryHandler';
 import { PackageManagementDiagnosticDto } from '@/Shared/Features/Dtos/PackageManagementDto';
 import { ProjectsTfmDto } from '@/Shared/Features/Dtos/ProjectTfmDto';
 import { GetProjectsTfmQuery } from '@/Shared/Features/Queries/GetProjectsTfmQuery';
 import { findFilesRecursive } from '@/Tests/Helpers/findFilesRecursive';
+import { createDiagnosticHandler, createTfmHandler } from '@/Tests/Helpers/createHandlers';
 
 // Mock vscode module
 jest.mock(
@@ -56,8 +54,8 @@ describe('Acceptance: Legacy Solution (packages.config)', () => {
   const solutionPath = path.resolve(__dirname, '../../Fixtures/Legacy/Legacy.sln');
   const fixtureRoot = path.dirname(solutionPath);
 
-  const diagnosticHandler = new GetPackageManagementDiagnosticQueryHandler();
-  const tfmHandler = new GetProjectsTfmQueryHandler();
+  const diagnosticHandler = createDiagnosticHandler();
+  const tfmHandler = createTfmHandler();
 
   let diagnosticResult: PackageManagementDiagnosticDto;
   let tfmResult: ProjectsTfmDto;

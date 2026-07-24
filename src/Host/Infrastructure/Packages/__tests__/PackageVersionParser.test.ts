@@ -6,8 +6,11 @@ jest.mock('fs');
 const mockFs = fs as jest.Mocked<typeof fs>;
 
 describe('PackageVersionParser', () => {
+  let parser: PackageVersionParser;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    parser = new PackageVersionParser();
   });
 
   describe('parse', () => {
@@ -22,7 +25,7 @@ describe('PackageVersionParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = PackageVersionParser.parse('C:\\Solution\\Directory.Packages.props');
+      const result = parser.parse('/Solution/Directory.Packages.props');
 
       expect(result).toHaveLength(3);
       expect(result[0].name).toBe('Newtonsoft.Json');
@@ -45,7 +48,7 @@ describe('PackageVersionParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = PackageVersionParser.parse('C:\\Solution\\Directory.Packages.props');
+      const result = parser.parse('/Solution/Directory.Packages.props');
 
       expect(result).toHaveLength(2);
       expect(result[0].name).toBe('Package1');
@@ -61,7 +64,7 @@ describe('PackageVersionParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = PackageVersionParser.parse('C:\\Solution\\Directory.Packages.props');
+      const result = parser.parse('/Solution/Directory.Packages.props');
 
       expect(result).toHaveLength(0);
     });
@@ -72,7 +75,7 @@ describe('PackageVersionParser', () => {
       mockFs.readFileSync.mockReturnValue(content);
 
       expect(() => {
-        PackageVersionParser.parse('C:\\Solution\\Directory.Packages.props');
+        parser.parse('/Solution/Directory.Packages.props');
       }).toThrow();
     });
   });
@@ -87,7 +90,7 @@ describe('PackageVersionParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = PackageVersionParser.isCpmEnabled('C:\\Solution\\Directory.Packages.props');
+      const result = parser.isCpmEnabled('/Solution/Directory.Packages.props');
 
       expect(result).toBe(true);
     });
@@ -101,7 +104,7 @@ describe('PackageVersionParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = PackageVersionParser.isCpmEnabled('C:\\Solution\\Directory.Packages.props');
+      const result = parser.isCpmEnabled('/Solution/Directory.Packages.props');
 
       expect(result).toBe(false);
     });
@@ -115,7 +118,7 @@ describe('PackageVersionParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = PackageVersionParser.isCpmEnabled('C:\\Solution\\Directory.Packages.props');
+      const result = parser.isCpmEnabled('/Solution/Directory.Packages.props');
 
       expect(result).toBe(false);
     });
@@ -125,7 +128,7 @@ describe('PackageVersionParser', () => {
         throw new Error('File not found');
       });
 
-      const result = PackageVersionParser.isCpmEnabled('C:\\Solution\\Directory.Packages.props');
+      const result = parser.isCpmEnabled('/Solution/Directory.Packages.props');
 
       expect(result).toBe(false);
     });

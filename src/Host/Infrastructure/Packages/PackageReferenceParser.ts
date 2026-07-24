@@ -1,23 +1,29 @@
 import * as fs from 'fs';
 import { XMLParser } from 'fast-xml-parser';
+import { singleton } from 'tsyringe';
 import { PackageReference } from '../../Domain/Packages/Entities/PackageReference';
 import { PackageIdentity } from '../../Domain/Packages/ValueObjects/PackageIdentity';
+import { ILogger, LOGGER } from '../../Application/Abstractions/Log/ILogger';
+import { injectToken } from '@Shared/DependencyInjection/inject';
 
 /**
  * Parser for extracting PackageReference entries from .csproj files
  */
+@singleton()
 export class PackageReferenceParser {
-  private static xmlParser = new XMLParser({
+  private readonly xmlParser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '@_',
     parseAttributeValue: false,
     trimValues: true,
   });
 
+  constructor(@injectToken(LOGGER) private readonly logger: ILogger) {}
+
   /**
    * Parses a .csproj file and extracts all PackageReference entries
    */
-  public static parse(csprojPath: string): PackageReference[] {
+  public parse(csprojPath: string): PackageReference[] {
     const content = fs.readFileSync(csprojPath, 'utf-8');
     const parsed = this.xmlParser.parse(content);
 
@@ -28,7 +34,6 @@ export class PackageReferenceParser {
     const project = parsed.Project;
     const packageReferences: PackageReference[] = [];
 
-    // Look for ItemGroup elements
     if (!project.ItemGroup) {
       return [];
     }
@@ -38,7 +43,6 @@ export class PackageReferenceParser {
       : [project.ItemGroup];
 
     for (const itemGroup of itemGroups) {
-      // Extract PackageReference elements
       if (itemGroup.PackageReference) {
         const packageReferenceElements = Array.isArray(itemGroup.PackageReference)
           ? itemGroup.PackageReference
@@ -63,7 +67,7 @@ export class PackageReferenceParser {
   /**
    * Parses multiple .csproj files and returns all package references
    */
-  public static parseMultiple(csprojPaths: string[]): Map<string, PackageReference[]> {
+  public parseMultiple(csprojPaths: string[]): Map<string, PackageReference[]> {
     const results = new Map<string, PackageReference[]>();
 
     for (const csprojPath of csprojPaths) {
@@ -71,7 +75,7 @@ export class PackageReferenceParser {
         const references = this.parse(csprojPath);
         results.set(csprojPath, references);
       } catch (error) {
-        console.error(`Failed to parse package references from ${csprojPath}:`, error);
+        this.logger.Error(`Failed to parse package references from ${csprojPath}`, error as Error);
         results.set(csprojPath, []);
       }
     }

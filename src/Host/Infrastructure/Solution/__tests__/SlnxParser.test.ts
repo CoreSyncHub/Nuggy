@@ -7,17 +7,19 @@ jest.mock('fs');
 const mockFs = fs as jest.Mocked<typeof fs>;
 
 describe('SlnxParser', () => {
-  const mockSolutionPath = 'C:\\Projects\\MySolution.slnx';
+  let parser: SlnxParser;
+  const mockSolutionPath = '/Projects/MySolution.slnx';
 
   beforeEach(() => {
     jest.clearAllMocks();
+    parser = new SlnxParser();
   });
 
   describe('isValidSlnxFile', () => {
     it('should return false if file does not exist', () => {
       mockFs.existsSync.mockReturnValue(false);
 
-      const result = SlnxParser.isValidSlnxFile('nonexistent.slnx');
+      const result = parser.isValidSlnxFile('nonexistent.slnx');
 
       expect(result).toBe(false);
     });
@@ -25,7 +27,7 @@ describe('SlnxParser', () => {
     it('should return false if file extension is not .slnx', () => {
       mockFs.existsSync.mockReturnValue(true);
 
-      const result = SlnxParser.isValidSlnxFile('file.txt');
+      const result = parser.isValidSlnxFile('file.txt');
 
       expect(result).toBe(false);
     });
@@ -34,7 +36,7 @@ describe('SlnxParser', () => {
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue('<InvalidRoot></InvalidRoot>');
 
-      const result = SlnxParser.isValidSlnxFile('test.slnx');
+      const result = parser.isValidSlnxFile('test.slnx');
 
       expect(result).toBe(false);
     });
@@ -47,7 +49,7 @@ describe('SlnxParser', () => {
 </Solution>`;
       mockFs.readFileSync.mockReturnValue(validSlnx);
 
-      const result = SlnxParser.isValidSlnxFile('test.slnx');
+      const result = parser.isValidSlnxFile('test.slnx');
 
       expect(result).toBe(true);
     });
@@ -63,7 +65,7 @@ describe('SlnxParser', () => {
 
       mockFs.readFileSync.mockReturnValue(slnxContent);
 
-      const result = SlnxParser.parse(mockSolutionPath);
+      const result = parser.parse(mockSolutionPath);
 
       expect(result.projects).toHaveLength(1);
       expect(result.projects[0].name).toBe('MyProject');
@@ -84,7 +86,7 @@ describe('SlnxParser', () => {
 
       mockFs.readFileSync.mockReturnValue(slnxContent);
 
-      const result = SlnxParser.parse(mockSolutionPath);
+      const result = parser.parse(mockSolutionPath);
 
       expect(result.folders).toHaveLength(1);
       expect(result.folders[0].name).toBe('Libraries');
@@ -114,7 +116,7 @@ describe('SlnxParser', () => {
 
       mockFs.readFileSync.mockReturnValue(slnxContent);
 
-      const result = SlnxParser.parse(mockSolutionPath);
+      const result = parser.parse(mockSolutionPath);
 
       expect(result.folders).toHaveLength(2);
       expect(result.projects).toHaveLength(1);
@@ -144,7 +146,7 @@ describe('SlnxParser', () => {
 
       mockFs.readFileSync.mockReturnValue(slnxContent);
 
-      const result = SlnxParser.parse(mockSolutionPath);
+      const result = parser.parse(mockSolutionPath);
 
       expect(result.rootItems).toHaveLength(2);
       expect(result.folders).toHaveLength(1);
@@ -178,7 +180,7 @@ describe('SlnxParser', () => {
 
       mockFs.readFileSync.mockReturnValue(slnxContent);
 
-      const result = SlnxParser.parse(mockSolutionPath);
+      const result = parser.parse(mockSolutionPath);
 
       expect(result.folders).toHaveLength(1);
       expect(result.projects).toHaveLength(3);
@@ -195,7 +197,7 @@ describe('SlnxParser', () => {
 
       mockFs.readFileSync.mockReturnValue(slnxContent);
 
-      const result = SlnxParser.parse(mockSolutionPath);
+      const result = parser.parse(mockSolutionPath);
 
       expect(result.folders).toHaveLength(0);
       expect(result.projects).toHaveLength(0);
@@ -211,7 +213,7 @@ describe('SlnxParser', () => {
 
       mockFs.readFileSync.mockReturnValue(slnxContent);
 
-      const result = SlnxParser.parse(mockSolutionPath);
+      const result = parser.parse(mockSolutionPath);
 
       expect(result.projects[0].id.toString()).toContain('MyProject');
       expect(result.projects[0].id.isPath()).toBe(true);
@@ -229,7 +231,7 @@ describe('SlnxParser', () => {
 
       mockFs.readFileSync.mockReturnValue(slnxContent);
 
-      const result = SlnxParser.parse(mockSolutionPath);
+      const result = parser.parse(mockSolutionPath);
 
       const folder1 = result.folders.find((f) => f.name === 'Folder1');
       const folder2 = result.folders.find((f) => f.name === 'Folder2');

@@ -6,8 +6,11 @@ jest.mock('fs');
 const mockFs = fs as jest.Mocked<typeof fs>;
 
 describe('CsprojParser', () => {
+  let parser: CsprojParser;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    parser = new CsprojParser();
   });
 
   describe('parse - SDK-style projects', () => {
@@ -20,7 +23,7 @@ describe('CsprojParser', () => {
 
       mockFs.readFileSync.mockReturnValue(csprojContent);
 
-      const result = CsprojParser.parse('C:\\Project\\Project.csproj');
+      const result = parser.parse('/Project/Project.csproj');
 
       expect(result.sdkType).toBe('SDK-Style');
       expect(result.sdk).toBe('Microsoft.NET.Sdk');
@@ -35,7 +38,7 @@ describe('CsprojParser', () => {
 
       mockFs.readFileSync.mockReturnValue(csprojContent);
 
-      const result = CsprojParser.parse('C:\\Project\\Project.csproj');
+      const result = parser.parse('/Project/Project.csproj');
 
       expect(result.targetFramework).toBe('net8.0');
       expect(result.targetFrameworks).toBeUndefined();
@@ -50,7 +53,7 @@ describe('CsprojParser', () => {
 
       mockFs.readFileSync.mockReturnValue(csprojContent);
 
-      const result = CsprojParser.parse('C:\\Project\\Project.csproj');
+      const result = parser.parse('/Project/Project.csproj');
 
       expect(result.targetFrameworks).toEqual(['net8.0', 'net7.0', 'net6.0']);
       expect(result.targetFramework).toBeUndefined();
@@ -65,7 +68,7 @@ describe('CsprojParser', () => {
 
       mockFs.readFileSync.mockReturnValue(csprojContent);
 
-      const result = CsprojParser.parse('C:\\Project\\Project.csproj');
+      const result = parser.parse('/Project/Project.csproj');
 
       expect(result.propertyGroups).toHaveLength(1);
       expect(result.propertyGroups[0].condition).toContain('Debug');
@@ -83,7 +86,7 @@ describe('CsprojParser', () => {
 
       mockFs.readFileSync.mockReturnValue(csprojContent);
 
-      const result = CsprojParser.parse('C:\\Project\\Project.csproj');
+      const result = parser.parse('/Project/Project.csproj');
 
       expect(result.sdkType).toBe('Legacy');
       expect(result.sdk).toBeUndefined();
@@ -98,7 +101,7 @@ describe('CsprojParser', () => {
         propertyGroups: [],
       };
 
-      const result = CsprojParser.getAllTargetFrameworks(parsed);
+      const result = parser.getAllTargetFrameworks(parsed);
 
       expect(result).toEqual(['net8.0', 'net7.0']);
     });
@@ -110,7 +113,7 @@ describe('CsprojParser', () => {
         propertyGroups: [],
       };
 
-      const result = CsprojParser.getAllTargetFrameworks(parsed);
+      const result = parser.getAllTargetFrameworks(parsed);
 
       expect(result).toEqual(['net8.0']);
     });
@@ -121,7 +124,7 @@ describe('CsprojParser', () => {
         propertyGroups: [],
       };
 
-      const result = CsprojParser.getAllTargetFrameworks(parsed);
+      const result = parser.getAllTargetFrameworks(parsed);
 
       expect(result).toEqual([]);
     });
@@ -135,7 +138,7 @@ describe('CsprojParser', () => {
         propertyGroups: [],
       };
 
-      expect(CsprojParser.isMultiTargeting(parsed)).toBe(true);
+      expect(parser.isMultiTargeting(parsed)).toBe(true);
     });
 
     it('should return false for single target framework', () => {
@@ -145,7 +148,7 @@ describe('CsprojParser', () => {
         propertyGroups: [],
       };
 
-      expect(CsprojParser.isMultiTargeting(parsed)).toBe(false);
+      expect(parser.isMultiTargeting(parsed)).toBe(false);
     });
 
     it('should return false for no target frameworks', () => {
@@ -154,7 +157,7 @@ describe('CsprojParser', () => {
         propertyGroups: [],
       };
 
-      expect(CsprojParser.isMultiTargeting(parsed)).toBe(false);
+      expect(parser.isMultiTargeting(parsed)).toBe(false);
     });
   });
 
@@ -172,7 +175,7 @@ describe('CsprojParser', () => {
 
       mockFs.readFileSync.mockReturnValue(csprojContent);
 
-      const result = CsprojParser.parse('C:\\Project\\Project.csproj');
+      const result = parser.parse('/Project/Project.csproj');
 
       expect(result.propertyGroups).toHaveLength(2);
       expect(result.propertyGroups[0].condition).toBeUndefined();

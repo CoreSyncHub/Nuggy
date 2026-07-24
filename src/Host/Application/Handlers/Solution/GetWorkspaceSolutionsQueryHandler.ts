@@ -14,14 +14,12 @@ import { SolutionDetector } from '@Infrastructure/Solution/SolutionDetector';
 export class GetWorkspaceSolutionsQueryHandler
   implements IQueryHandler<GetWorkspaceSolutionsQuery, SolutionDto[]>
 {
+  constructor(private readonly solutionDetector: SolutionDetector) {}
+
   async Handle(_: GetWorkspaceSolutionsQuery): Promise<SolutionDto[]> {
-    // Find all solutions in the workspace
-    const detectedSolutions = await SolutionDetector.findAllSolutions();
+    const detectedSolutions = await this.solutionDetector.findAllSolutions();
+    const selectedSolution = this.solutionDetector.getSelectedSolution();
 
-    // Get the currently selected solution
-    const selectedSolution = SolutionDetector.getSelectedSolution();
-
-    // Map to DTOs
     return detectedSolutions.map((solution) => ({
       path: solution.path,
       name: solution.name,

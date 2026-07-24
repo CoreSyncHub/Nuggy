@@ -19,25 +19,27 @@ import { SlnxParser } from '@Infrastructure/Solution/SlnxParser';
 export class GetBuildConfigurationFilesQueryHandler
   implements IQueryHandler<GetBuildConfigurationFilesQuery, BuildConfigStructureDto>
 {
+  constructor(
+    private readonly buildConfigDetector: BuildConfigDetector,
+    private readonly buildConfigParser: BuildConfigParser,
+    private readonly slnParser: SlnParser,
+    private readonly slnxParser: SlnxParser
+  ) {}
+
   async Handle(query: GetBuildConfigurationFilesQuery): Promise<BuildConfigStructureDto> {
-    // Find all configuration files
-    const configFiles = await BuildConfigDetector.findAllConfigFiles();
+    const configFiles = await this.buildConfigDetector.findAllConfigFiles();
 
-    // Build hierarchical relationships
-    BuildConfigDetector.buildHierarchy(configFiles);
+    this.buildConfigDetector.buildHierarchy(configFiles);
 
-    // Parse each file to extract properties
     for (const file of configFiles) {
-      BuildConfigParser.parse(file.path, file);
+      this.buildConfigParser.parse(file.path, file);
     }
 
-    // Map affected projects if a solution path is provided
     if (query.solutionPath) {
       const projectPaths = this.getProjectPathsFromSolution(query.solutionPath);
-      await BuildConfigDetector.mapAffectedProjects(configFiles, projectPaths);
+      await this.buildConfigDetector.mapAffectedProjects(configFiles, projectPaths);
     }
 
-    // Convert to DTOs
     const fileDtos: BuildConfigFileDto[] = configFiles.map((file) => ({
       path: file.path,
       type: file.type,
@@ -50,24 +52,17 @@ export class GetBuildConfigurationFilesQueryHandler
       importsParent: file.importsParent,
     }));
 
-    // Get root files
-    const rootFiles = BuildConfigDetector.getRootFiles(configFiles);
+    const rootFiles = this.buildConfigDetector.getRootFiles(configFiles);
     const rootFileDtos = rootFiles.map((file) => fileDtos.find((dto) => dto.path === file.path)!);
 
-    // Check if CPM is enabled
-    const isCpmEnabled = BuildConfigDetector.isCpmEnabled(configFiles);
-    const cpmFile = BuildConfigDetector.getCpmFile(configFiles);
+    const isCpmEnabled = this.buildConfigDetector.isCpmEnabled(configFiles);
+    const cpmFile = this.buildConfigDetector.getCpmFile(configFiles);
 
-    // Calculate summary statistics
     const summary = {
       totalFiles: configFiles.length,
-      propsFiles: configFiles.filter((f) => f.type === BuildConfigFileType.DirectoryBuildProps)
-        .length,
-      targetsFiles: configFiles.filter((f) => f.type === BuildConfigFileType.DirectoryBuildTargets)
-        .length,
-      packagesPropsFiles: configFiles.filter(
-        (f) => f.type === BuildConfigFileType.DirectoryPackagesProps
-      ).length,
+      propsFiles: configFiles.filter((f) => f.type === BuildConfigFileType.DirectoryBuildProps).length,
+      targetsFiles: configFiles.filter((f) => f.type === BuildConfigFileType.DirectoryBuildTargets).length,
+      packagesPropsFiles: configFiles.filter((f) => f.type === BuildConfigFileType.DirectoryPackagesProps).length,
       maxDepth: Math.max(0, ...configFiles.map((f) => f.getDepth())),
     };
 
@@ -80,17 +75,14 @@ export class GetBuildConfigurationFilesQueryHandler
     };
   }
 
-  /**
-   * Extracts project paths from a solution file
-   */
   private getProjectPathsFromSolution(solutionPath: string): string[] {
     const solutionExt = path.extname(solutionPath).toLowerCase();
 
     if (solutionExt === '.slnx') {
-      const parseResult = SlnxParser.parse(solutionPath);
+      const parseResult = this.slnxParser.parse(solutionPath);
       return parseResult.projects.map((p) => p.path);
     } else if (solutionExt === '.sln') {
-      const parseResult = SlnParser.parse(solutionPath);
+      const parseResult = this.slnParser.parse(solutionPath);
       return parseResult.projects.map((p) => p.path);
     }
 

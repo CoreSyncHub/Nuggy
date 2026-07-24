@@ -19,36 +19,39 @@ import { TfmResolver } from '@Infrastructure/Projects/TfmResolver';
 export class GetProjectsTfmQueryHandler
   implements IQueryHandler<GetProjectsTfmQuery, ProjectsTfmDto>
 {
+  constructor(
+    private readonly slnParser: SlnParser,
+    private readonly slnxParser: SlnxParser,
+    private readonly buildConfigDetector: BuildConfigDetector,
+    private readonly buildConfigParser: BuildConfigParser,
+    private readonly tfmResolver: TfmResolver
+  ) {}
+
   async Handle(query: GetProjectsTfmQuery): Promise<ProjectsTfmDto> {
     const solutionPath = query.solutionPath;
     const solutionExt = path.extname(solutionPath).toLowerCase();
 
-    // 1. Parse the solution to get project paths
     let projectPaths: string[];
 
     if (solutionExt === '.slnx') {
-      const parseResult = SlnxParser.parse(solutionPath);
+      const parseResult = this.slnxParser.parse(solutionPath);
       projectPaths = parseResult.projects.map((p) => p.path);
     } else if (solutionExt === '.sln') {
-      const parseResult = SlnParser.parse(solutionPath);
+      const parseResult = this.slnParser.parse(solutionPath);
       projectPaths = parseResult.projects.map((p) => p.path);
     } else {
       throw new Error(`Unsupported solution format: ${solutionExt}`);
     }
 
-    // 2. Find and parse all build configuration files
-    const buildConfigFiles = await BuildConfigDetector.findAllConfigFiles();
-    BuildConfigDetector.buildHierarchy(buildConfigFiles);
+    const buildConfigFiles = await this.buildConfigDetector.findAllConfigFiles();
+    this.buildConfigDetector.buildHierarchy(buildConfigFiles);
 
-    // Parse each build config file
     for (const file of buildConfigFiles) {
-      BuildConfigParser.parse(file.path, file);
+      this.buildConfigParser.parse(file.path, file);
     }
 
-    // 3. Resolve TFM for each project
-    const resolvedTfms = TfmResolver.resolveMultiple(projectPaths, buildConfigFiles);
+    const resolvedTfms = this.tfmResolver.resolveMultiple(projectPaths, buildConfigFiles);
 
-    // 4. Convert to DTOs
     const projectDtos: ProjectTfmDto[] = [];
     for (const [projectPath, resolvedTfm] of resolvedTfms) {
       const projectName = path.basename(projectPath, '.csproj');
@@ -65,7 +68,6 @@ export class GetProjectsTfmQueryHandler
       });
     }
 
-    // 5. Calculate summary statistics
     const sdkStyleProjects = projectDtos.filter((p) => p.sdkType === 'SDK-Style').length;
     const legacyProjects = projectDtos.filter((p) => p.sdkType === 'Legacy').length;
     const multiTargetingProjects = projectDtos.filter((p) => p.isMultiTargeting).length;

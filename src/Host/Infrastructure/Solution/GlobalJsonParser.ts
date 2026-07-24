@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { singleton } from 'tsyringe';
 
 /**
  * Represents the content of a global.json file
@@ -21,11 +22,12 @@ export interface GlobalJson {
  * Parser for global.json files
  * See: https://learn.microsoft.com/en-us/dotnet/core/tools/global-json
  */
+@singleton()
 export class GlobalJsonParser {
   /**
    * Searches for global.json file starting from a directory and going up
    */
-  public static findGlobalJson(startDir: string): string | null {
+  public findGlobalJson(startDir: string): string | null {
     let currentDir = startDir;
     const root = path.parse(currentDir).root;
 
@@ -49,7 +51,7 @@ export class GlobalJsonParser {
   /**
    * Parses a global.json file
    */
-  public static parse(globalJsonPath: string): GlobalJson | null {
+  public parse(globalJsonPath: string): GlobalJson | null {
     try {
       const content = fs.readFileSync(globalJsonPath, 'utf-8');
       return JSON.parse(content) as GlobalJson;
@@ -61,7 +63,7 @@ export class GlobalJsonParser {
   /**
    * Gets the .NET SDK version from global.json
    */
-  public static getSdkVersion(globalJsonPath: string): string | null {
+  public getSdkVersion(globalJsonPath: string): string | null {
     const globalJson = this.parse(globalJsonPath);
     return globalJson?.sdk?.version ?? null;
   }
@@ -69,7 +71,7 @@ export class GlobalJsonParser {
   /**
    * Finds and returns the .NET SDK version for a given directory
    */
-  public static findSdkVersion(startDir: string): {
+  public findSdkVersion(startDir: string): {
     version: string | null;
     globalJsonPath: string | null;
   } {

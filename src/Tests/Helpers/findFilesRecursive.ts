@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from "fs";
+import * as path from "path";
 
 /**
  * Helper function to recursively find files matching a pattern in a directory
@@ -17,12 +17,7 @@ export function findFilesRecursive(dir: string, pattern: string): string[] {
     const fullPath = path.join(dir, entry.name);
 
     // Skip node_modules and build outputs
-    if (
-      entry.name === 'node_modules' ||
-      entry.name === '.git' ||
-      entry.name === 'obj' ||
-      entry.name === 'bin'
-    ) {
+    if (entry.name === "node_modules" || entry.name === ".git" || entry.name === "obj" || entry.name === "bin") {
       continue;
     }
 

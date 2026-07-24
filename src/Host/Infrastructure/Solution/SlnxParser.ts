@@ -1,29 +1,21 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { XMLParser } from 'fast-xml-parser';
+import { singleton } from 'tsyringe';
 import { SolutionFolder, SolutionProject } from '../../Domain/Solutions/Entities/SolutionFolder';
 import { SolutionItemId } from '../../Domain/Solutions/ValueObjects/SolutionItemId';
 
-/**
- * Represents a project entry in .slnx format
- */
 interface SlnxProject {
   '@_Path': string;
   '@_Type'?: string;
 }
 
-/**
- * Represents a folder entry in .slnx format
- */
 interface SlnxFolder {
   '@_Name': string;
   Project?: SlnxProject | SlnxProject[];
   Folder?: SlnxFolder | SlnxFolder[];
 }
 
-/**
- * Root structure of .slnx XML
- */
 interface SlnxRoot {
   Solution?: {
     Project?: SlnxProject | SlnxProject[];
@@ -34,8 +26,9 @@ interface SlnxRoot {
 /**
  * Parser for .slnx (XML-based Visual Studio Solution) files
  */
+@singleton()
 export class SlnxParser {
-  private static xmlParser = new XMLParser({
+  private readonly xmlParser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '@_',
     parseAttributeValue: false,
@@ -44,7 +37,7 @@ export class SlnxParser {
   /**
    * Parses a .slnx file and returns the hierarchical structure
    */
-  public static parse(solutionPath: string): {
+  public parse(solutionPath: string): {
     projects: SolutionProject[];
     folders: SolutionFolder[];
     rootItems: (SolutionFolder | SolutionProject)[];
@@ -62,7 +55,6 @@ export class SlnxParser {
       return { projects: [], folders: [], rootItems: [] };
     }
 
-    // Process root-level projects
     if (parsed.Solution.Project) {
       const projects = Array.isArray(parsed.Solution.Project)
         ? parsed.Solution.Project
@@ -75,7 +67,6 @@ export class SlnxParser {
       }
     }
 
-    // Process root-level folders
     if (parsed.Solution.Folder) {
       const folders = Array.isArray(parsed.Solution.Folder)
         ? parsed.Solution.Folder
@@ -100,10 +91,7 @@ export class SlnxParser {
     };
   }
 
-  /**
-   * Creates a SolutionProject from XML data
-   */
-  private static createProjectFromXml(
+  private createProjectFromXml(
     projectXml: SlnxProject,
     solutionDir: string,
     parentId: SolutionItemId | null
@@ -111,24 +99,17 @@ export class SlnxParser {
     const projectPath = projectXml['@_Path'];
     const projectType = projectXml['@_Type'] ?? null;
 
-    // In .slnx, the path IS the identifier
-    const id = SolutionItemId.fromPath(projectPath);
-
-    // Extract project name from path
-    const projectName = path.basename(projectPath, path.extname(projectPath));
-
-    // Resolve absolute path
-    const absolutePath = path.isAbsolute(projectPath)
-      ? projectPath
-      : path.join(solutionDir, projectPath);
+    const normalizedPath = projectPath.replace(/\\/g, path.sep);
+    const id = SolutionItemId.fromPath(normalizedPath);
+    const projectName = path.basename(normalizedPath, path.extname(normalizedPath));
+    const absolutePath = path.isAbsolute(normalizedPath)
+      ? normalizedPath
+      : path.join(solutionDir, normalizedPath);
 
     return new SolutionProject(id, projectName, absolutePath, projectType, parentId);
   }
 
-  /**
-   * Processes a folder and its children recursively
-   */
-  private static processFolderRecursive(
+  private processFolderRecursive(
     folderXml: SlnxFolder,
     solutionDir: string,
     parentId: SolutionItemId | null
@@ -139,8 +120,6 @@ export class SlnxParser {
   } {
     const folderName = folderXml['@_Name'];
 
-    // In .slnx, folders use their name as identifier
-    // To make it unique in nested scenarios, we use the full path
     const folderId = parentId
       ? SolutionItemId.fromPath(`${parentId.toString()}/${folderName}`)
       : SolutionItemId.fromPath(folderName);
@@ -150,7 +129,6 @@ export class SlnxParser {
     const allProjects: SolutionProject[] = [];
     const allSubFolders: SolutionFolder[] = [];
 
-    // Process projects within this folder
     if (folderXml.Project) {
       const projects = Array.isArray(folderXml.Project)
         ? folderXml.Project
@@ -163,7 +141,6 @@ export class SlnxParser {
       }
     }
 
-    // Process subfolders
     if (folderXml.Folder) {
       const subFolders = Array.isArray(folderXml.Folder)
         ? folderXml.Folder
@@ -187,7 +164,7 @@ export class SlnxParser {
   /**
    * Checks if a file is a valid .slnx file
    */
-  public static isValidSlnxFile(filePath: string): boolean {
+  public isValidSlnxFile(filePath: string): boolean {
     if (!fs.existsSync(filePath)) {
       return false;
     }

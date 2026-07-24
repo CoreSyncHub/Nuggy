@@ -7,8 +7,11 @@ jest.mock('fs');
 const mockFs = fs as jest.Mocked<typeof fs>;
 
 describe('GlobalJsonParser', () => {
+  let parser: GlobalJsonParser;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    parser = new GlobalJsonParser();
   });
 
   describe('parse', () => {
@@ -22,7 +25,7 @@ describe('GlobalJsonParser', () => {
 
       mockFs.readFileSync.mockReturnValue(globalJsonContent);
 
-      const result = GlobalJsonParser.parse('C:\\Projects\\global.json');
+      const result = parser.parse('/Projects/global.json');
 
       expect(result).not.toBeNull();
       expect(result?.sdk?.version).toBe('8.0.100');
@@ -32,7 +35,7 @@ describe('GlobalJsonParser', () => {
     it('should return null for invalid JSON', () => {
       mockFs.readFileSync.mockReturnValue('Invalid JSON {]');
 
-      const result = GlobalJsonParser.parse('C:\\Projects\\global.json');
+      const result = parser.parse('/Projects/global.json');
 
       expect(result).toBeNull();
     });
@@ -48,7 +51,7 @@ describe('GlobalJsonParser', () => {
 
       mockFs.readFileSync.mockReturnValue(globalJsonContent);
 
-      const result = GlobalJsonParser.parse('C:\\Projects\\global.json');
+      const result = parser.parse('/Projects/global.json');
 
       expect(result).not.toBeNull();
       expect(result?.sdk).toBeUndefined();
@@ -66,7 +69,7 @@ describe('GlobalJsonParser', () => {
 
       mockFs.readFileSync.mockReturnValue(globalJsonContent);
 
-      const version = GlobalJsonParser.getSdkVersion('C:\\Projects\\global.json');
+      const version = parser.getSdkVersion('/Projects/global.json');
 
       expect(version).toBe('7.0.400');
     });
@@ -76,7 +79,7 @@ describe('GlobalJsonParser', () => {
 
       mockFs.readFileSync.mockReturnValue(globalJsonContent);
 
-      const version = GlobalJsonParser.getSdkVersion('C:\\Projects\\global.json');
+      const version = parser.getSdkVersion('/Projects/global.json');
 
       expect(version).toBeNull();
     });
@@ -90,7 +93,7 @@ describe('GlobalJsonParser', () => {
 
       mockFs.readFileSync.mockReturnValue(globalJsonContent);
 
-      const version = GlobalJsonParser.getSdkVersion('C:\\Projects\\global.json');
+      const version = parser.getSdkVersion('/Projects/global.json');
 
       expect(version).toBeNull();
     });
@@ -98,23 +101,23 @@ describe('GlobalJsonParser', () => {
 
   describe('findGlobalJson', () => {
     it('should find global.json in current directory', () => {
-      const startDir = 'C:\\Projects\\MyApp';
+      const startDir = '/Projects/MyApp';
       const expectedPath = path.join(startDir, 'global.json');
 
       mockFs.existsSync.mockImplementation((p) => p === expectedPath);
 
-      const result = GlobalJsonParser.findGlobalJson(startDir);
+      const result = parser.findGlobalJson(startDir);
 
       expect(result).toBe(expectedPath);
     });
 
     it('should find global.json in parent directory', () => {
-      const startDir = 'C:\\Projects\\MyApp\\src';
-      const parentGlobalJson = 'C:\\Projects\\MyApp\\global.json';
+      const startDir = '/Projects/MyApp/src';
+      const parentGlobalJson = '/Projects/MyApp/global.json';
 
       mockFs.existsSync.mockImplementation((p) => p === parentGlobalJson);
 
-      const result = GlobalJsonParser.findGlobalJson(startDir);
+      const result = parser.findGlobalJson(startDir);
 
       expect(result).toBe(parentGlobalJson);
     });
@@ -122,17 +125,17 @@ describe('GlobalJsonParser', () => {
     it('should return null if no global.json found', () => {
       mockFs.existsSync.mockReturnValue(false);
 
-      const result = GlobalJsonParser.findGlobalJson('C:\\Projects\\MyApp');
+      const result = parser.findGlobalJson('/Projects/MyApp');
 
       expect(result).toBeNull();
     });
 
     it('should search up to root directory', () => {
-      const startDir = 'C:\\Projects\\Deep\\Nested\\Path';
+      const startDir = '/Projects/Deep/Nested/Path';
 
       mockFs.existsSync.mockReturnValue(false);
 
-      const result = GlobalJsonParser.findGlobalJson(startDir);
+      const result = parser.findGlobalJson(startDir);
 
       expect(result).toBeNull();
       expect(mockFs.existsSync).toHaveBeenCalled();
@@ -141,7 +144,7 @@ describe('GlobalJsonParser', () => {
 
   describe('findSdkVersion', () => {
     it('should return SDK version and path when global.json exists', () => {
-      const startDir = 'C:\\Projects\\MyApp';
+      const startDir = '/Projects/MyApp';
       const globalJsonPath = path.join(startDir, 'global.json');
       const globalJsonContent = JSON.stringify({
         sdk: {
@@ -152,7 +155,7 @@ describe('GlobalJsonParser', () => {
       mockFs.existsSync.mockImplementation((p) => p === globalJsonPath);
       mockFs.readFileSync.mockReturnValue(globalJsonContent);
 
-      const result = GlobalJsonParser.findSdkVersion(startDir);
+      const result = parser.findSdkVersion(startDir);
 
       expect(result.version).toBe('8.0.200');
       expect(result.globalJsonPath).toBe(globalJsonPath);
@@ -161,21 +164,21 @@ describe('GlobalJsonParser', () => {
     it('should return null values when no global.json found', () => {
       mockFs.existsSync.mockReturnValue(false);
 
-      const result = GlobalJsonParser.findSdkVersion('C:\\Projects\\MyApp');
+      const result = parser.findSdkVersion('/Projects/MyApp');
 
       expect(result.version).toBeNull();
       expect(result.globalJsonPath).toBeNull();
     });
 
     it('should return null version when global.json has no SDK', () => {
-      const startDir = 'C:\\Projects\\MyApp';
+      const startDir = '/Projects/MyApp';
       const globalJsonPath = path.join(startDir, 'global.json');
       const globalJsonContent = JSON.stringify({});
 
       mockFs.existsSync.mockImplementation((p) => p === globalJsonPath);
       mockFs.readFileSync.mockReturnValue(globalJsonContent);
 
-      const result = GlobalJsonParser.findSdkVersion(startDir);
+      const result = parser.findSdkVersion(startDir);
 
       expect(result.version).toBeNull();
       expect(result.globalJsonPath).toBe(globalJsonPath);
