@@ -78,8 +78,16 @@ export class WebMediator {
 
     if (ctor) {
       try {
-        // Rehydrate request by assigning properties onto new instance
-        requestObj = Object.assign(new ctor(), message.Body);
+        // Rehydrate onto a fresh instance, skipping prototype-polluting keys
+        const body = (message.Body ?? {}) as Record<string, unknown>;
+        const instance = new ctor();
+        for (const key of Object.keys(body)) {
+          if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+            continue;
+          }
+          instance[key] = body[key];
+        }
+        requestObj = instance;
       } catch (e) {
         this.logger.Warning('Failed to instantiate request ctor', { Command, error: e });
       }

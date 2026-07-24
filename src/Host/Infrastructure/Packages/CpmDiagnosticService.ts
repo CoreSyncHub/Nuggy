@@ -115,7 +115,9 @@ export class CpmDiagnosticService {
       if (cpmFile) {
         return cpmFile;
       }
-      currentDir = path.dirname(currentDir);
+      const parentDir = path.dirname(currentDir);
+      if (parentDir === currentDir) { break; }
+      currentDir = parentDir;
     }
 
     const rootCpmFile = cpmFiles.find((f) => f.directory === path.parse(projectDir).root);

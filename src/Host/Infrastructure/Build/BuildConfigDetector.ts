@@ -104,7 +104,9 @@ export class BuildConfigDetector {
         return parentFile;
       }
 
-      currentDir = path.dirname(currentDir);
+      const parentDir = path.dirname(currentDir);
+      if (parentDir === currentDir) { break; }
+      currentDir = parentDir;
     }
 
     const rootFile = allFiles.find(
@@ -155,7 +157,9 @@ export class BuildConfigDetector {
         return file;
       }
 
-      currentDir = path.dirname(currentDir);
+      const parentDir = path.dirname(currentDir);
+      if (parentDir === currentDir) { break; }
+      currentDir = parentDir;
     }
 
     const rootFile = filesOfType.find((f) => f.directory === path.parse(projectDir).root);
