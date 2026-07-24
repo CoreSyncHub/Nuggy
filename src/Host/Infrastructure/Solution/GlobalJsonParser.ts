@@ -36,7 +36,9 @@ export class GlobalJsonParser {
       if (fs.existsSync(globalJsonPath)) {
         return globalJsonPath;
       }
-      currentDir = path.dirname(currentDir);
+      const parentDir = path.dirname(currentDir);
+      if (parentDir === currentDir) { break; }
+      currentDir = parentDir;
     }
 
     // Check root directory
