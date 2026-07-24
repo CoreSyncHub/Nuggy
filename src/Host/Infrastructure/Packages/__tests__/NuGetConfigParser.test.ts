@@ -6,6 +6,10 @@ import { ILogger } from '../../../Application/Abstractions/Log/ILogger';
 
 // Mock filesystem and os
 jest.mock('fs');
+// Force POSIX path semantics so the mocked-fs fixtures behave identically on
+// every OS (path.win32.join would rewrite '/' to '\\' and break exact-string
+// mocks). Platform-specific production code uses path.win32 explicitly.
+jest.mock('path', () => jest.requireActual('path').posix);
 jest.mock('os');
 const mockFs = fs as jest.Mocked<typeof fs>;
 const mockOs = os as jest.Mocked<typeof os>;
