@@ -1,15 +1,22 @@
 import * as fs from 'fs';
-import * as path from 'path';
 import * as os from 'os';
 import { NuGetConfigResolver } from '@Infrastructure/Packages/NuGetConfigResolver';
 import { NuGetConfigParser } from '@Infrastructure/Packages/NuGetConfigParser';
 import { NuGetConfigScope } from '@Domain/Packages/Enums/NuGetConfigScope';
+import { ILogger } from '@/Host/Application/Abstractions/Log/ILogger';
 
 // Mock filesystem and os
 jest.mock('fs');
 jest.mock('os');
 const mockFs = fs as jest.Mocked<typeof fs>;
 const mockOs = os as jest.Mocked<typeof os>;
+
+const noOpLogger: ILogger = {
+  Info: () => {},
+  Warning: () => {},
+  Error: () => {},
+  Debug: () => {},
+};
 
 /**
  * Acceptance test for NuGet.Config resolution
@@ -18,12 +25,13 @@ const mockOs = os as jest.Mocked<typeof os>;
  * from Machine-wide, User-profile, and Solution-local scopes
  */
 describe('Acceptance: NuGet.Config Resolution', () => {
+  let resolver: NuGetConfigResolver;
+
   beforeEach(() => {
     jest.clearAllMocks();
-    mockOs.platform.mockReturnValue('win32');
-    mockOs.homedir.mockReturnValue('C:\\Users\\TestUser');
-    process.env.PROGRAMDATA = 'C:\\ProgramData';
-    process.env.APPDATA = 'C:\\Users\\TestUser\\AppData\\Roaming';
+    mockOs.platform.mockReturnValue('linux');
+    mockOs.homedir.mockReturnValue('/home/testuser');
+    resolver = new NuGetConfigResolver(new NuGetConfigParser(noOpLogger));
   });
 
   describe('Hierarchical resolution (Machine-wide -> User-profile -> Solution-local)', () => {
@@ -31,10 +39,10 @@ describe('Acceptance: NuGet.Config Resolution', () => {
       // Mock config file locations
       (mockFs.existsSync as any).mockImplementation((path: string) => {
         return (
-          path === 'C:\\ProgramData\\NuGet\\NuGet.Config' ||
-          path === 'C:\\Users\\TestUser\\AppData\\Roaming\\NuGet\\NuGet.Config' ||
-          path === 'C:\\Solution\\NuGet.Config' ||
-          path === 'C:\\Solution'
+          path === '/etc/opt/NuGet/NuGet.Config' ||
+          path === '/home/testuser/.nuget/NuGet/NuGet.Config' ||
+          path === '/solution/NuGet.Config' ||
+          path === '/solution'
         );
       });
 
@@ -69,19 +77,19 @@ describe('Acceptance: NuGet.Config Resolution', () => {
 </configuration>`;
 
       (mockFs.readFileSync as any).mockImplementation((path: string) => {
-        if (path === 'C:\\ProgramData\\NuGet\\NuGet.Config') {
+        if (path === '/etc/opt/NuGet/NuGet.Config') {
           return machineWideConfig;
         }
-        if (path === 'C:\\Users\\TestUser\\AppData\\Roaming\\NuGet\\NuGet.Config') {
+        if (path === '/home/testuser/.nuget/NuGet/NuGet.Config') {
           return userProfileConfig;
         }
-        if (path === 'C:\\Solution\\NuGet.Config') {
+        if (path === '/solution/NuGet.Config') {
           return solutionLocalConfig;
         }
         return '';
       });
 
-      const resolution = NuGetConfigResolver.resolve('C:\\Solution\\MySolution.sln');
+      const resolution = resolver.resolve('/solution/MySolution.sln');
 
       // Should have 3 config files
       expect(resolution.configPaths.machineWide).toBeDefined();
@@ -113,7 +121,7 @@ describe('Acceptance: NuGet.Config Resolution', () => {
   describe('Package Source Mapping', () => {
     it('should enforce package source mappings for package routing', () => {
       (mockFs.existsSync as any).mockImplementation((path: string) => {
-        return path === 'C:\\Solution\\NuGet.Config' || path === 'C:\\Solution';
+        return path === '/solution/NuGet.Config' || path === '/solution';
       });
 
       mockFs.statSync.mockReturnValue({ isFile: () => false } as any);
@@ -138,13 +146,13 @@ describe('Acceptance: NuGet.Config Resolution', () => {
 
       mockFs.readFileSync.mockReturnValue(solutionLocalConfig);
 
-      const resolution = NuGetConfigResolver.resolve('C:\\Solution\\MySolution.sln');
+      const resolution = resolver.resolve('/solution/MySolution.sln');
 
       // Should have package source mappings
       expect(resolution.packageSourceMappings).toHaveLength(3); // 3 patterns
 
       // Microsoft.* should be allowed from nuget.org only
-      const microsoftSources = NuGetConfigResolver.getAllowedSourcesForPackage(
+      const microsoftSources = resolver.getAllowedSourcesForPackage(
         resolution,
         'Microsoft.Extensions.Logging'
       );
@@ -152,7 +160,7 @@ describe('Acceptance: NuGet.Config Resolution', () => {
       expect(microsoftSources).toContain('nuget.org');
 
       // Contoso.* should be allowed from CompanyFeed only
-      const contosoSources = NuGetConfigResolver.getAllowedSourcesForPackage(
+      const contosoSources = resolver.getAllowedSourcesForPackage(
         resolution,
         'Contoso.Core.Api'
       );
@@ -160,7 +168,7 @@ describe('Acceptance: NuGet.Config Resolution', () => {
       expect(contosoSources).toContain('CompanyFeed');
 
       // Newtonsoft.Json does NOT match any pattern (strict mode)
-      const newtonsoftSources = NuGetConfigResolver.getAllowedSourcesForPackage(
+      const newtonsoftSources = resolver.getAllowedSourcesForPackage(
         resolution,
         'Newtonsoft.Json'
       );
@@ -168,14 +176,14 @@ describe('Acceptance: NuGet.Config Resolution', () => {
 
       // Verify canSourcePackageFrom
       expect(
-        NuGetConfigResolver.canSourcePackageFrom(
+        resolver.canSourcePackageFrom(
           resolution,
           'Microsoft.AspNetCore.Mvc',
           'nuget.org'
         )
       ).toBe(true);
       expect(
-        NuGetConfigResolver.canSourcePackageFrom(
+        resolver.canSourcePackageFrom(
           resolution,
           'Microsoft.AspNetCore.Mvc',
           'CompanyFeed'
@@ -183,10 +191,10 @@ describe('Acceptance: NuGet.Config Resolution', () => {
       ).toBe(false);
 
       expect(
-        NuGetConfigResolver.canSourcePackageFrom(resolution, 'Contoso.Api', 'CompanyFeed')
+        resolver.canSourcePackageFrom(resolution, 'Contoso.Api', 'CompanyFeed')
       ).toBe(true);
       expect(
-        NuGetConfigResolver.canSourcePackageFrom(resolution, 'Contoso.Api', 'nuget.org')
+        resolver.canSourcePackageFrom(resolution, 'Contoso.Api', 'nuget.org')
       ).toBe(false);
     });
   });
@@ -194,7 +202,7 @@ describe('Acceptance: NuGet.Config Resolution', () => {
   describe('Private feed detection', () => {
     it('should identify Azure Artifacts feeds', () => {
       (mockFs.existsSync as any).mockImplementation((path: string) => {
-        return path === 'C:\\Solution\\NuGet.Config' || path === 'C:\\Solution';
+        return path === '/solution/NuGet.Config' || path === '/solution';
       });
 
       mockFs.statSync.mockReturnValue({ isFile: () => false } as any);
@@ -210,20 +218,20 @@ describe('Acceptance: NuGet.Config Resolution', () => {
 
       mockFs.readFileSync.mockReturnValue(solutionLocalConfig);
 
-      const resolution = NuGetConfigResolver.resolve('C:\\Solution\\MySolution.sln');
+      const resolution = resolver.resolve('/solution/MySolution.sln');
 
-      const azureFeeds = NuGetConfigResolver.getAzureArtifactsFeeds(resolution);
+      const azureFeeds = resolver.getAzureArtifactsFeeds(resolution);
       expect(azureFeeds).toHaveLength(2);
       expect(azureFeeds[0].name).toBe('AzureFeed1');
       expect(azureFeeds[1].name).toBe('AzureFeed2');
 
-      const privateFeeds = NuGetConfigResolver.getPrivateFeeds(resolution);
+      const privateFeeds = resolver.getPrivateFeeds(resolution);
       expect(privateFeeds).toHaveLength(2); // AzureFeed1 + AzureFeed2 (nuget.org is public)
     });
 
     it('should identify BaGet feeds', () => {
       (mockFs.existsSync as any).mockImplementation((path: string) => {
-        return path === 'C:\\Solution\\NuGet.Config' || path === 'C:\\Solution';
+        return path === '/solution/NuGet.Config' || path === '/solution';
       });
 
       mockFs.statSync.mockReturnValue({ isFile: () => false } as any);
@@ -237,9 +245,9 @@ describe('Acceptance: NuGet.Config Resolution', () => {
 
       mockFs.readFileSync.mockReturnValue(solutionLocalConfig);
 
-      const resolution = NuGetConfigResolver.resolve('C:\\Solution\\MySolution.sln');
+      const resolution = resolver.resolve('/solution/MySolution.sln');
 
-      const bagetFeeds = NuGetConfigResolver.getBaGetFeeds(resolution);
+      const bagetFeeds = resolver.getBaGetFeeds(resolution);
       expect(bagetFeeds).toHaveLength(1);
       expect(bagetFeeds[0].name).toBe('BaGetServer');
       expect(bagetFeeds[0].getFeedType()).toBe('BaGet (or compatible)');
@@ -250,7 +258,7 @@ describe('Acceptance: NuGet.Config Resolution', () => {
     it('should handle missing config files gracefully', () => {
       mockFs.existsSync.mockReturnValue(false);
 
-      const resolution = NuGetConfigResolver.resolve('C:\\Solution\\MySolution.sln');
+      const resolution = resolver.resolve('/solution/MySolution.sln');
 
       // Should have no sources
       expect(resolution.sources).toHaveLength(0);

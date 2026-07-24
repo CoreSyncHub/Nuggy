@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "module": "ESNext",
     "target": "ESNext",
     "lib": ["ESNext", "DOM"],
@@ -22,7 +21,8 @@
       "@Shared/*": ["./src/Shared/*"],
       "@Queries/*": ["./src/Shared/Features/Queries/*"],
       "@Commands/*": ["./src/Shared/Features/Commands/*"]
-    }
+    },
+    "types": ["node", "jest"]
   },
   "exclude": ["./vite.config.ts", "vite.config.webview.ts", "vite.config.extension.ts"]
 }

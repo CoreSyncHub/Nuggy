@@ -1,3 +1,4 @@
+import { singleton } from 'tsyringe';
 import { PackageVersion } from '../../Domain/Packages/Entities/PackageVersion';
 import { PackageReference } from '../../Domain/Packages/Entities/PackageReference';
 import { LegacyPackage } from '../../Domain/Packages/Entities/LegacyPackage';
@@ -58,35 +59,33 @@ export interface PackageManagementDiagnosticResult {
  * - SDK-style projects with local PackageReference
  * - Legacy projects with packages.config
  */
+@singleton()
 export class PackageManagementDiagnosticService {
+  constructor(private readonly cpmDiagnosticService: CpmDiagnosticService) {}
+
   /**
    * Analyzes package management configuration across all project types
    */
-  public static analyze(
+  public analyze(
     buildConfigFiles: BuildConfigFile[],
     packageReferences: Map<string, PackageReference[]>,
     legacyPackages: Map<string, LegacyPackage[]>
   ): PackageManagementDiagnosticResult {
-    // Analyze SDK-style projects (CPM + PackageReference)
-    const cpmResult = CpmDiagnosticService.analyze(buildConfigFiles, packageReferences);
+    const cpmResult = this.cpmDiagnosticService.analyze(buildConfigFiles, packageReferences);
 
-    // Calculate project type summary
     const projectTypeSummary = this.calculateProjectTypeSummary(
       packageReferences,
       legacyPackages,
       cpmResult.isCpmEnabled
     );
 
-    // Detect if this is a transitional solution
     const isTransitional = this.isTransitionalSolution(projectTypeSummary);
 
-    // Combine diagnostics from CPM analysis and transitional info
     const diagnostics = [...cpmResult.diagnostics];
     if (isTransitional) {
       diagnostics.push(this.createTransitionalSolutionInfo(projectTypeSummary));
     }
 
-    // Combine results from both SDK-style and legacy projects
     return {
       isCpmEnabled: cpmResult.isCpmEnabled,
       mode: this.determineOverallMode(cpmResult.mode, packageReferences, legacyPackages),
@@ -100,10 +99,7 @@ export class PackageManagementDiagnosticService {
     };
   }
 
-  /**
-   * Calculates project type summary
-   */
-  private static calculateProjectTypeSummary(
+  private calculateProjectTypeSummary(
     packageReferences: Map<string, PackageReference[]>,
     legacyPackages: Map<string, LegacyPackage[]>,
     isCpmEnabled: boolean
@@ -111,8 +107,6 @@ export class PackageManagementDiagnosticService {
     const legacyFrameworkProjects = legacyPackages.size;
     const sdkStyleProjects = packageReferences.size;
 
-    // Count how many SDK-style projects are using CPM
-    // If CPM is enabled, we assume all SDK-style projects without local versions are using it
     let cpmEnabledProjects = 0;
     if (isCpmEnabled) {
       for (const references of packageReferences.values()) {
@@ -130,17 +124,11 @@ export class PackageManagementDiagnosticService {
     };
   }
 
-  /**
-   * Determines if this is a transitional solution (.NET Framework + .NET Core coexistence)
-   */
-  private static isTransitionalSolution(summary: ProjectTypeSummary): boolean {
+  private isTransitionalSolution(summary: ProjectTypeSummary): boolean {
     return summary.legacyFrameworkProjects > 0 && summary.sdkStyleProjects > 0;
   }
 
-  /**
-   * Creates an informational diagnostic for transitional solutions
-   */
-  private static createTransitionalSolutionInfo(summary: ProjectTypeSummary): PackageDiagnostic {
+  private createTransitionalSolutionInfo(summary: ProjectTypeSummary): PackageDiagnostic {
     const message =
       `This solution contains both legacy .NET Framework projects (${summary.legacyFrameworkProjects} project${summary.legacyFrameworkProjects > 1 ? 's' : ''} with packages.config) ` +
       `and modern SDK-style projects (${summary.sdkStyleProjects} project${summary.sdkStyleProjects > 1 ? 's' : ''} with PackageReference). ` +
@@ -149,10 +137,7 @@ export class PackageManagementDiagnosticService {
     return PackageDiagnostic.info(message, '', undefined, undefined);
   }
 
-  /**
-   * Determines the overall package management mode considering both SDK-style and legacy projects
-   */
-  private static determineOverallMode(
+  private determineOverallMode(
     sdkStyleMode: PackageManagementMode,
     packageReferences: Map<string, PackageReference[]>,
     legacyPackages: Map<string, LegacyPackage[]>
@@ -160,17 +145,14 @@ export class PackageManagementDiagnosticService {
     const hasLegacyProjects = legacyPackages.size > 0;
     const hasSdkStyleProjects = packageReferences.size > 0;
 
-    // If we have both SDK-style and legacy projects, it's always mixed (transitional)
     if (hasLegacyProjects && hasSdkStyleProjects) {
       return PackageManagementMode.Mixed;
     }
 
-    // If only legacy projects exist
     if (hasLegacyProjects && !hasSdkStyleProjects) {
-      return PackageManagementMode.Local; // Legacy is considered "Local" mode
+      return PackageManagementMode.Local;
     }
 
-    // Otherwise, use the SDK-style mode (Central, Local, or Mixed from SDK-style analysis)
     return sdkStyleMode;
   }
 }

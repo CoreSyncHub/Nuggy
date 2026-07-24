@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { singleton } from 'tsyringe';
 import { SolutionFolder, SolutionProject } from '../../Domain/Solutions/Entities/SolutionFolder';
 import { SolutionItemId } from '../../Domain/Solutions/ValueObjects/SolutionItemId';
 
@@ -31,11 +32,12 @@ interface SlnNestedProject {
 /**
  * Parser for classic .sln (Visual Studio Solution) files
  */
+@singleton()
 export class SlnParser {
   /**
    * Parses a .sln file and returns the hierarchical structure
    */
-  public static parse(solutionPath: string): {
+  public parse(solutionPath: string): {
     projects: SolutionProject[];
     folders: SolutionFolder[];
     rootItems: (SolutionFolder | SolutionProject)[];
@@ -43,20 +45,13 @@ export class SlnParser {
     const content = fs.readFileSync(solutionPath, 'utf-8');
     const solutionDir = path.dirname(solutionPath);
 
-    // Extract project entries
     const projectEntries = this.extractProjectEntries(content);
-
-    // Extract nesting relationships
     const nestedProjects = this.extractNestedProjects(content);
 
-    // Build the hierarchy
     return this.buildHierarchy(projectEntries, nestedProjects, solutionDir);
   }
 
-  /**
-   * Extracts all project entries from the solution content
-   */
-  private static extractProjectEntries(content: string): SlnProjectEntry[] {
+  private extractProjectEntries(content: string): SlnProjectEntry[] {
     const entries: SlnProjectEntry[] = [];
     const projectRegex = /Project\("({[^}]+})"\)\s*=\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"({[^}]+})"/g;
 
@@ -73,13 +68,9 @@ export class SlnParser {
     return entries;
   }
 
-  /**
-   * Extracts nesting relationships (which projects/folders are children of which folders)
-   */
-  private static extractNestedProjects(content: string): SlnNestedProject[] {
+  private extractNestedProjects(content: string): SlnNestedProject[] {
     const nested: SlnNestedProject[] = [];
 
-    // Find the NestedProjects section
     const nestedSectionRegex = /GlobalSection\(NestedProjects\)\s*=\s*preSolution([\s\S]*?)EndGlobalSection/;
     const nestedMatch = nestedSectionRegex.exec(content);
 
@@ -99,10 +90,7 @@ export class SlnParser {
     return nested;
   }
 
-  /**
-   * Builds the hierarchical structure from project entries and nesting info
-   */
-  private static buildHierarchy(
+  private buildHierarchy(
     projectEntries: SlnProjectEntry[],
     nestedProjects: SlnNestedProject[],
     solutionDir: string
@@ -114,26 +102,23 @@ export class SlnParser {
     const foldersMap = new Map<string, SolutionFolder>();
     const projectsMap = new Map<string, SolutionProject>();
 
-    // Create all folders and projects
     for (const entry of projectEntries) {
       const id = SolutionItemId.fromGuid(entry.guid);
 
       if (entry.typeGuid === ProjectTypeGuids.SolutionFolder) {
-        // Solution folder
         const folder = new SolutionFolder(id, entry.name);
         foldersMap.set(entry.guid, folder);
       } else {
-        // Project
-        const projectPath = path.isAbsolute(entry.path)
-          ? entry.path
-          : path.join(solutionDir, entry.path);
+        const normalizedPath = entry.path.replace(/\\/g, path.sep);
+        const projectPath = path.isAbsolute(normalizedPath)
+          ? normalizedPath
+          : path.join(solutionDir, normalizedPath);
 
         const project = new SolutionProject(id, entry.name, projectPath, entry.typeGuid);
         projectsMap.set(entry.guid, project);
       }
     }
 
-    // Apply nesting relationships
     for (const nested of nestedProjects) {
       const parentFolder = foldersMap.get(nested.parentGuid);
       if (!parentFolder) {
@@ -152,7 +137,6 @@ export class SlnParser {
       }
     }
 
-    // Identify root items (items without parents)
     const rootItems: (SolutionFolder | SolutionProject)[] = [];
 
     for (const folder of foldersMap.values()) {
@@ -177,7 +161,7 @@ export class SlnParser {
   /**
    * Checks if a file is a valid .sln file
    */
-  public static isValidSlnFile(filePath: string): boolean {
+  public isValidSlnFile(filePath: string): boolean {
     if (!fs.existsSync(filePath)) {
       return false;
     }

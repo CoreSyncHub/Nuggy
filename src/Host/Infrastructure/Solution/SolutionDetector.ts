@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { singleton } from 'tsyringe';
 import { SlnParser } from './SlnParser';
 import { SlnxParser } from './SlnxParser';
 
@@ -23,11 +24,17 @@ export interface DetectedSolution {
 /**
  * Service responsible for detecting solution files in the workspace
  */
+@singleton()
 export class SolutionDetector {
+  constructor(
+    private readonly slnParser: SlnParser,
+    private readonly slnxParser: SlnxParser
+  ) {}
+
   /**
    * Finds all .sln and .slnx files in the current workspace
    */
-  public static async findAllSolutions(): Promise<DetectedSolution[]> {
+  public async findAllSolutions(): Promise<DetectedSolution[]> {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders || workspaceFolders.length === 0) {
       return [];
@@ -35,14 +42,13 @@ export class SolutionDetector {
 
     const solutions: DetectedSolution[] = [];
 
-    // Search for .sln files
     const slnFiles = await vscode.workspace.findFiles(
       '**/*.sln',
       '**/node_modules/**'
     );
 
     for (const uri of slnFiles) {
-      if (SlnParser.isValidSlnFile(uri.fsPath)) {
+      if (this.slnParser.isValidSlnFile(uri.fsPath)) {
         const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
         if (workspaceFolder) {
           solutions.push({
@@ -55,14 +61,13 @@ export class SolutionDetector {
       }
     }
 
-    // Search for .slnx files
     const slnxFiles = await vscode.workspace.findFiles(
       '**/*.slnx',
       '**/node_modules/**'
     );
 
     for (const uri of slnxFiles) {
-      if (SlnxParser.isValidSlnxFile(uri.fsPath)) {
+      if (this.slnxParser.isValidSlnxFile(uri.fsPath)) {
         const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
         if (workspaceFolder) {
           solutions.push({
@@ -75,14 +80,13 @@ export class SolutionDetector {
       }
     }
 
-    // Sort by name for consistent ordering
     return solutions.sort((a, b) => a.name.localeCompare(b.name));
   }
 
   /**
    * Gets the selected solution from workspace settings
    */
-  public static getSelectedSolution(): string | undefined {
+  public getSelectedSolution(): string | undefined {
     const config = vscode.workspace.getConfiguration('nuget-explorer');
     return config.get<string>('selectedSolution');
   }
@@ -90,7 +94,7 @@ export class SolutionDetector {
   /**
    * Sets the selected solution in workspace settings
    */
-  public static async setSelectedSolution(solutionPath: string): Promise<void> {
+  public async setSelectedSolution(solutionPath: string): Promise<void> {
     const config = vscode.workspace.getConfiguration('nuget-explorer');
     await config.update(
       'selectedSolution',
@@ -102,7 +106,7 @@ export class SolutionDetector {
   /**
    * Clears the selected solution from workspace settings
    */
-  public static async clearSelectedSolution(): Promise<void> {
+  public async clearSelectedSolution(): Promise<void> {
     const config = vscode.workspace.getConfiguration('nuget-explorer');
     await config.update(
       'selectedSolution',

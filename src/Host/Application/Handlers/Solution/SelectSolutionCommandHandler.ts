@@ -11,11 +11,13 @@ import { SolutionDetector } from '@Infrastructure/Solution/SolutionDetector';
 @injectable()
 @HandlerFor(SelectSolutionCommand)
 export class SelectSolutionCommandHandler implements ICommandHandler<SelectSolutionCommand, void> {
+  constructor(private readonly solutionDetector: SolutionDetector) {}
+
   async Handle(command: SelectSolutionCommand): Promise<void> {
     if (command.solutionPath === null) {
-      await SolutionDetector.clearSelectedSolution();
+      await this.solutionDetector.clearSelectedSolution();
     } else {
-      await SolutionDetector.setSelectedSolution(command.solutionPath);
+      await this.solutionDetector.setSelectedSolution(command.solutionPath);
     }
   }
 }

@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import { XMLParser } from 'fast-xml-parser';
+import { singleton } from 'tsyringe';
 import { ProjectSdkType } from '../../Domain/Projects/Enums/ProjectSdkType';
 
 /**
@@ -36,8 +37,9 @@ export interface PropertyGroup {
 /**
  * Parser for .csproj files (both SDK-style and legacy)
  */
+@singleton()
 export class CsprojParser {
-  private static xmlParser = new XMLParser({
+  private readonly xmlParser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '@_',
     parseAttributeValue: false,
@@ -47,7 +49,7 @@ export class CsprojParser {
   /**
    * Parses a .csproj file
    */
-  public static parse(csprojPath: string): ParsedCsproj {
+  public parse(csprojPath: string): ParsedCsproj {
     const content = fs.readFileSync(csprojPath, 'utf-8');
     const parsed = this.xmlParser.parse(content);
 
@@ -57,14 +59,10 @@ export class CsprojParser {
 
     const project = parsed.Project;
 
-    // Determine SDK type based on Sdk attribute
     const sdkType = this.determineSdkType(project);
     const sdk = project['@_Sdk'];
 
-    // Extract PropertyGroups
     const propertyGroups = this.extractPropertyGroups(project);
-
-    // Extract TFM information
     const tfmInfo = this.extractTargetFrameworks(propertyGroups);
 
     return {
@@ -76,17 +74,11 @@ export class CsprojParser {
     };
   }
 
-  /**
-   * Determines if a project is SDK-style or legacy
-   */
-  private static determineSdkType(project: any): ProjectSdkType {
-    // SDK-style projects have an Sdk attribute on the Project element
+  private determineSdkType(project: any): ProjectSdkType {
     if (project['@_Sdk']) {
       return 'SDK-Style';
     }
 
-    // Legacy projects don't have Sdk attribute
-    // They typically have ToolsVersion and verbose structure
     if (project['@_ToolsVersion'] || project['@_DefaultTargets']) {
       return 'Legacy';
     }
@@ -94,10 +86,7 @@ export class CsprojParser {
     return 'Unknown';
   }
 
-  /**
-   * Extracts all PropertyGroup elements with their conditions
-   */
-  private static extractPropertyGroups(project: any): PropertyGroup[] {
+  private extractPropertyGroups(project: any): PropertyGroup[] {
     if (!project.PropertyGroup) {
       return [];
     }
@@ -110,21 +99,16 @@ export class CsprojParser {
       const condition = group['@_Condition'];
       const properties: Record<string, string> = {};
 
-      // Extract all properties from this group
       for (const [key, value] of Object.entries(group)) {
-        // Skip attributes and special elements
         if (key.startsWith('@_') || key === 'Condition') {
           continue;
         }
 
-        // Handle property values
         if (typeof value === 'string') {
           properties[key] = value;
         } else if (typeof value === 'boolean' || typeof value === 'number') {
-          // Convert booleans and numbers to strings
           properties[key] = String(value);
         } else if (typeof value === 'object' && value !== null) {
-          // Property might have attributes or nested content
           const textValue = (value as any)['#text'] || JSON.stringify(value);
           properties[key] = textValue;
         }
@@ -137,33 +121,24 @@ export class CsprojParser {
     });
   }
 
-  /**
-   * Extracts TargetFramework and TargetFrameworks from PropertyGroups
-   * Also handles Legacy .NET Framework projects (TargetFrameworkVersion)
-   */
-  private static extractTargetFrameworks(propertyGroups: PropertyGroup[]): {
+  private extractTargetFrameworks(propertyGroups: PropertyGroup[]): {
     targetFramework?: string;
     targetFrameworks?: string[];
   } {
     let targetFramework: string | undefined;
     let targetFrameworks: string[] | undefined;
 
-    // Look through all property groups (unconditional ones first)
     for (const group of propertyGroups) {
-      // Prioritize unconditional PropertyGroups
       if (!group.condition) {
         if (group.properties.TargetFrameworks) {
-          // Multi-targeting
           const value = group.properties.TargetFrameworks;
           targetFrameworks = value.split(';').map((f) => f.trim()).filter(Boolean);
         }
 
         if (group.properties.TargetFramework) {
-          // Single target
           targetFramework = group.properties.TargetFramework;
         }
 
-        // Legacy .NET Framework projects use TargetFrameworkVersion (e.g., "v4.8.1")
         if (group.properties.TargetFrameworkVersion) {
           const legacyVersion = group.properties.TargetFrameworkVersion;
           targetFramework = this.convertLegacyFrameworkVersion(legacyVersion);
@@ -171,8 +146,6 @@ export class CsprojParser {
       }
     }
 
-    // If no unconditional TFM found, look in conditional ones
-    // (we'll return all of them for the resolver to handle)
     if (!targetFramework && !targetFrameworks) {
       for (const group of propertyGroups) {
         if (group.condition) {
@@ -187,7 +160,6 @@ export class CsprojParser {
             break;
           }
 
-          // Legacy .NET Framework projects
           if (group.properties.TargetFrameworkVersion) {
             const legacyVersion = group.properties.TargetFrameworkVersion;
             targetFramework = this.convertLegacyFrameworkVersion(legacyVersion);
@@ -200,30 +172,16 @@ export class CsprojParser {
     return { targetFramework, targetFrameworks };
   }
 
-  /**
-   * Converts Legacy .NET Framework version to modern TFM format
-   * Examples:
-   *   v4.8.1 -> net481
-   *   v4.7.2 -> net472
-   *   v4.6.1 -> net461
-   *   v3.5 -> net35
-   */
-  private static convertLegacyFrameworkVersion(legacyVersion: string): string {
-    // Remove the 'v' prefix
+  private convertLegacyFrameworkVersion(legacyVersion: string): string {
     const version = legacyVersion.replace(/^v/, '');
-
-    // Remove dots to get the TFM
-    // v4.8.1 -> 4.8.1 -> 481
-    // v4.7.2 -> 4.7.2 -> 472
     const tfmNumber = version.replace(/\./g, '');
-
     return `net${tfmNumber}`;
   }
 
   /**
    * Gets all TFMs from a parsed csproj (handles both single and multi-targeting)
    */
-  public static getAllTargetFrameworks(parsed: ParsedCsproj): string[] {
+  public getAllTargetFrameworks(parsed: ParsedCsproj): string[] {
     if (parsed.targetFrameworks && parsed.targetFrameworks.length > 0) {
       return parsed.targetFrameworks;
     }
@@ -238,7 +196,7 @@ export class CsprojParser {
   /**
    * Checks if a project is multi-targeting
    */
-  public static isMultiTargeting(parsed: ParsedCsproj): boolean {
+  public isMultiTargeting(parsed: ParsedCsproj): boolean {
     return (parsed.targetFrameworks?.length ?? 0) > 1;
   }
 }

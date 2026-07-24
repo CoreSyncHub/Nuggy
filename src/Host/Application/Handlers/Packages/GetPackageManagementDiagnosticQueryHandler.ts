@@ -30,66 +30,64 @@ import { PackageDiagnosticSeverity } from '@Domain/Packages/Enums/PackageDiagnos
 export class GetPackageManagementDiagnosticQueryHandler
   implements IQueryHandler<GetPackageManagementDiagnosticQuery, PackageManagementDiagnosticDto>
 {
+  constructor(
+    private readonly slnParser: SlnParser,
+    private readonly slnxParser: SlnxParser,
+    private readonly buildConfigDetector: BuildConfigDetector,
+    private readonly buildConfigParser: BuildConfigParser,
+    private readonly packageReferenceParser: PackageReferenceParser,
+    private readonly packagesConfigParser: PackagesConfigParser,
+    private readonly packageManagementDiagnosticService: PackageManagementDiagnosticService
+  ) {}
+
   async Handle(
     query: GetPackageManagementDiagnosticQuery
   ): Promise<PackageManagementDiagnosticDto> {
     const solutionPath = query.solutionPath;
     const solutionExt = path.extname(solutionPath).toLowerCase();
 
-    // 1. Parse the solution to get project paths
     let projectPaths: string[];
     let solutionType: 'SLNX' | 'SLN';
 
     const solutionName = path.basename(solutionPath, solutionExt);
 
     if (solutionExt === '.slnx') {
-      const parseResult = SlnxParser.parse(solutionPath);
+      const parseResult = this.slnxParser.parse(solutionPath);
       solutionType = 'SLNX';
       projectPaths = parseResult.projects.map((p) => p.path);
     } else if (solutionExt === '.sln') {
-      const parseResult = SlnParser.parse(solutionPath);
+      const parseResult = this.slnParser.parse(solutionPath);
       projectPaths = parseResult.projects.map((p) => p.path);
       solutionType = 'SLN';
     } else {
       throw new Error(`Unsupported solution format: ${solutionExt}`);
     }
 
-    // 2. Find and parse all build configuration files
-    const buildConfigFiles = await BuildConfigDetector.findAllConfigFiles();
-    BuildConfigDetector.buildHierarchy(buildConfigFiles);
+    const buildConfigFiles = await this.buildConfigDetector.findAllConfigFiles();
+    this.buildConfigDetector.buildHierarchy(buildConfigFiles);
 
-    // Parse each build config file
     for (const file of buildConfigFiles) {
-      BuildConfigParser.parse(file.path, file);
+      this.buildConfigParser.parse(file.path, file);
     }
 
-    // Map affected projects
-    await BuildConfigDetector.mapAffectedProjects(buildConfigFiles, projectPaths);
+    await this.buildConfigDetector.mapAffectedProjects(buildConfigFiles, projectPaths);
 
-    // 3. Extract PackageReference entries from all projects
-    const allPackageReferences = PackageReferenceParser.parseMultiple(projectPaths);
+    const allPackageReferences = this.packageReferenceParser.parseMultiple(projectPaths);
+    const legacyPackages = this.packagesConfigParser.parseMultiple(projectPaths);
 
-    // 4. Extract legacy packages from packages.config files
-    const legacyPackages = PackagesConfigParser.parseMultiple(projectPaths);
-
-    // 5. Filter out Legacy projects from packageReferences
-    // Legacy projects use packages.config, not PackageReference
     const packageReferences = new Map<string, PackageReference[]>();
     for (const [projectPath, references] of allPackageReferences) {
-      // Only include this project if it's NOT a legacy project
       if (!legacyPackages.has(projectPath)) {
         packageReferences.set(projectPath, references);
       }
     }
 
-    // 6. Run diagnostic analysis (handles both SDK-style and legacy projects)
-    const diagnosticResult = PackageManagementDiagnosticService.analyze(
+    const diagnosticResult = this.packageManagementDiagnosticService.analyze(
       buildConfigFiles,
       packageReferences,
       legacyPackages
     );
 
-    // 6. Convert to DTOs
     const packageVersionDtos: PackageVersionDto[] = diagnosticResult.packageVersions.map((pv) => ({
       name: pv.name,
       version: pv.version,
@@ -126,11 +124,9 @@ export class GetPackageManagementDiagnosticQueryHandler
       filePath: diag.filePath,
     }));
 
-    // 7. Calculate summary statistics
     const diagnosticsBySeverity = {
       errors: diagnosticDtos.filter((d) => d.severity === PackageDiagnosticSeverity.Error).length,
-      warnings: diagnosticDtos.filter((d) => d.severity === PackageDiagnosticSeverity.Warning)
-        .length,
+      warnings: diagnosticDtos.filter((d) => d.severity === PackageDiagnosticSeverity.Warning).length,
       infos: diagnosticDtos.filter((d) => d.severity === PackageDiagnosticSeverity.Info).length,
     };
 

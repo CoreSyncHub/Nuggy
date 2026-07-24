@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import { NuGetConfigParser } from '../NuGetConfigParser';
 import { NuGetConfigScope } from '@Domain/Packages/Enums/NuGetConfigScope';
+import { ILogger } from '../../../Application/Abstractions/Log/ILogger';
 
 // Mock filesystem and os
 jest.mock('fs');
@@ -10,8 +11,17 @@ const mockFs = fs as jest.Mocked<typeof fs>;
 const mockOs = os as jest.Mocked<typeof os>;
 
 describe('NuGetConfigParser', () => {
+  let parser: NuGetConfigParser;
+  const mockLogger: ILogger = {
+    Info: jest.fn(),
+    Warning: jest.fn(),
+    Error: jest.fn(),
+    Debug: jest.fn(),
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
+    parser = new NuGetConfigParser(mockLogger);
   });
 
   describe('parse', () => {
@@ -27,8 +37,8 @@ describe('NuGetConfigParser', () => {
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue(configContent);
 
-      const sources = NuGetConfigParser.parse(
-        'C:\\Solution\\NuGet.Config',
+      const sources = parser.parse(
+        '/Solution/NuGet.Config',
         NuGetConfigScope.SolutionLocal
       );
 
@@ -58,8 +68,8 @@ describe('NuGetConfigParser', () => {
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue(configContent);
 
-      const sources = NuGetConfigParser.parse(
-        'C:\\Solution\\NuGet.Config',
+      const sources = parser.parse(
+        '/Solution/NuGet.Config',
         NuGetConfigScope.SolutionLocal
       );
 
@@ -72,8 +82,8 @@ describe('NuGetConfigParser', () => {
     it('should return empty array if file does not exist', () => {
       mockFs.existsSync.mockReturnValue(false);
 
-      const sources = NuGetConfigParser.parse(
-        'C:\\Solution\\NuGet.Config',
+      const sources = parser.parse(
+        '/Solution/NuGet.Config',
         NuGetConfigScope.SolutionLocal
       );
 
@@ -91,8 +101,8 @@ describe('NuGetConfigParser', () => {
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue(configContent);
 
-      const sources = NuGetConfigParser.parse(
-        'C:\\Solution\\NuGet.Config',
+      const sources = parser.parse(
+        '/Solution/NuGet.Config',
         NuGetConfigScope.SolutionLocal
       );
 
@@ -101,20 +111,16 @@ describe('NuGetConfigParser', () => {
     });
 
     it('should handle invalid XML gracefully', () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue('<invalid xml');
 
-      const sources = NuGetConfigParser.parse(
-        'C:\\Solution\\NuGet.Config',
+      const sources = parser.parse(
+        '/Solution/NuGet.Config',
         NuGetConfigScope.SolutionLocal
       );
 
       expect(sources).toHaveLength(0);
-      expect(consoleErrorSpy).toHaveBeenCalled();
-
-      consoleErrorSpy.mockRestore();
+      expect(mockLogger.Error).toHaveBeenCalled();
     });
   });
 
@@ -136,7 +142,7 @@ describe('NuGetConfigParser', () => {
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue(configContent);
 
-      const mappings = NuGetConfigParser.parsePackageSourceMappings('C:\\Solution\\NuGet.Config');
+      const mappings = parser.parsePackageSourceMappings('/Solution/NuGet.Config');
 
       expect(mappings).toHaveLength(3);
 
@@ -164,7 +170,7 @@ describe('NuGetConfigParser', () => {
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue(configContent);
 
-      const mappings = NuGetConfigParser.parsePackageSourceMappings('C:\\Solution\\NuGet.Config');
+      const mappings = parser.parsePackageSourceMappings('/Solution/NuGet.Config');
 
       expect(mappings).toHaveLength(1);
       expect(mappings[0].pattern).toBe('*');
@@ -182,7 +188,7 @@ describe('NuGetConfigParser', () => {
       mockFs.existsSync.mockReturnValue(true);
       mockFs.readFileSync.mockReturnValue(configContent);
 
-      const mappings = NuGetConfigParser.parsePackageSourceMappings('C:\\Solution\\NuGet.Config');
+      const mappings = parser.parsePackageSourceMappings('/Solution/NuGet.Config');
 
       expect(mappings).toHaveLength(0);
     });
@@ -194,7 +200,7 @@ describe('NuGetConfigParser', () => {
       process.env.PROGRAMDATA = 'C:\\ProgramData';
       mockFs.existsSync.mockReturnValue(true);
 
-      const configPath = NuGetConfigParser.findMachineWideConfig();
+      const configPath = parser.findMachineWideConfig();
 
       expect(configPath).toBe('C:\\ProgramData\\NuGet\\NuGet.Config');
     });
@@ -204,7 +210,7 @@ describe('NuGetConfigParser', () => {
       process.env.PROGRAMDATA = 'C:\\ProgramData';
       mockFs.existsSync.mockReturnValue(false);
 
-      const configPath = NuGetConfigParser.findMachineWideConfig();
+      const configPath = parser.findMachineWideConfig();
 
       expect(configPath).toBeUndefined();
     });
@@ -217,7 +223,7 @@ describe('NuGetConfigParser', () => {
       process.env.APPDATA = 'C:\\Users\\TestUser\\AppData\\Roaming';
       mockFs.existsSync.mockReturnValue(true);
 
-      const configPath = NuGetConfigParser.findUserProfileConfig();
+      const configPath = parser.findUserProfileConfig();
 
       expect(configPath).toBe('C:\\Users\\TestUser\\AppData\\Roaming\\NuGet\\NuGet.Config');
     });
@@ -228,7 +234,7 @@ describe('NuGetConfigParser', () => {
       process.env.APPDATA = 'C:\\Users\\TestUser\\AppData\\Roaming';
       mockFs.existsSync.mockReturnValue(false);
 
-      const configPath = NuGetConfigParser.findUserProfileConfig();
+      const configPath = parser.findUserProfileConfig();
 
       expect(configPath).toBeUndefined();
     });
@@ -236,30 +242,29 @@ describe('NuGetConfigParser', () => {
 
   describe('findSolutionLocalConfigs', () => {
     it('should find NuGet.Config files in directory hierarchy', () => {
-      const mockExistsSync = (path: string) => {
+      const mockExistsSync = (p: string) => {
         return (
-          path === 'C:\\Solution\\NuGet.Config' ||
-          path === 'C:\\Solution\\src\\Project1' ||
-          path === 'C:\\Solution\\src\\Project1\\Project1.csproj'
+          p === '/solution/NuGet.Config' ||
+          p === '/solution/src/Project1' ||
+          p === '/solution/src/Project1/Project1.csproj'
         );
       };
 
-      const mockStatSync = (path: string) => {
+      const mockStatSync = (p: string) => {
         return {
-          isFile: () => path === 'C:\\Solution\\src\\Project1\\Project1.csproj',
+          isFile: () => p === '/solution/src/Project1/Project1.csproj',
         } as any;
       };
 
       mockFs.existsSync.mockImplementation(mockExistsSync as any);
       (mockFs.statSync as jest.Mock).mockImplementation(mockStatSync);
 
-      const configs = NuGetConfigParser.findSolutionLocalConfigs(
-        'C:\\Solution\\src\\Project1\\Project1.csproj'
+      const configs = parser.findSolutionLocalConfigs(
+        '/solution/src/Project1/Project1.csproj'
       );
 
-      // Should find C:\Solution\NuGet.Config
-      // Note: The loop stops before reaching the root directory (C:\)
-      expect(configs).toContain('C:\\Solution\\NuGet.Config');
+      // Should find /solution/NuGet.Config
+      expect(configs).toContain('/solution/NuGet.Config');
       expect(configs).toHaveLength(1);
     });
   });

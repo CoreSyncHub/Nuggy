@@ -1,25 +1,28 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { XMLParser } from 'fast-xml-parser';
+import { singleton } from 'tsyringe';
 import { LegacyPackage } from '../../Domain/Packages/Entities/LegacyPackage';
 import { PackageIdentity } from '../../Domain/Packages/ValueObjects/PackageIdentity';
+import { ILogger, LOGGER } from '../../Application/Abstractions/Log/ILogger';
+import { injectToken } from '@Shared/DependencyInjection/inject';
 
 /**
  * Parser for packages.config files (legacy NuGet format)
  */
+@singleton()
 export class PackagesConfigParser {
-  private static readonly xmlParser = new XMLParser({
+  private readonly xmlParser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '@_',
   });
 
+  constructor(@injectToken(LOGGER) private readonly logger: ILogger) {}
+
   /**
    * Parses a packages.config file and returns LegacyPackage entries
-   * @param configPath - Path to the packages.config file
-   * @param projectPath - Path to the associated .csproj file
-   * @returns Array of LegacyPackage instances
    */
-  public static parse(configPath: string, projectPath: string): LegacyPackage[] {
+  public parse(configPath: string, projectPath: string): LegacyPackage[] {
     try {
       const content = fs.readFileSync(configPath, 'utf-8');
       const parsed = this.xmlParser.parse(content);
@@ -28,7 +31,6 @@ export class PackagesConfigParser {
         return [];
       }
 
-      // Handle both single package and array of packages
       const packageElements = Array.isArray(parsed.packages.package)
         ? parsed.packages.package
         : [parsed.packages.package];
@@ -42,17 +44,15 @@ export class PackagesConfigParser {
         return new LegacyPackage(identity, projectPath, configPath, targetFramework);
       });
     } catch (error) {
-      console.error(`Error parsing packages.config at ${configPath}:`, error);
+      this.logger.Error(`Error parsing packages.config at ${configPath}`, error as Error);
       return [];
     }
   }
 
   /**
    * Parses packages.config files for multiple projects
-   * @param projectPaths - Array of .csproj file paths
-   * @returns Map of project path to LegacyPackage array
    */
-  public static parseMultiple(projectPaths: string[]): Map<string, LegacyPackage[]> {
+  public parseMultiple(projectPaths: string[]): Map<string, LegacyPackage[]> {
     const result = new Map<string, LegacyPackage[]>();
 
     for (const projectPath of projectPaths) {
@@ -70,10 +70,8 @@ export class PackagesConfigParser {
 
   /**
    * Finds the packages.config file for a given project
-   * @param projectPath - Path to the .csproj file
-   * @returns Path to packages.config if it exists, undefined otherwise
    */
-  public static findPackagesConfig(projectPath: string): string | undefined {
+  public findPackagesConfig(projectPath: string): string | undefined {
     const projectDir = path.dirname(projectPath);
     const configPath = path.join(projectDir, 'packages.config');
 
@@ -86,10 +84,8 @@ export class PackagesConfigParser {
 
   /**
    * Checks if a project uses legacy package management
-   * @param projectPath - Path to the .csproj file
-   * @returns True if packages.config exists
    */
-  public static isLegacyProject(projectPath: string): boolean {
+  public isLegacyProject(projectPath: string): boolean {
     return this.findPackagesConfig(projectPath) !== undefined;
   }
 }

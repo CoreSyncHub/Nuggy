@@ -1,10 +1,9 @@
 import * as path from 'path';
-import { GetPackageManagementDiagnosticQueryHandler } from '@Application/Handlers/Packages/GetPackageManagementDiagnosticQueryHandler';
 import { GetPackageManagementDiagnosticQuery } from '@Shared/Features/Queries/GetPackageManagementDiagnosticQuery';
 import { PackageManagementDiagnosticDto } from '@/Shared/Features/Dtos/PackageManagementDto';
-import { GetProjectsTfmQueryHandler } from '@/Host/Application/Handlers/Projects/GetProjectsTfmQueryHandler';
 import { GetProjectsTfmQuery } from '@/Shared/Features/Queries/GetProjectsTfmQuery';
 import { ProjectsTfmDto } from '@/Shared/Features/Dtos/ProjectTfmDto';
+import { createDiagnosticHandler, createTfmHandler } from '@/Tests/Helpers/createHandlers';
 
 /**
  * Acceptance test for Modern solution (SLNX + Local PackageReference)
@@ -35,8 +34,8 @@ import { ProjectsTfmDto } from '@/Shared/Features/Dtos/ProjectTfmDto';
  */
 describe('Acceptance: Modern Solution (SLNX + Local PackageReference)', () => {
   const solutionPath = path.resolve(__dirname, '../../Fixtures/Modern/Modern.slnx');
-  const diagnosticHandler = new GetPackageManagementDiagnosticQueryHandler();
-  const tfmHandler = new GetProjectsTfmQueryHandler();
+  const diagnosticHandler = createDiagnosticHandler();
+  const tfmHandler = createTfmHandler();
 
   let diagnosticResult: PackageManagementDiagnosticDto;
   let tfmResult: ProjectsTfmDto;

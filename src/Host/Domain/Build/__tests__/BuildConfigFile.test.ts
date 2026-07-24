@@ -5,15 +5,15 @@ describe('BuildConfigFile', () => {
   describe('addChild', () => {
     it('should add a child configuration file', () => {
       const parent = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.props',
+        '/Solution/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution'
+        '/Solution'
       );
 
       const child = new BuildConfigFile(
-        'C:\\Solution\\src\\Directory.Build.props',
+        '/Solution/src/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution\\src',
+        '/Solution/src',
         parent
       );
 
@@ -27,26 +27,26 @@ describe('BuildConfigFile', () => {
   describe('addAffectedProject', () => {
     it('should add a project path to affected projects', () => {
       const configFile = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.props',
+        '/Solution/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution'
+        '/Solution'
       );
 
-      configFile.addAffectedProject('C:\\Solution\\Project1\\Project1.csproj');
+      configFile.addAffectedProject('/Solution/Project1/Project1.csproj');
 
       expect(configFile.affectedProjects).toContain(
-        'C:\\Solution\\Project1\\Project1.csproj'
+        '/Solution/Project1/Project1.csproj'
       );
     });
 
     it('should not add duplicate project paths', () => {
       const configFile = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.props',
+        '/Solution/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution'
+        '/Solution'
       );
 
-      const projectPath = 'C:\\Solution\\Project1\\Project1.csproj';
+      const projectPath = '/Solution/Project1/Project1.csproj';
       configFile.addAffectedProject(projectPath);
       configFile.addAffectedProject(projectPath);
 
@@ -57,9 +57,9 @@ describe('BuildConfigFile', () => {
   describe('setProperty', () => {
     it('should set a property value', () => {
       const configFile = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.props',
+        '/Solution/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution'
+        '/Solution'
       );
 
       configFile.setProperty('TargetFramework', 'net8.0');
@@ -69,9 +69,9 @@ describe('BuildConfigFile', () => {
 
     it('should override existing property values', () => {
       const configFile = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.props',
+        '/Solution/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution'
+        '/Solution'
       );
 
       configFile.setProperty('TargetFramework', 'net7.0');
@@ -84,9 +84,9 @@ describe('BuildConfigFile', () => {
   describe('getAllProperties', () => {
     it('should return own properties for files without parents', () => {
       const configFile = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.props',
+        '/Solution/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution'
+        '/Solution'
       );
 
       configFile.setProperty('TargetFramework', 'net8.0');
@@ -101,15 +101,15 @@ describe('BuildConfigFile', () => {
 
     it('should merge parent and child properties', () => {
       const parent = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.props',
+        '/Solution/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution'
+        '/Solution'
       );
 
       const child = new BuildConfigFile(
-        'C:\\Solution\\src\\Directory.Build.props',
+        '/Solution/src/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution\\src',
+        '/Solution/src',
         parent
       );
 
@@ -127,15 +127,15 @@ describe('BuildConfigFile', () => {
 
     it('should override parent properties with child values', () => {
       const parent = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.props',
+        '/Solution/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution'
+        '/Solution'
       );
 
       const child = new BuildConfigFile(
-        'C:\\Solution\\src\\Directory.Build.props',
+        '/Solution/src/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution\\src',
+        '/Solution/src',
         parent
       );
 
@@ -150,22 +150,22 @@ describe('BuildConfigFile', () => {
 
     it('should handle multi-level hierarchies', () => {
       const root = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.props',
+        '/Solution/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution'
+        '/Solution'
       );
 
       const middle = new BuildConfigFile(
-        'C:\\Solution\\src\\Directory.Build.props',
+        '/Solution/src/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution\\src',
+        '/Solution/src',
         root
       );
 
       const leaf = new BuildConfigFile(
-        'C:\\Solution\\src\\lib\\Directory.Build.props',
+        '/Solution/src/lib/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution\\src\\lib',
+        '/Solution/src/lib',
         middle
       );
 
@@ -185,9 +185,9 @@ describe('BuildConfigFile', () => {
   describe('getDepth', () => {
     it('should return 0 for root files', () => {
       const root = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.props',
+        '/Solution/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution'
+        '/Solution'
       );
 
       expect(root.getDepth()).toBe(0);
@@ -195,22 +195,22 @@ describe('BuildConfigFile', () => {
 
     it('should return correct depth for nested files', () => {
       const root = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.props',
+        '/Solution/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution'
+        '/Solution'
       );
 
       const level1 = new BuildConfigFile(
-        'C:\\Solution\\src\\Directory.Build.props',
+        '/Solution/src/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution\\src',
+        '/Solution/src',
         root
       );
 
       const level2 = new BuildConfigFile(
-        'C:\\Solution\\src\\lib\\Directory.Build.props',
+        '/Solution/src/lib/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution\\src\\lib',
+        '/Solution/src/lib',
         level1
       );
 
@@ -222,9 +222,9 @@ describe('BuildConfigFile', () => {
   describe('isCentralPackageManagement', () => {
     it('should return true for Directory.Packages.props', () => {
       const cpmFile = new BuildConfigFile(
-        'C:\\Solution\\Directory.Packages.props',
+        '/Solution/Directory.Packages.props',
         BuildConfigFileType.DirectoryPackagesProps,
-        'C:\\Solution'
+        '/Solution'
       );
 
       expect(cpmFile.isCentralPackageManagement()).toBe(true);
@@ -232,15 +232,15 @@ describe('BuildConfigFile', () => {
 
     it('should return false for other types', () => {
       const propsFile = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.props',
+        '/Solution/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution'
+        '/Solution'
       );
 
       const targetsFile = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.targets',
+        '/Solution/Directory.Build.targets',
         BuildConfigFileType.DirectoryBuildTargets,
-        'C:\\Solution'
+        '/Solution'
       );
 
       expect(propsFile.isCentralPackageManagement()).toBe(false);

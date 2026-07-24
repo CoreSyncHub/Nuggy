@@ -1,5 +1,6 @@
 import { injectable } from 'tsyringe';
 import * as path from 'path';
+import * as fs from 'fs';
 import { IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
 import { GetSolutionStructureQuery } from '@Shared/Features/Queries/GetSolutionStructureQuery';
 import {
@@ -22,13 +23,18 @@ import { SolutionFolder, SolutionProject } from '@Domain/Solutions/Entities/Solu
 export class GetSolutionStructureQueryHandler
   implements IQueryHandler<GetSolutionStructureQuery, SolutionStructureDto>
 {
+  constructor(
+    private readonly slnParser: SlnParser,
+    private readonly slnxParser: SlnxParser,
+    private readonly globalJsonParser: GlobalJsonParser
+  ) {}
+
   async Handle(query: GetSolutionStructureQuery): Promise<SolutionStructureDto> {
     const solutionPath = query.solutionPath;
     const solutionDir = path.dirname(solutionPath);
     const solutionName = path.basename(solutionPath, path.extname(solutionPath));
     const solutionExt = path.extname(solutionPath).toLowerCase();
 
-    // Determine format and parse accordingly
     let parseResult: {
       projects: SolutionProject[];
       folders: SolutionFolder[];
@@ -36,22 +42,19 @@ export class GetSolutionStructureQueryHandler
     };
 
     if (solutionExt === '.slnx') {
-      parseResult = SlnxParser.parse(solutionPath);
+      parseResult = this.slnxParser.parse(solutionPath);
     } else if (solutionExt === '.sln') {
-      parseResult = SlnParser.parse(solutionPath);
+      parseResult = this.slnParser.parse(solutionPath);
     } else {
       throw new Error(`Unsupported solution format: ${solutionExt}`);
     }
 
-    // Find global.json
     const { version: dotnetSdkVersion, globalJsonPath } =
-      GlobalJsonParser.findSdkVersion(solutionDir);
+      this.globalJsonParser.findSdkVersion(solutionDir);
 
-    // Check for CPM (Directory.Packages.props)
     const directoryPackagesPropsPath = path.join(solutionDir, 'Directory.Packages.props');
-    const isCentrallyManaged = require('fs').existsSync(directoryPackagesPropsPath);
+    const isCentrallyManaged = fs.existsSync(directoryPackagesPropsPath);
 
-    // Map projects to DTOs
     const projectDtos: SolutionProjectDto[] = parseResult.projects.map((project) => ({
       id: project.id.toString(),
       name: project.name,
@@ -60,7 +63,6 @@ export class GetSolutionStructureQueryHandler
       parentId: project.parentId?.toString() ?? null,
     }));
 
-    // Map folders to DTOs
     const folderDtos: SolutionFolderDto[] = parseResult.folders.map((folder) => {
       const projectIds: string[] = [];
       const folderIds: string[] = [];
@@ -82,7 +84,6 @@ export class GetSolutionStructureQueryHandler
       };
     });
 
-    // Get root item IDs
     const rootItemIds = parseResult.rootItems.map((item) => item.id.toString());
 
     return {
@@ -90,8 +91,8 @@ export class GetSolutionStructureQueryHandler
         path: solutionPath,
         name: solutionName,
         format: solutionExt === '.slnx' ? 'slnx' : 'sln',
-        workspaceFolder: '', // Will be filled by the caller if needed
-        isSelected: false, // Will be filled by the caller if needed
+        workspaceFolder: '',
+        isSelected: false,
       },
       projects: projectDtos,
       folders: folderDtos,

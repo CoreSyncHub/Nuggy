@@ -1,15 +1,26 @@
 import * as fs from 'fs';
 import { TfmResolver, TfmSource } from '../TfmResolver';
+import { CsprojParser } from '../CsprojParser';
 import { BuildConfigFile } from '../../../Domain/Build/Entities/BuildConfigFile';
 import { BuildConfigFileType } from '../../../Domain/Build/Enums/BuildConfigFileType';
+import { ILogger } from '../../../Application/Abstractions/Log/ILogger';
 
 // Mock filesystem
 jest.mock('fs');
 const mockFs = fs as jest.Mocked<typeof fs>;
 
 describe('TfmResolver', () => {
+  let resolver: TfmResolver;
+  const mockLogger: ILogger = {
+    Info: jest.fn(),
+    Warning: jest.fn(),
+    Error: jest.fn(),
+    Debug: jest.fn(),
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
+    resolver = new TfmResolver(new CsprojParser(), mockLogger);
   });
 
   describe('resolve - Priority: .csproj > Directory.Build.targets > Directory.Build.props', () => {
@@ -24,7 +35,7 @@ describe('TfmResolver', () => {
 
       const buildConfigFiles: BuildConfigFile[] = [];
 
-      const result = TfmResolver.resolve('C:\\Solution\\Project\\Project.csproj', buildConfigFiles);
+      const result = resolver.resolve('/Solution/Project/Project.csproj', buildConfigFiles);
 
       expect(result.targetFrameworks).toEqual(['net8.0']);
       expect(result.primaryTargetFramework).toBe('net8.0');
@@ -42,15 +53,15 @@ describe('TfmResolver', () => {
       mockFs.readFileSync.mockReturnValue(csprojContent);
 
       const targetsFile = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.targets',
+        '/Solution/Directory.Build.targets',
         BuildConfigFileType.DirectoryBuildTargets,
-        'C:\\Solution'
+        '/Solution'
       );
       targetsFile.setProperty('TargetFramework', 'net7.0');
 
       const buildConfigFiles = [targetsFile];
 
-      const result = TfmResolver.resolve('C:\\Solution\\Project\\Project.csproj', buildConfigFiles);
+      const result = resolver.resolve('/Solution/Project/Project.csproj', buildConfigFiles);
 
       expect(result.targetFrameworks).toEqual(['net7.0']);
       expect(result.source).toBe(TfmSource.DirectoryBuildTargets);
@@ -66,15 +77,15 @@ describe('TfmResolver', () => {
       mockFs.readFileSync.mockReturnValue(csprojContent);
 
       const propsFile = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.props',
+        '/Solution/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution'
+        '/Solution'
       );
       propsFile.setProperty('TargetFramework', 'net6.0');
 
       const buildConfigFiles = [propsFile];
 
-      const result = TfmResolver.resolve('C:\\Solution\\Project\\Project.csproj', buildConfigFiles);
+      const result = resolver.resolve('/Solution/Project/Project.csproj', buildConfigFiles);
 
       expect(result.targetFrameworks).toEqual(['net6.0']);
       expect(result.source).toBe(TfmSource.DirectoryBuildProps);
@@ -87,22 +98,22 @@ describe('TfmResolver', () => {
       mockFs.readFileSync.mockReturnValue(csprojContent);
 
       const propsFile = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.props',
+        '/Solution/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution'
+        '/Solution'
       );
       propsFile.setProperty('TargetFramework', 'net6.0');
 
       const targetsFile = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.targets',
+        '/Solution/Directory.Build.targets',
         BuildConfigFileType.DirectoryBuildTargets,
-        'C:\\Solution'
+        '/Solution'
       );
       targetsFile.setProperty('TargetFramework', 'net8.0');
 
       const buildConfigFiles = [propsFile, targetsFile];
 
-      const result = TfmResolver.resolve('C:\\Solution\\Project\\Project.csproj', buildConfigFiles);
+      const result = resolver.resolve('/Solution/Project/Project.csproj', buildConfigFiles);
 
       expect(result.targetFrameworks).toEqual(['net8.0']);
       expect(result.source).toBe(TfmSource.DirectoryBuildTargets);
@@ -116,7 +127,7 @@ describe('TfmResolver', () => {
 
       const buildConfigFiles: BuildConfigFile[] = [];
 
-      const result = TfmResolver.resolve('C:\\Solution\\Project\\Project.csproj', buildConfigFiles);
+      const result = resolver.resolve('/Solution/Project/Project.csproj', buildConfigFiles);
 
       expect(result.targetFrameworks).toEqual([]);
       expect(result.primaryTargetFramework).toBe('unknown');
@@ -134,7 +145,7 @@ describe('TfmResolver', () => {
 
       mockFs.readFileSync.mockReturnValue(csprojContent);
 
-      const result = TfmResolver.resolve('C:\\Solution\\Project\\Project.csproj', []);
+      const result = resolver.resolve('/Solution/Project/Project.csproj', []);
 
       expect(result.targetFrameworks).toEqual(['net8.0', 'net7.0', 'net6.0']);
       expect(result.isMultiTargeting).toBe(true);
@@ -148,13 +159,13 @@ describe('TfmResolver', () => {
       mockFs.readFileSync.mockReturnValue(csprojContent);
 
       const propsFile = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.props',
+        '/Solution/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution'
+        '/Solution'
       );
       propsFile.setProperty('TargetFrameworks', 'net8.0;net7.0');
 
-      const result = TfmResolver.resolve('C:\\Solution\\Project\\Project.csproj', [propsFile]);
+      const result = resolver.resolve('/Solution/Project/Project.csproj', [propsFile]);
 
       expect(result.targetFrameworks).toEqual(['net8.0', 'net7.0']);
       expect(result.isMultiTargeting).toBe(true);
@@ -170,25 +181,25 @@ describe('TfmResolver', () => {
 
       // Root level props
       const rootProps = new BuildConfigFile(
-        'C:\\Solution\\Directory.Build.props',
+        '/Solution/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution'
+        '/Solution'
       );
       rootProps.setProperty('TargetFramework', 'net6.0');
 
       // Nested props closer to project
       const nestedProps = new BuildConfigFile(
-        'C:\\Solution\\src\\Directory.Build.props',
+        '/Solution/src/Directory.Build.props',
         BuildConfigFileType.DirectoryBuildProps,
-        'C:\\Solution\\src'
+        '/Solution/src'
       );
       nestedProps.setProperty('TargetFramework', 'net8.0');
 
       const buildConfigFiles = [rootProps, nestedProps];
 
       // Project is in C:\Solution\src\Project
-      const result = TfmResolver.resolve(
-        'C:\\Solution\\src\\Project\\Project.csproj',
+      const result = resolver.resolve(
+        '/Solution/src/Project/Project.csproj',
         buildConfigFiles
       );
 
@@ -212,47 +223,45 @@ describe('TfmResolver', () => {
 </Project>`;
 
       mockFs.readFileSync.mockImplementation((path) => {
-        if (path === 'C:\\Solution\\Project1\\Project1.csproj') {
+        if (path === '/Solution/Project1/Project1.csproj') {
           return csprojContent1;
-        } else if (path === 'C:\\Solution\\Project2\\Project2.csproj') {
+        } else if (path === '/Solution/Project2/Project2.csproj') {
           return csprojContent2;
         }
         return '';
       });
 
       const projectPaths = [
-        'C:\\Solution\\Project1\\Project1.csproj',
-        'C:\\Solution\\Project2\\Project2.csproj',
+        '/Solution/Project1/Project1.csproj',
+        '/Solution/Project2/Project2.csproj',
       ];
 
-      const results = TfmResolver.resolveMultiple(projectPaths, []);
+      const results = resolver.resolveMultiple(projectPaths, []);
 
       expect(results.size).toBe(2);
-      expect(results.get('C:\\Solution\\Project1\\Project1.csproj')?.targetFrameworks).toEqual([
+      expect(results.get('/Solution/Project1/Project1.csproj')?.targetFrameworks).toEqual([
         'net8.0',
       ]);
-      expect(results.get('C:\\Solution\\Project2\\Project2.csproj')?.targetFrameworks).toEqual([
+      expect(results.get('/Solution/Project2/Project2.csproj')?.targetFrameworks).toEqual([
         'net7.0',
       ]);
     });
 
     it('should handle errors gracefully and provide fallback', () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
       mockFs.readFileSync.mockImplementation(() => {
         throw new Error('File not found');
       });
 
-      const projectPaths = ['C:\\Solution\\Project\\Project.csproj'];
+      const projectPaths = ['/Solution/Project/Project.csproj'];
 
-      const results = TfmResolver.resolveMultiple(projectPaths, []);
+      const results = resolver.resolveMultiple(projectPaths, []);
 
       expect(results.size).toBe(1);
-      const result = results.get('C:\\Solution\\Project\\Project.csproj');
+      const result = results.get('/Solution/Project/Project.csproj');
       expect(result?.source).toBe(TfmSource.NotFound);
       expect(result?.targetFrameworks).toEqual([]);
 
-      consoleErrorSpy.mockRestore();
+      expect(mockLogger.Error).toHaveBeenCalled();
     });
   });
 });

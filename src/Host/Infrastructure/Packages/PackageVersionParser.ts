@@ -1,13 +1,15 @@
 import * as fs from 'fs';
 import { XMLParser } from 'fast-xml-parser';
+import { singleton } from 'tsyringe';
 import { PackageVersion } from '../../Domain/Packages/Entities/PackageVersion';
 import { PackageIdentity } from '../../Domain/Packages/ValueObjects/PackageIdentity';
 
 /**
  * Parser for extracting PackageVersion entries from Directory.Packages.props
  */
+@singleton()
 export class PackageVersionParser {
-  private static xmlParser = new XMLParser({
+  private readonly xmlParser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '@_',
     parseAttributeValue: false,
@@ -17,7 +19,7 @@ export class PackageVersionParser {
   /**
    * Parses a Directory.Packages.props file and extracts all PackageVersion entries
    */
-  public static parse(filePath: string): PackageVersion[] {
+  public parse(filePath: string): PackageVersion[] {
     const content = fs.readFileSync(filePath, 'utf-8');
     const parsed = this.xmlParser.parse(content);
 
@@ -28,7 +30,6 @@ export class PackageVersionParser {
     const project = parsed.Project;
     const packageVersions: PackageVersion[] = [];
 
-    // Look for ItemGroup elements
     if (!project.ItemGroup) {
       return [];
     }
@@ -38,7 +39,6 @@ export class PackageVersionParser {
       : [project.ItemGroup];
 
     for (const itemGroup of itemGroups) {
-      // Extract PackageVersion elements
       if (itemGroup.PackageVersion) {
         const packageVersionElements = Array.isArray(itemGroup.PackageVersion)
           ? itemGroup.PackageVersion
@@ -62,7 +62,7 @@ export class PackageVersionParser {
   /**
    * Checks if a file has ManagePackageVersionsCentrally enabled
    */
-  public static isCpmEnabled(filePath: string): boolean {
+  public isCpmEnabled(filePath: string): boolean {
     try {
       const content = fs.readFileSync(filePath, 'utf-8');
       const parsed = this.xmlParser.parse(content);
