@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { ILogger, LOGGER } from '@Application/Abstractions/Log/ILogger';
+import { type ILogger, LOGGER } from '@Application/Abstractions/Log/ILogger';
 import { getHtmlForWebview } from './webviewHtml';
 import { WebMediator } from './WebMediator';
-import { IDispatcher, DISPATCHER } from '../../Shared/Abstractions/Messaging/IDispatcher';
+import { type IDispatcher, DISPATCHER } from '../../Shared/Abstractions/Messaging/IDispatcher';
 import { container } from 'tsyringe';
 import { GetLanguageQuery } from '@/Shared/Features/Queries/GetLanguageQuery';
 import { GetWorkspaceSolutionsQuery } from '@/Shared/Features/Queries/GetWorkspaceSolutionsQuery';
@@ -10,6 +10,8 @@ import { GetSolutionStructureQuery } from '@/Shared/Features/Queries/GetSolution
 import { GetBuildConfigurationFilesQuery } from '@/Shared/Features/Queries/GetBuildConfigurationFilesQuery';
 import { GetProjectsTfmQuery } from '@/Shared/Features/Queries/GetProjectsTfmQuery';
 import { SelectSolutionCommand } from '@/Shared/Features/Commands/SelectSolutionCommand';
+import { GetSolutionPackagesQuery } from '@Shared/Features/Queries/GetSolutionPackagesQuery';
+import { GetPackageUpdateInfoQuery } from '@Shared/Features/Queries/GetPackageUpdateInfoQuery';
 
 /**
  * Provider for the NuGet Explorer webview displayed in the bottom panel.
@@ -69,6 +71,8 @@ export class NuGetWebviewProvider implements vscode.WebviewViewProvider {
       GetProjectsTfmQuery
     );
     this.webMediator.registerRequestType('SelectSolutionCommand', SelectSolutionCommand);
+    this.webMediator.registerRequestType('GetSolutionPackagesQuery', GetSolutionPackagesQuery);
+    this.webMediator.registerRequestType('GetPackageUpdateInfoQuery', GetPackageUpdateInfoQuery);
   }
 
   /**
