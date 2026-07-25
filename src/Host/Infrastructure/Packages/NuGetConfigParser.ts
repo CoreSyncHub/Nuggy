@@ -1,13 +1,13 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
-import { XMLParser } from 'fast-xml-parser';
-import { singleton } from 'tsyringe';
-import { NuGetSource } from '../../Domain/Packages/Entities/NuGetSource';
-import { type NuGetConfigScope } from '../../Domain/Packages/Enums/NuGetConfigScope';
-import { PackageSourceMapping } from '../../Domain/Packages/Entities/PackageSourceMapping';
-import { type ILogger, LOGGER } from '../../Application/Abstractions/Log/ILogger';
-import { injectToken } from '@Shared/DependencyInjection/inject';
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
+import { XMLParser } from "fast-xml-parser";
+import { singleton } from "tsyringe";
+import { NuGetSource } from "../../Domain/Packages/Entities/NuGetSource";
+import { type NuGetConfigScope } from "../../Domain/Packages/Enums/NuGetConfigScope";
+import { PackageSourceMapping } from "../../Domain/Packages/Entities/PackageSourceMapping";
+import { type ILogger, LOGGER } from "../../Application/Abstractions/Log/ILogger";
+import { injectToken } from "@Shared/DependencyInjection/inject";
 
 /**
  * Parser for NuGet.Config files
@@ -16,7 +16,7 @@ import { injectToken } from '@Shared/DependencyInjection/inject';
 export class NuGetConfigParser {
   private readonly xmlParser = new XMLParser({
     ignoreAttributes: false,
-    attributeNamePrefix: '@_',
+    attributeNamePrefix: "@_",
     parseAttributeValue: false,
     trimValues: true,
   });
@@ -32,7 +32,7 @@ export class NuGetConfigParser {
     }
 
     try {
-      const content = fs.readFileSync(configPath, 'utf-8');
+      const content = fs.readFileSync(configPath, "utf-8");
       const parsed = this.xmlParser.parse(content);
 
       if (!parsed.configuration) {
@@ -50,14 +50,14 @@ export class NuGetConfigParser {
         const disabledSources = this.extractDisabledSources(parsed.configuration);
 
         for (const add of addElements) {
-          const name = add['@_key'];
-          const url = add['@_value'];
-          const protocolVersion = add['@_protocolVersion'];
+          const name = add["@_key"];
+          const url = add["@_value"];
+          const protocolVersion = add["@_protocolVersion"];
 
           if (name && url) {
             const isEnabled = !disabledSources.has(name);
             sources.push(
-              new NuGetSource(name, url, isEnabled, scope, configPath, 0, protocolVersion)
+              new NuGetSource(name, url, isEnabled, scope, configPath, 0, protocolVersion),
             );
           }
         }
@@ -80,10 +80,10 @@ export class NuGetConfigParser {
         : [disabledPackageSources.add];
 
       for (const add of addElements) {
-        const key = add['@_key'];
-        const value = add['@_value'];
+        const key = add["@_key"];
+        const value = add["@_value"];
 
-        if (key && value && value.toLowerCase() === 'true') {
+        if (key && value && value.toLowerCase() === "true") {
           disabledSources.add(key);
         }
       }
@@ -101,7 +101,7 @@ export class NuGetConfigParser {
     }
 
     try {
-      const content = fs.readFileSync(configPath, 'utf-8');
+      const content = fs.readFileSync(configPath, "utf-8");
       const parsed = this.xmlParser.parse(content);
 
       if (!parsed.configuration || !parsed.configuration.packageSourceMapping) {
@@ -117,7 +117,7 @@ export class NuGetConfigParser {
           : [packageSourceMapping.packageSource];
 
         for (const packageSource of packageSourceElements) {
-          const sourceName = packageSource['@_key'];
+          const sourceName = packageSource["@_key"];
 
           if (packageSource.package) {
             const packageElements = Array.isArray(packageSource.package)
@@ -125,7 +125,7 @@ export class NuGetConfigParser {
               : [packageSource.package];
 
             for (const pkg of packageElements) {
-              const pattern = pkg['@_pattern'];
+              const pattern = pkg["@_pattern"];
 
               if (pattern) {
                 let mapping = mappings.find((m) => m.pattern === pattern);
@@ -159,13 +159,13 @@ export class NuGetConfigParser {
 
     let machineWidePath: string;
 
-    if (platform === 'win32') {
-      const programData = process.env.PROGRAMDATA || 'C:\\ProgramData';
-      machineWidePath = path.win32.join(programData, 'NuGet', 'NuGet.Config');
-    } else if (platform === 'darwin') {
-      machineWidePath = '/Library/Application Support/NuGet/NuGet.Config';
+    if (platform === "win32") {
+      const programData = process.env.PROGRAMDATA || "C:\\ProgramData";
+      machineWidePath = path.win32.join(programData, "NuGet", "NuGet.Config");
+    } else if (platform === "darwin") {
+      machineWidePath = "/Library/Application Support/NuGet/NuGet.Config";
     } else {
-      machineWidePath = '/etc/opt/NuGet/NuGet.Config';
+      machineWidePath = "/etc/opt/NuGet/NuGet.Config";
     }
 
     return fs.existsSync(machineWidePath) ? machineWidePath : undefined;
@@ -180,11 +180,11 @@ export class NuGetConfigParser {
 
     let userProfilePath: string;
 
-    if (platform === 'win32') {
-      const appData = process.env.APPDATA || path.win32.join(homeDir, 'AppData', 'Roaming');
-      userProfilePath = path.win32.join(appData, 'NuGet', 'NuGet.Config');
+    if (platform === "win32") {
+      const appData = process.env.APPDATA || path.win32.join(homeDir, "AppData", "Roaming");
+      userProfilePath = path.win32.join(appData, "NuGet", "NuGet.Config");
     } else {
-      userProfilePath = path.join(homeDir, '.nuget', 'NuGet', 'NuGet.Config');
+      userProfilePath = path.join(homeDir, ".nuget", "NuGet", "NuGet.Config");
     }
 
     return fs.existsSync(userProfilePath) ? userProfilePath : undefined;
@@ -202,14 +202,16 @@ export class NuGetConfigParser {
     }
 
     while (currentDir && currentDir !== path.parse(currentDir).root) {
-      const configPath = path.join(currentDir, 'NuGet.Config');
+      const configPath = path.join(currentDir, "NuGet.Config");
 
       if (fs.existsSync(configPath)) {
         configPaths.push(configPath);
       }
 
       const parentDir = path.dirname(currentDir);
-      if (parentDir === currentDir) { break; }
+      if (parentDir === currentDir) {
+        break;
+      }
       currentDir = parentDir;
     }
 

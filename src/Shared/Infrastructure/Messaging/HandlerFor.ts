@@ -1,4 +1,4 @@
-import { handlersMap } from './HandlerRegistry';
+import { handlersMap } from "./HandlerRegistry";
 
 /**
  * Decorator to register a handler for a specific request type.
@@ -9,7 +9,7 @@ import { handlersMap } from './HandlerRegistry';
  * }
  */
 export function HandlerFor<TRequest = any, TResponse = any>(
-  requestType: new (...args: any[]) => TRequest
+  requestType: new (...args: any[]) => TRequest,
 ) {
   return function (target: new (...args: any[]) => any) {
     handlersMap.set(requestType, target);

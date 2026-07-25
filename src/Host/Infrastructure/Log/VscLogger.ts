@@ -1,6 +1,6 @@
-import * as vscode from 'vscode';
-import { injectable } from 'tsyringe';
-import { type ILogger } from '@Application/Abstractions/Log/ILogger';
+import * as vscode from "vscode";
+import { injectable } from "tsyringe";
+import { type ILogger } from "@Application/Abstractions/Log/ILogger";
 
 /**
  * Logger implementation for VSCode Host.
@@ -17,9 +17,9 @@ export class VscLogger implements ILogger {
   constructor() {
     // Create the output channel only once (shared across all logger instances)
     if (!VscLogger.outputChannel) {
-      VscLogger.outputChannel = vscode.window.createOutputChannel('NuGet Explorer');
+      VscLogger.outputChannel = vscode.window.createOutputChannel("NuGet Explorer");
     }
-    this.isDevelopment = process.env.NODE_ENV !== 'production';
+    this.isDevelopment = process.env.NODE_ENV !== "production";
   }
 
   /**
@@ -27,24 +27,24 @@ export class VscLogger implements ILogger {
    */
   private get outputChannel(): vscode.OutputChannel {
     if (!VscLogger.outputChannel) {
-      throw new Error('Output channel not initialized');
+      throw new Error("Output channel not initialized");
     }
     return VscLogger.outputChannel;
   }
 
   Info(message: string, context?: Record<string, unknown>): void {
-    const formatted = this.formatMessage('INFO', message, context);
+    const formatted = this.formatMessage("INFO", message, context);
     this.outputChannel.appendLine(formatted);
   }
 
   Warning(message: string, context?: Record<string, unknown>): void {
-    const formatted = this.formatMessage('WARN', message, context);
+    const formatted = this.formatMessage("WARN", message, context);
     console.warn(formatted);
     this.outputChannel.appendLine(formatted);
   }
 
   Error(message: string, error?: Error, context?: Record<string, unknown>): void {
-    const formatted = this.formatMessage('ERROR', message, context);
+    const formatted = this.formatMessage("ERROR", message, context);
     console.error(formatted, error);
     this.outputChannel.appendLine(formatted);
     if (error) {
@@ -57,7 +57,7 @@ export class VscLogger implements ILogger {
       return; // Skip debug logs in production
     }
 
-    const formatted = this.formatMessage('DEBUG', message, context);
+    const formatted = this.formatMessage("DEBUG", message, context);
     console.debug(formatted);
     this.outputChannel.appendLine(formatted);
   }
@@ -67,7 +67,7 @@ export class VscLogger implements ILogger {
    */
   private formatMessage(level: string, message: string, context?: Record<string, unknown>): string {
     const timestamp = new Date().toISOString();
-    const contextStr = context ? ` ${JSON.stringify(context)}` : '';
+    const contextStr = context ? ` ${JSON.stringify(context)}` : "";
     return `[${timestamp}] [${level}] ${message}${contextStr}`;
   }
 

@@ -1,17 +1,17 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { XMLParser } from 'fast-xml-parser';
-import { singleton } from 'tsyringe';
-import { SolutionFolder, SolutionProject } from '../../Domain/Solutions/Entities/SolutionFolder';
-import { SolutionItemId } from '../../Domain/Solutions/ValueObjects/SolutionItemId';
+import * as fs from "fs";
+import * as path from "path";
+import { XMLParser } from "fast-xml-parser";
+import { singleton } from "tsyringe";
+import { SolutionFolder, SolutionProject } from "../../Domain/Solutions/Entities/SolutionFolder";
+import { SolutionItemId } from "../../Domain/Solutions/ValueObjects/SolutionItemId";
 
 interface SlnxProject {
-  '@_Path': string;
-  '@_Type'?: string;
+  "@_Path": string;
+  "@_Type"?: string;
 }
 
 interface SlnxFolder {
-  '@_Name': string;
+  "@_Name": string;
   Project?: SlnxProject | SlnxProject[];
   Folder?: SlnxFolder | SlnxFolder[];
 }
@@ -30,7 +30,7 @@ interface SlnxRoot {
 export class SlnxParser {
   private readonly xmlParser = new XMLParser({
     ignoreAttributes: false,
-    attributeNamePrefix: '@_',
+    attributeNamePrefix: "@_",
     parseAttributeValue: false,
   });
 
@@ -42,7 +42,7 @@ export class SlnxParser {
     folders: SolutionFolder[];
     rootItems: (SolutionFolder | SolutionProject)[];
   } {
-    const content = fs.readFileSync(solutionPath, 'utf-8');
+    const content = fs.readFileSync(solutionPath, "utf-8");
     const solutionDir = path.dirname(solutionPath);
 
     const parsed = this.xmlParser.parse(content) as SlnxRoot;
@@ -76,7 +76,7 @@ export class SlnxParser {
         const { folder, projects, subFolders } = this.processFolderRecursive(
           folderXml,
           solutionDir,
-          null
+          null,
         );
         allFolders.push(folder, ...subFolders);
         allProjects.push(...projects);
@@ -94,10 +94,10 @@ export class SlnxParser {
   private createProjectFromXml(
     projectXml: SlnxProject,
     solutionDir: string,
-    parentId: SolutionItemId | null
+    parentId: SolutionItemId | null,
   ): SolutionProject {
-    const projectPath = projectXml['@_Path'];
-    const projectType = projectXml['@_Type'] ?? null;
+    const projectPath = projectXml["@_Path"];
+    const projectType = projectXml["@_Type"] ?? null;
 
     const normalizedPath = projectPath.replace(/\\/g, path.sep);
     const id = SolutionItemId.fromPath(normalizedPath);
@@ -112,13 +112,13 @@ export class SlnxParser {
   private processFolderRecursive(
     folderXml: SlnxFolder,
     solutionDir: string,
-    parentId: SolutionItemId | null
+    parentId: SolutionItemId | null,
   ): {
     folder: SolutionFolder;
     projects: SolutionProject[];
     subFolders: SolutionFolder[];
   } {
-    const folderName = folderXml['@_Name'];
+    const folderName = folderXml["@_Name"];
 
     const folderId = parentId
       ? SolutionItemId.fromPath(`${parentId.toString()}/${folderName}`)
@@ -130,9 +130,7 @@ export class SlnxParser {
     const allSubFolders: SolutionFolder[] = [];
 
     if (folderXml.Project) {
-      const projects = Array.isArray(folderXml.Project)
-        ? folderXml.Project
-        : [folderXml.Project];
+      const projects = Array.isArray(folderXml.Project) ? folderXml.Project : [folderXml.Project];
 
       for (const proj of projects) {
         const project = this.createProjectFromXml(proj, solutionDir, folderId);
@@ -142,9 +140,7 @@ export class SlnxParser {
     }
 
     if (folderXml.Folder) {
-      const subFolders = Array.isArray(folderXml.Folder)
-        ? folderXml.Folder
-        : [folderXml.Folder];
+      const subFolders = Array.isArray(folderXml.Folder) ? folderXml.Folder : [folderXml.Folder];
 
       for (const subFolderXml of subFolders) {
         const result = this.processFolderRecursive(subFolderXml, solutionDir, folderId);
@@ -169,12 +165,12 @@ export class SlnxParser {
       return false;
     }
 
-    if (!filePath.toLowerCase().endsWith('.slnx')) {
+    if (!filePath.toLowerCase().endsWith(".slnx")) {
       return false;
     }
 
     try {
-      const content = fs.readFileSync(filePath, 'utf-8');
+      const content = fs.readFileSync(filePath, "utf-8");
       const parsed = this.xmlParser.parse(content) as SlnxRoot;
       return !!parsed.Solution;
     } catch {

@@ -1,4 +1,4 @@
-import { InjectionToken } from '@/Shared';
+import { InjectionToken } from "@/Shared";
 
 /**
  * Logger abstraction for structured logging.
@@ -35,4 +35,4 @@ export interface ILogger {
   Debug(message: string, context?: Record<string, unknown>): void;
 }
 
-export const LOGGER = new InjectionToken<ILogger>('ILogger');
+export const LOGGER = new InjectionToken<ILogger>("ILogger");

@@ -1,4 +1,4 @@
-import { type PackageIdentity } from '../ValueObjects/PackageIdentity';
+import { type PackageIdentity } from "../ValueObjects/PackageIdentity";
 
 /**
  * Represents a PackageVersion entry from Directory.Packages.props
@@ -8,7 +8,7 @@ export class PackageVersion {
   constructor(
     public readonly identity: PackageIdentity,
     public readonly sourcePath: string,
-    public readonly affectedProjects: string[] = []
+    public readonly affectedProjects: string[] = [],
   ) {}
 
   /**

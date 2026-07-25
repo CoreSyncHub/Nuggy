@@ -18,7 +18,7 @@ export class Package {
     id: string,
     version: string,
     isDevelopmentDependency?: boolean,
-    isCentrallyManaged?: boolean
+    isCentrallyManaged?: boolean,
   ) {
     this.id = id;
     this.version = version;

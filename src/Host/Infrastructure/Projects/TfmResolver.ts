@@ -1,12 +1,12 @@
-import * as path from 'path';
-import { singleton } from 'tsyringe';
-import { CsprojParser } from './CsprojParser';
-import { type BuildConfigFile } from '@Domain/Build/Entities/BuildConfigFile';
-import { BuildConfigFileType } from '@Domain/Build/Enums/BuildConfigFileType';
-import { type ProjectSdkType } from '@Domain/Projects/Enums/ProjectSdkType';
-import { type ObjectEnumType } from '@/Shared/Types/ObjetEnumType';
-import { type ILogger, LOGGER } from '@/Host/Application/Abstractions/Log/ILogger';
-import { injectToken } from '@Shared/DependencyInjection/inject';
+import * as path from "path";
+import { singleton } from "tsyringe";
+import { CsprojParser } from "./CsprojParser";
+import { type BuildConfigFile } from "@Domain/Build/Entities/BuildConfigFile";
+import { BuildConfigFileType } from "@Domain/Build/Enums/BuildConfigFileType";
+import { type ProjectSdkType } from "@Domain/Projects/Enums/ProjectSdkType";
+import { type ObjectEnumType } from "@/Shared/Types/ObjetEnumType";
+import { type ILogger, LOGGER } from "@/Host/Application/Abstractions/Log/ILogger";
+import { injectToken } from "@Shared/DependencyInjection/inject";
 
 /**
  * Represents the resolved TFM information for a project
@@ -32,10 +32,10 @@ export interface ResolvedTfm {
 }
 
 export const TfmSource = {
-  CsprojFile: '.csproj',
-  DirectoryBuildTargets: 'Directory.Build.targets',
-  DirectoryBuildProps: 'Directory.Build.props',
-  NotFound: 'Not Found',
+  CsprojFile: ".csproj",
+  DirectoryBuildTargets: "Directory.Build.targets",
+  DirectoryBuildProps: "Directory.Build.props",
+  NotFound: "Not Found",
 } as const;
 
 export type TfmSource = ObjectEnumType<typeof TfmSource>;
@@ -47,7 +47,7 @@ export type TfmSource = ObjectEnumType<typeof TfmSource>;
 export class TfmResolver {
   constructor(
     private readonly csprojParser: CsprojParser,
-    @injectToken(LOGGER) private readonly logger: ILogger
+    @injectToken(LOGGER) private readonly logger: ILogger,
   ) {}
 
   /**
@@ -62,7 +62,7 @@ export class TfmResolver {
     const csprojTfms = this.csprojParser.getAllTargetFrameworks(parsedCsproj);
     if (csprojTfms.length > 0) {
       const resolvedTfms = csprojTfms.map((tfm) =>
-        this.resolveMSBuildProperty(tfm, allMSBuildProps)
+        this.resolveMSBuildProperty(tfm, allMSBuildProps),
       );
 
       return {
@@ -78,7 +78,7 @@ export class TfmResolver {
     const targetsTfm = this.findTfmInBuildConfig(
       projectDir,
       buildConfigFiles,
-      BuildConfigFileType.DirectoryBuildTargets
+      BuildConfigFileType.DirectoryBuildTargets,
     );
 
     if (targetsTfm.length > 0) {
@@ -95,7 +95,7 @@ export class TfmResolver {
     const propsTfm = this.findTfmInBuildConfig(
       projectDir,
       buildConfigFiles,
-      BuildConfigFileType.DirectoryBuildProps
+      BuildConfigFileType.DirectoryBuildProps,
     );
 
     if (propsTfm.length > 0) {
@@ -112,7 +112,7 @@ export class TfmResolver {
     return {
       targetFrameworks: [],
       isMultiTargeting: false,
-      primaryTargetFramework: 'unknown',
+      primaryTargetFramework: "unknown",
       source: TfmSource.NotFound,
       sdkType: parsedCsproj.sdkType,
       sdk: parsedCsproj.sdk,
@@ -121,14 +121,14 @@ export class TfmResolver {
 
   private getAllMSBuildProperties(
     projectDir: string,
-    buildConfigFiles: BuildConfigFile[]
+    buildConfigFiles: BuildConfigFile[],
   ): Map<string, string> {
     const allProps = new Map<string, string>();
 
     const propsFile = this.findClosestBuildConfigFile(
       projectDir,
       buildConfigFiles,
-      BuildConfigFileType.DirectoryBuildProps
+      BuildConfigFileType.DirectoryBuildProps,
     );
     if (propsFile) {
       const props = propsFile.getAllProperties();
@@ -138,7 +138,7 @@ export class TfmResolver {
     const targetsFile = this.findClosestBuildConfigFile(
       projectDir,
       buildConfigFiles,
-      BuildConfigFileType.DirectoryBuildTargets
+      BuildConfigFileType.DirectoryBuildTargets,
     );
     if (targetsFile) {
       const props = targetsFile.getAllProperties();
@@ -151,7 +151,7 @@ export class TfmResolver {
   private findClosestBuildConfigFile(
     projectDir: string,
     buildConfigFiles: BuildConfigFile[],
-    type: BuildConfigFileType
+    type: BuildConfigFileType,
   ): BuildConfigFile | null {
     const filesOfType = buildConfigFiles.filter((f) => f.type === type);
 
@@ -164,7 +164,9 @@ export class TfmResolver {
       }
 
       const parentDir = path.dirname(currentDir);
-      if (parentDir === currentDir) { break; }
+      if (parentDir === currentDir) {
+        break;
+      }
       currentDir = parentDir;
     }
 
@@ -176,7 +178,7 @@ export class TfmResolver {
   private findTfmInBuildConfig(
     projectDir: string,
     buildConfigFiles: BuildConfigFile[],
-    type: BuildConfigFileType
+    type: BuildConfigFileType,
   ): string[] {
     const filesOfType = buildConfigFiles.filter((f) => f.type === type);
 
@@ -189,7 +191,9 @@ export class TfmResolver {
       }
 
       const parentDir = path.dirname(currentDir);
-      if (parentDir === currentDir) { break; }
+      if (parentDir === currentDir) {
+        break;
+      }
       currentDir = parentDir;
     }
 
@@ -205,15 +209,15 @@ export class TfmResolver {
   private extractTfmFromBuildConfig(configFile: BuildConfigFile): string[] {
     const allProps = configFile.getAllProperties();
 
-    const targetFrameworks = allProps.get('TargetFrameworks');
+    const targetFrameworks = allProps.get("TargetFrameworks");
     if (targetFrameworks) {
       return targetFrameworks
-        .split(';')
+        .split(";")
         .map((f) => this.resolveMSBuildProperty(f.trim(), allProps))
         .filter(Boolean);
     }
 
-    const targetFramework = allProps.get('TargetFramework');
+    const targetFramework = allProps.get("TargetFramework");
     if (targetFramework) {
       const resolved = this.resolveMSBuildProperty(targetFramework, allProps);
       return resolved ? [resolved] : [];
@@ -253,7 +257,7 @@ export class TfmResolver {
    */
   public resolveMultiple(
     csprojPaths: string[],
-    buildConfigFiles: BuildConfigFile[]
+    buildConfigFiles: BuildConfigFile[],
   ): Map<string, ResolvedTfm> {
     const results = new Map<string, ResolvedTfm>();
 
@@ -266,9 +270,9 @@ export class TfmResolver {
         results.set(csprojPath, {
           targetFrameworks: [],
           isMultiTargeting: false,
-          primaryTargetFramework: 'unknown',
+          primaryTargetFramework: "unknown",
           source: TfmSource.NotFound,
-          sdkType: 'Unknown',
+          sdkType: "Unknown",
         });
       }
     }

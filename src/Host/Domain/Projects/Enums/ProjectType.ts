@@ -1,4 +1,4 @@
-import { type ObjectEnumType } from '@/Shared/Types/ObjetEnumType';
+import { type ObjectEnumType } from "@/Shared/Types/ObjetEnumType";
 
 /**
  * Represents the type of project
@@ -7,23 +7,23 @@ export const ProjectType = {
   /**
    * Aspire AppHost application or Service Default application
    */
-  ASPIRE: 'aspire',
+  ASPIRE: "aspire",
   /**
    * Console application (executable)
    */
-  CONSOLE: 'console',
+  CONSOLE: "console",
   /**
    * Class library project
    */
-  LIBRARY: 'library',
+  LIBRARY: "library",
   /**
    * Test project
    */
-  TEST: 'test',
+  TEST: "test",
   /**
    * Web application project
    */
-  WEB: 'web',
+  WEB: "web",
 };
 
 export type ProjectType = ObjectEnumType<typeof ProjectType>;

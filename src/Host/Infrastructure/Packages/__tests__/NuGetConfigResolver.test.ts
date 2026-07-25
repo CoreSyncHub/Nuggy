@@ -1,8 +1,8 @@
-import { NuGetConfigResolver } from '../NuGetConfigResolver';
-import { type NuGetConfigParser } from '../NuGetConfigParser';
-import { NuGetSource } from '@Domain/Packages/Entities/NuGetSource';
-import { NuGetConfigScope } from '@Domain/Packages/Enums/NuGetConfigScope';
-import { PackageSourceMapping } from '@Domain/Packages/Entities/PackageSourceMapping';
+import { NuGetConfigResolver } from "../NuGetConfigResolver";
+import { type NuGetConfigParser } from "../NuGetConfigParser";
+import { NuGetSource } from "@Domain/Packages/Entities/NuGetSource";
+import { NuGetConfigScope } from "@Domain/Packages/Enums/NuGetConfigScope";
+import { PackageSourceMapping } from "@Domain/Packages/Entities/PackageSourceMapping";
 
 // Mock the parser instance methods
 const mockParserInstance = {
@@ -11,11 +11,11 @@ const mockParserInstance = {
   parsePackageSourceMappings: jest.fn(),
 };
 
-jest.mock('../NuGetConfigParser', () => ({
+jest.mock("../NuGetConfigParser", () => ({
   NuGetConfigParser: jest.fn().mockImplementation(() => mockParserInstance),
 }));
 
-describe('NuGetConfigResolver', () => {
+describe("NuGetConfigResolver", () => {
   let resolver: NuGetConfigResolver;
 
   beforeEach(() => {
@@ -23,41 +23,41 @@ describe('NuGetConfigResolver', () => {
     resolver = new NuGetConfigResolver(mockParserInstance as unknown as NuGetConfigParser);
   });
 
-  describe('resolve', () => {
-    it('should merge sources from all scopes', () => {
+  describe("resolve", () => {
+    it("should merge sources from all scopes", () => {
       mockParserInstance.findAllConfigs.mockReturnValue({
-        machineWide: '/ProgramData/NuGet/NuGet.Config',
-        userProfile: '/Users/Test/.nuget/NuGet/NuGet.Config',
-        solutionLocal: ['/Solution/NuGet.Config'],
+        machineWide: "/ProgramData/NuGet/NuGet.Config",
+        userProfile: "/Users/Test/.nuget/NuGet/NuGet.Config",
+        solutionLocal: ["/Solution/NuGet.Config"],
       });
 
       const machineWideSources = [
         new NuGetSource(
-          'nuget.org',
-          'https://api.nuget.org/v3/index.json',
+          "nuget.org",
+          "https://api.nuget.org/v3/index.json",
           true,
           NuGetConfigScope.MachineWide,
-          '/ProgramData/NuGet/NuGet.Config'
+          "/ProgramData/NuGet/NuGet.Config",
         ),
       ];
 
       const userProfileSources = [
         new NuGetSource(
-          'MyFeed',
-          'https://example.com/nuget',
+          "MyFeed",
+          "https://example.com/nuget",
           true,
           NuGetConfigScope.UserProfile,
-          '/Users/Test/.nuget/NuGet/NuGet.Config'
+          "/Users/Test/.nuget/NuGet/NuGet.Config",
         ),
       ];
 
       const solutionLocalSources = [
         new NuGetSource(
-          'PrivateFeed',
-          'https://pkgs.dev.azure.com/myorg/_packaging/myfeed/nuget/v3/index.json',
+          "PrivateFeed",
+          "https://pkgs.dev.azure.com/myorg/_packaging/myfeed/nuget/v3/index.json",
           true,
           NuGetConfigScope.SolutionLocal,
-          '/Solution/NuGet.Config'
+          "/Solution/NuGet.Config",
         ),
       ];
 
@@ -68,7 +68,7 @@ describe('NuGetConfigResolver', () => {
 
       mockParserInstance.parsePackageSourceMappings.mockReturnValue([]);
 
-      const resolution = resolver.resolve('/Solution/MySolution.sln');
+      const resolution = resolver.resolve("/Solution/MySolution.sln");
 
       expect(resolution.sources).toHaveLength(3);
       expect(resolution.sourcesByScope.machineWide).toHaveLength(1);
@@ -76,119 +76,121 @@ describe('NuGetConfigResolver', () => {
       expect(resolution.sourcesByScope.solutionLocal).toHaveLength(1);
     });
 
-    it('should override machine-wide sources with user-profile sources of the same name', () => {
+    it("should override machine-wide sources with user-profile sources of the same name", () => {
       mockParserInstance.findAllConfigs.mockReturnValue({
-        machineWide: '/ProgramData/NuGet/NuGet.Config',
-        userProfile: '/Users/Test/.nuget/NuGet/NuGet.Config',
+        machineWide: "/ProgramData/NuGet/NuGet.Config",
+        userProfile: "/Users/Test/.nuget/NuGet/NuGet.Config",
         solutionLocal: [],
       });
 
       const machineWideSources = [
         new NuGetSource(
-          'SharedFeed',
-          'https://machine.example.com/nuget',
+          "SharedFeed",
+          "https://machine.example.com/nuget",
           true,
           NuGetConfigScope.MachineWide,
-          '/ProgramData/NuGet/NuGet.Config'
+          "/ProgramData/NuGet/NuGet.Config",
         ),
       ];
 
       const userProfileSources = [
         new NuGetSource(
-          'SharedFeed',
-          'https://user.example.com/nuget',
+          "SharedFeed",
+          "https://user.example.com/nuget",
           true,
           NuGetConfigScope.UserProfile,
-          '/Users/Test/.nuget/NuGet/NuGet.Config'
+          "/Users/Test/.nuget/NuGet/NuGet.Config",
         ),
       ];
 
-      mockParserInstance.parse.mockReturnValueOnce(machineWideSources).mockReturnValueOnce(userProfileSources);
+      mockParserInstance.parse
+        .mockReturnValueOnce(machineWideSources)
+        .mockReturnValueOnce(userProfileSources);
 
       mockParserInstance.parsePackageSourceMappings.mockReturnValue([]);
 
-      const resolution = resolver.resolve('/Solution/MySolution.sln');
+      const resolution = resolver.resolve("/Solution/MySolution.sln");
 
       // Should have only 1 source (user-profile overrides machine-wide)
       expect(resolution.sources).toHaveLength(1);
-      expect(resolution.sources[0].url).toBe('https://user.example.com/nuget');
+      expect(resolution.sources[0].url).toBe("https://user.example.com/nuget");
       expect(resolution.sources[0].scope).toBe(NuGetConfigScope.UserProfile);
     });
 
-    it('should filter out disabled sources', () => {
+    it("should filter out disabled sources", () => {
       mockParserInstance.findAllConfigs.mockReturnValue({
-        machineWide: '/ProgramData/NuGet/NuGet.Config',
+        machineWide: "/ProgramData/NuGet/NuGet.Config",
         userProfile: undefined,
         solutionLocal: [],
       });
 
       const machineWideSources = [
         new NuGetSource(
-          'EnabledFeed',
-          'https://enabled.example.com/nuget',
+          "EnabledFeed",
+          "https://enabled.example.com/nuget",
           true,
           NuGetConfigScope.MachineWide,
-          '/ProgramData/NuGet/NuGet.Config'
+          "/ProgramData/NuGet/NuGet.Config",
         ),
         new NuGetSource(
-          'DisabledFeed',
-          'https://disabled.example.com/nuget',
+          "DisabledFeed",
+          "https://disabled.example.com/nuget",
           false,
           NuGetConfigScope.MachineWide,
-          '/ProgramData/NuGet/NuGet.Config'
+          "/ProgramData/NuGet/NuGet.Config",
         ),
       ];
 
       mockParserInstance.parse.mockReturnValueOnce(machineWideSources);
       mockParserInstance.parsePackageSourceMappings.mockReturnValue([]);
 
-      const resolution = resolver.resolve('/Solution/MySolution.sln');
+      const resolution = resolver.resolve("/Solution/MySolution.sln");
 
       expect(resolution.sources).toHaveLength(1);
-      expect(resolution.sources[0].name).toBe('EnabledFeed');
+      expect(resolution.sources[0].name).toBe("EnabledFeed");
     });
 
-    it('should extract package source mappings from solution-local configs', () => {
+    it("should extract package source mappings from solution-local configs", () => {
       mockParserInstance.findAllConfigs.mockReturnValue({
         machineWide: undefined,
         userProfile: undefined,
-        solutionLocal: ['/Solution/NuGet.Config'],
+        solutionLocal: ["/Solution/NuGet.Config"],
       });
 
       mockParserInstance.parse.mockReturnValue([]);
 
       const mappings = [
-        new PackageSourceMapping('Microsoft.*', ['nuget.org']),
-        new PackageSourceMapping('Contoso.*', ['MyPrivateFeed']),
+        new PackageSourceMapping("Microsoft.*", ["nuget.org"]),
+        new PackageSourceMapping("Contoso.*", ["MyPrivateFeed"]),
       ];
 
       mockParserInstance.parsePackageSourceMappings.mockReturnValue(mappings);
 
-      const resolution = resolver.resolve('/Solution/MySolution.sln');
+      const resolution = resolver.resolve("/Solution/MySolution.sln");
 
       expect(resolution.packageSourceMappings).toHaveLength(2);
-      expect(resolution.packageSourceMappings[0].pattern).toBe('Microsoft.*');
-      expect(resolution.packageSourceMappings[1].pattern).toBe('Contoso.*');
+      expect(resolution.packageSourceMappings[0].pattern).toBe("Microsoft.*");
+      expect(resolution.packageSourceMappings[1].pattern).toBe("Contoso.*");
     });
   });
 
-  describe('getPrivateFeeds', () => {
-    it('should filter private feeds', () => {
+  describe("getPrivateFeeds", () => {
+    it("should filter private feeds", () => {
       const resolution = {
         sources: [
           new NuGetSource(
-            'nuget.org',
-            'https://api.nuget.org/v3/index.json',
+            "nuget.org",
+            "https://api.nuget.org/v3/index.json",
             true,
             NuGetConfigScope.MachineWide,
-            ''
+            "",
           ),
           new NuGetSource(
-            'PrivateFeed',
-            'https://example.com/nuget',
+            "PrivateFeed",
+            "https://example.com/nuget",
             true,
             NuGetConfigScope.SolutionLocal,
-            ''
+            "",
           ),
         ],
         sourcesByScope: { machineWide: [], userProfile: [], solutionLocal: [] },
@@ -199,106 +201,151 @@ describe('NuGetConfigResolver', () => {
       const privateFeeds = resolver.getPrivateFeeds(resolution);
 
       expect(privateFeeds).toHaveLength(1);
-      expect(privateFeeds[0].name).toBe('PrivateFeed');
+      expect(privateFeeds[0].name).toBe("PrivateFeed");
     });
   });
 
-  describe('getAllowedSourcesForPackage', () => {
-    it('should return all sources if no mappings exist', () => {
+  describe("getAllowedSourcesForPackage", () => {
+    it("should return all sources if no mappings exist", () => {
       const resolution = {
         sources: [
-          new NuGetSource('nuget.org', 'https://api.nuget.org/v3/index.json', true, NuGetConfigScope.MachineWide, ''),
-          new NuGetSource('MyFeed', 'https://example.com/nuget', true, NuGetConfigScope.SolutionLocal, ''),
+          new NuGetSource(
+            "nuget.org",
+            "https://api.nuget.org/v3/index.json",
+            true,
+            NuGetConfigScope.MachineWide,
+            "",
+          ),
+          new NuGetSource(
+            "MyFeed",
+            "https://example.com/nuget",
+            true,
+            NuGetConfigScope.SolutionLocal,
+            "",
+          ),
         ],
         sourcesByScope: { machineWide: [], userProfile: [], solutionLocal: [] },
         packageSourceMappings: [],
         configPaths: { solutionLocal: [] },
       };
 
-      const allowedSources = resolver.getAllowedSourcesForPackage(resolution, 'Newtonsoft.Json');
+      const allowedSources = resolver.getAllowedSourcesForPackage(resolution, "Newtonsoft.Json");
 
       expect(allowedSources).toHaveLength(2);
-      expect(allowedSources).toContain('nuget.org');
-      expect(allowedSources).toContain('MyFeed');
+      expect(allowedSources).toContain("nuget.org");
+      expect(allowedSources).toContain("MyFeed");
     });
 
-    it('should return mapped sources for matching package patterns', () => {
+    it("should return mapped sources for matching package patterns", () => {
       const resolution = {
         sources: [
-          new NuGetSource('nuget.org', 'https://api.nuget.org/v3/index.json', true, NuGetConfigScope.MachineWide, ''),
-          new NuGetSource('MyFeed', 'https://example.com/nuget', true, NuGetConfigScope.SolutionLocal, ''),
+          new NuGetSource(
+            "nuget.org",
+            "https://api.nuget.org/v3/index.json",
+            true,
+            NuGetConfigScope.MachineWide,
+            "",
+          ),
+          new NuGetSource(
+            "MyFeed",
+            "https://example.com/nuget",
+            true,
+            NuGetConfigScope.SolutionLocal,
+            "",
+          ),
         ],
         sourcesByScope: { machineWide: [], userProfile: [], solutionLocal: [] },
         packageSourceMappings: [
-          new PackageSourceMapping('Microsoft.*', ['nuget.org']),
-          new PackageSourceMapping('Contoso.*', ['MyFeed']),
+          new PackageSourceMapping("Microsoft.*", ["nuget.org"]),
+          new PackageSourceMapping("Contoso.*", ["MyFeed"]),
         ],
         configPaths: { solutionLocal: [] },
       };
 
-      const allowedSources = resolver.getAllowedSourcesForPackage(resolution, 'Microsoft.Extensions.Logging');
+      const allowedSources = resolver.getAllowedSourcesForPackage(
+        resolution,
+        "Microsoft.Extensions.Logging",
+      );
 
       expect(allowedSources).toHaveLength(1);
-      expect(allowedSources).toContain('nuget.org');
+      expect(allowedSources).toContain("nuget.org");
     });
 
-    it('should return empty array if package does not match any mapping (strict mode)', () => {
+    it("should return empty array if package does not match any mapping (strict mode)", () => {
       const resolution = {
         sources: [
-          new NuGetSource('nuget.org', 'https://api.nuget.org/v3/index.json', true, NuGetConfigScope.MachineWide, ''),
+          new NuGetSource(
+            "nuget.org",
+            "https://api.nuget.org/v3/index.json",
+            true,
+            NuGetConfigScope.MachineWide,
+            "",
+          ),
         ],
         sourcesByScope: { machineWide: [], userProfile: [], solutionLocal: [] },
-        packageSourceMappings: [
-          new PackageSourceMapping('Microsoft.*', ['nuget.org']),
-        ],
+        packageSourceMappings: [new PackageSourceMapping("Microsoft.*", ["nuget.org"])],
         configPaths: { solutionLocal: [] },
       };
 
-      const allowedSources = resolver.getAllowedSourcesForPackage(resolution, 'Newtonsoft.Json');
+      const allowedSources = resolver.getAllowedSourcesForPackage(resolution, "Newtonsoft.Json");
 
       expect(allowedSources).toHaveLength(0);
     });
   });
 
-  describe('canSourcePackageFrom', () => {
-    it('should return true if package can be sourced from feed', () => {
+  describe("canSourcePackageFrom", () => {
+    it("should return true if package can be sourced from feed", () => {
       const resolution = {
         sources: [
-          new NuGetSource('nuget.org', 'https://api.nuget.org/v3/index.json', true, NuGetConfigScope.MachineWide, ''),
+          new NuGetSource(
+            "nuget.org",
+            "https://api.nuget.org/v3/index.json",
+            true,
+            NuGetConfigScope.MachineWide,
+            "",
+          ),
         ],
         sourcesByScope: { machineWide: [], userProfile: [], solutionLocal: [] },
-        packageSourceMappings: [
-          new PackageSourceMapping('Microsoft.*', ['nuget.org']),
-        ],
+        packageSourceMappings: [new PackageSourceMapping("Microsoft.*", ["nuget.org"])],
         configPaths: { solutionLocal: [] },
       };
 
       const canSource = resolver.canSourcePackageFrom(
         resolution,
-        'Microsoft.Extensions.Logging',
-        'nuget.org'
+        "Microsoft.Extensions.Logging",
+        "nuget.org",
       );
 
       expect(canSource).toBe(true);
     });
 
-    it('should return false if package cannot be sourced from feed', () => {
+    it("should return false if package cannot be sourced from feed", () => {
       const resolution = {
         sources: [
-          new NuGetSource('nuget.org', 'https://api.nuget.org/v3/index.json', true, NuGetConfigScope.MachineWide, ''),
-          new NuGetSource('MyFeed', 'https://example.com/nuget', true, NuGetConfigScope.SolutionLocal, ''),
+          new NuGetSource(
+            "nuget.org",
+            "https://api.nuget.org/v3/index.json",
+            true,
+            NuGetConfigScope.MachineWide,
+            "",
+          ),
+          new NuGetSource(
+            "MyFeed",
+            "https://example.com/nuget",
+            true,
+            NuGetConfigScope.SolutionLocal,
+            "",
+          ),
         ],
         sourcesByScope: { machineWide: [], userProfile: [], solutionLocal: [] },
-        packageSourceMappings: [
-          new PackageSourceMapping('Microsoft.*', ['nuget.org']),
-        ],
+        packageSourceMappings: [new PackageSourceMapping("Microsoft.*", ["nuget.org"])],
         configPaths: { solutionLocal: [] },
       };
 
       const canSource = resolver.canSourcePackageFrom(
         resolution,
-        'Microsoft.Extensions.Logging',
-        'MyFeed'
+        "Microsoft.Extensions.Logging",
+        "MyFeed",
       );
 
       expect(canSource).toBe(false);

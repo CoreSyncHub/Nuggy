@@ -1,6 +1,6 @@
-import { type CancellationToken } from 'vscode';
-import { type IRequest } from './IRequest';
-import { InjectionToken } from '../../InjectionToken';
+import { type CancellationToken } from "vscode";
+import { type IRequest } from "./IRequest";
+import { InjectionToken } from "../../InjectionToken";
 
 /**
  * Abstraction for sending requests to their handlers.
@@ -18,8 +18,8 @@ export interface IBus {
    */
   Send<TResponse>(
     request: IRequest<TResponse>,
-    cancellationToken?: CancellationToken
+    cancellationToken?: CancellationToken,
   ): Promise<TResponse>;
 }
 
-export const BUS = new InjectionToken<IBus>('IBus');
+export const BUS = new InjectionToken<IBus>("IBus");

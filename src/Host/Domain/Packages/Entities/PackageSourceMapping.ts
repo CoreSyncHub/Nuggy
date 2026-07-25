@@ -8,7 +8,7 @@ export class PackageSourceMapping {
     public readonly pattern: string,
 
     /** Source names that can provide packages matching this pattern */
-    public readonly sourceNames: string[]
+    public readonly sourceNames: string[],
   ) {}
 
   /**
@@ -19,10 +19,10 @@ export class PackageSourceMapping {
     // Convert glob pattern to regex
     // Escape special regex characters except *
     const regexPattern = this.pattern
-      .replace(/[.+?^${}()|[\]\\]/g, '\\$&') // Escape special chars
-      .replace(/\*/g, '.*'); // Convert * to .*
+      .replace(/[.+?^${}()|[\]\\]/g, "\\$&") // Escape special chars
+      .replace(/\*/g, ".*"); // Convert * to .*
 
-    const regex = new RegExp(`^${regexPattern}$`, 'i');
+    const regex = new RegExp(`^${regexPattern}$`, "i");
     return regex.test(packageId);
   }
 }

@@ -1,17 +1,17 @@
 /**
  * Package management mode
  */
-export type PackageManagementMode = 'Central' | 'Local' | 'Mixed' | 'Unknown';
+export type PackageManagementMode = "Central" | "Local" | "Mixed" | "Unknown";
 
 /**
  * Package diagnostic severity
  */
-export type PackageDiagnosticSeverity = 'Error' | 'Warning' | 'Info';
+export type PackageDiagnosticSeverity = "Error" | "Warning" | "Info";
 
 /**
  * Package source type
  */
-export type PackageSourceType = 'CPM' | 'Local' | 'Legacy';
+export type PackageSourceType = "CPM" | "Local" | "Legacy";
 
 /**
  * DTO for a package version (from Directory.Packages.props)
@@ -133,7 +133,7 @@ export interface PackageManagementDiagnosticDto {
   diagnostics: PackageDiagnosticDto[];
 
   /** Solution type (SLNX or SLN) */
-  solutionType: 'SLNX' | 'SLN';
+  solutionType: "SLNX" | "SLN";
 
   /** Solution name */
   solutionName: string;

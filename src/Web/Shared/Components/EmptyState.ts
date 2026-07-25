@@ -1,15 +1,15 @@
-import { html, css } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-import { LitElement } from 'lit';
+import { html, css } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { LitElement } from "lit";
 
 /**
  * Empty State Component
  * Displays a message when there's no content to show.
  */
-@customElement('empty-state')
+@customElement("empty-state")
 export class EmptyState extends LitElement {
-  @property({ type: String }) message = '';
-  @property({ type: String }) icon = 'ℹ️';
+  @property({ type: String }) message = "";
+  @property({ type: String }) icon = "ℹ️";
 
   static styles = css`
     :host {
@@ -45,6 +45,6 @@ export class EmptyState extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'empty-state': EmptyState;
+    "empty-state": EmptyState;
   }
 }

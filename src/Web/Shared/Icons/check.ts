@@ -1,8 +1,8 @@
-import { customElement, property } from 'lit/decorators.js';
-import { BaseComponent } from '../Components/BaseComponent';
-import { html } from 'lit';
+import { customElement, property } from "lit/decorators.js";
+import { BaseComponent } from "../Components/BaseComponent";
+import { html } from "lit";
 
-@customElement('icon-check')
+@customElement("icon-check")
 export class CheckIcon extends BaseComponent {
   @property({ type: Number }) size: number = 16;
 
@@ -45,6 +45,6 @@ export class CheckIcon extends BaseComponent {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'icon-check': CheckIcon;
+    "icon-check": CheckIcon;
   }
 }

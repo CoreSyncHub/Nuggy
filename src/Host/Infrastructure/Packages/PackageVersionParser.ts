@@ -1,8 +1,8 @@
-import * as fs from 'fs';
-import { XMLParser } from 'fast-xml-parser';
-import { singleton } from 'tsyringe';
-import { PackageVersion } from '../../Domain/Packages/Entities/PackageVersion';
-import { PackageIdentity } from '../../Domain/Packages/ValueObjects/PackageIdentity';
+import * as fs from "fs";
+import { XMLParser } from "fast-xml-parser";
+import { singleton } from "tsyringe";
+import { PackageVersion } from "../../Domain/Packages/Entities/PackageVersion";
+import { PackageIdentity } from "../../Domain/Packages/ValueObjects/PackageIdentity";
 
 /**
  * Parser for extracting PackageVersion entries from Directory.Packages.props
@@ -11,7 +11,7 @@ import { PackageIdentity } from '../../Domain/Packages/ValueObjects/PackageIdent
 export class PackageVersionParser {
   private readonly xmlParser = new XMLParser({
     ignoreAttributes: false,
-    attributeNamePrefix: '@_',
+    attributeNamePrefix: "@_",
     parseAttributeValue: false,
     trimValues: true,
   });
@@ -20,7 +20,7 @@ export class PackageVersionParser {
    * Parses a Directory.Packages.props file and extracts all PackageVersion entries
    */
   public parse(filePath: string): PackageVersion[] {
-    const content = fs.readFileSync(filePath, 'utf-8');
+    const content = fs.readFileSync(filePath, "utf-8");
     const parsed = this.xmlParser.parse(content);
 
     if (!parsed.Project) {
@@ -34,9 +34,7 @@ export class PackageVersionParser {
       return [];
     }
 
-    const itemGroups = Array.isArray(project.ItemGroup)
-      ? project.ItemGroup
-      : [project.ItemGroup];
+    const itemGroups = Array.isArray(project.ItemGroup) ? project.ItemGroup : [project.ItemGroup];
 
     for (const itemGroup of itemGroups) {
       if (itemGroup.PackageVersion) {
@@ -45,8 +43,8 @@ export class PackageVersionParser {
           : [itemGroup.PackageVersion];
 
         for (const element of packageVersionElements) {
-          const name = element['@_Include'];
-          const version = element['@_Version'];
+          const name = element["@_Include"];
+          const version = element["@_Version"];
 
           if (name) {
             const identity = new PackageIdentity(name, version);
@@ -64,7 +62,7 @@ export class PackageVersionParser {
    */
   public isCpmEnabled(filePath: string): boolean {
     try {
-      const content = fs.readFileSync(filePath, 'utf-8');
+      const content = fs.readFileSync(filePath, "utf-8");
       const parsed = this.xmlParser.parse(content);
 
       if (!parsed.Project || !parsed.Project.PropertyGroup) {
@@ -76,10 +74,10 @@ export class PackageVersionParser {
         : [parsed.Project.PropertyGroup];
 
       for (const group of propertyGroups) {
-        const managePackageVersionsCentrally = group['ManagePackageVersionsCentrally'];
+        const managePackageVersionsCentrally = group["ManagePackageVersionsCentrally"];
         if (
           managePackageVersionsCentrally &&
-          managePackageVersionsCentrally.toString().toLowerCase() === 'true'
+          managePackageVersionsCentrally.toString().toLowerCase() === "true"
         ) {
           return true;
         }

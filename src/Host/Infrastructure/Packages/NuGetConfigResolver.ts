@@ -47,18 +47,28 @@ export class NuGetConfigResolver {
     const solutionLocalSources: NuGetSource[] = [];
 
     if (configPaths.machineWide) {
-      machineWideSources.push(...this.nuGetConfigParser.parse(configPaths.machineWide, NuGetConfigScope.MachineWide));
+      machineWideSources.push(
+        ...this.nuGetConfigParser.parse(configPaths.machineWide, NuGetConfigScope.MachineWide),
+      );
     }
 
     if (configPaths.userProfile) {
-      userProfileSources.push(...this.nuGetConfigParser.parse(configPaths.userProfile, NuGetConfigScope.UserProfile));
+      userProfileSources.push(
+        ...this.nuGetConfigParser.parse(configPaths.userProfile, NuGetConfigScope.UserProfile),
+      );
     }
 
     for (const configPath of configPaths.solutionLocal) {
-      solutionLocalSources.push(...this.nuGetConfigParser.parse(configPath, NuGetConfigScope.SolutionLocal));
+      solutionLocalSources.push(
+        ...this.nuGetConfigParser.parse(configPath, NuGetConfigScope.SolutionLocal),
+      );
     }
 
-    const mergedSources = this.mergeSources(machineWideSources, userProfileSources, solutionLocalSources);
+    const mergedSources = this.mergeSources(
+      machineWideSources,
+      userProfileSources,
+      solutionLocalSources,
+    );
 
     const packageSourceMappings: PackageSourceMapping[] = [];
     for (const configPath of configPaths.solutionLocal) {
@@ -129,19 +139,28 @@ export class NuGetConfigResolver {
   }
 
   public hasSource(resolution: NuGetConfigResolution, sourceName: string): boolean {
-    return resolution.sources.some((source) => source.name.toLowerCase() === sourceName.toLowerCase());
+    return resolution.sources.some(
+      (source) => source.name.toLowerCase() === sourceName.toLowerCase(),
+    );
   }
 
   public getSource(resolution: NuGetConfigResolution, sourceName: string): NuGetSource | undefined {
-    return resolution.sources.find((source) => source.name.toLowerCase() === sourceName.toLowerCase());
+    return resolution.sources.find(
+      (source) => source.name.toLowerCase() === sourceName.toLowerCase(),
+    );
   }
 
-  public getAllowedSourcesForPackage(resolution: NuGetConfigResolution, packageId: string): string[] {
+  public getAllowedSourcesForPackage(
+    resolution: NuGetConfigResolution,
+    packageId: string,
+  ): string[] {
     if (resolution.packageSourceMappings.length === 0) {
       return resolution.sources.map((s) => s.name);
     }
 
-    const matchingMappings = resolution.packageSourceMappings.filter((mapping) => mapping.matches(packageId));
+    const matchingMappings = resolution.packageSourceMappings.filter((mapping) =>
+      mapping.matches(packageId),
+    );
 
     if (matchingMappings.length === 0) {
       return [];
@@ -157,7 +176,11 @@ export class NuGetConfigResolver {
     return Array.from(allowedSources);
   }
 
-  public canSourcePackageFrom(resolution: NuGetConfigResolution, packageId: string, sourceName: string): boolean {
+  public canSourcePackageFrom(
+    resolution: NuGetConfigResolution,
+    packageId: string,
+    sourceName: string,
+  ): boolean {
     const allowedSources = this.getAllowedSourcesForPackage(resolution, packageId);
 
     if (allowedSources.length === 0) {

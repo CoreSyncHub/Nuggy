@@ -1,10 +1,10 @@
-import type { Webview } from 'vscode';
-import type { IDispatcher } from '@Shared/Abstractions/Messaging/IDispatcher';
-import { type ILogger, LOGGER } from '@Application/Abstractions/Log/ILogger';
-import { injectToken } from '@Shared/DependencyInjection/inject';
+import type { Webview } from "vscode";
+import type { IDispatcher } from "@Shared/Abstractions/Messaging/IDispatcher";
+import { type ILogger, LOGGER } from "@Application/Abstractions/Log/ILogger";
+import { injectToken } from "@Shared/DependencyInjection/inject";
 
 type MessageHeaders = {
-  Type: 'REQUEST' | 'RESPONSE' | 'EVENT';
+  Type: "REQUEST" | "RESPONSE" | "EVENT";
   Command: string;
   CorrelationId: number;
 };
@@ -26,14 +26,14 @@ export class WebMediator {
   constructor(
     private readonly webview: Webview,
     private readonly dispatcher: IDispatcher,
-    @injectToken(LOGGER) private readonly logger: ILogger
+    @injectToken(LOGGER) private readonly logger: ILogger,
   ) {
     this.webview.onDidReceiveMessage((message: Envelope) => {
-      this.logger.Info('Received message from webview', { message });
+      this.logger.Info("Received message from webview", { message });
       try {
         this.handleMessage(message);
       } catch (error) {
-        this.logger.Error('Error handling message in WebMediator', error as Error);
+        this.logger.Error("Error handling message in WebMediator", error as Error);
       }
     });
   }
@@ -46,7 +46,7 @@ export class WebMediator {
   public sendEvent(eventName: string, payload: any): void {
     const envelope: Envelope = {
       Headers: {
-        Type: 'EVENT',
+        Type: "EVENT",
         Command: eventName,
         CorrelationId: 0,
       },
@@ -65,7 +65,7 @@ export class WebMediator {
       return;
     }
     const headers = message.Headers;
-    if (headers.Type === 'REQUEST') {
+    if (headers.Type === "REQUEST") {
       await this.handleRequest(message);
     }
     // Host does not handle RESPONSE messages in this mediator
@@ -82,14 +82,14 @@ export class WebMediator {
         const body = (message.Body ?? {}) as Record<string, unknown>;
         const instance = new ctor();
         for (const key of Object.keys(body)) {
-          if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+          if (key === "__proto__" || key === "constructor" || key === "prototype") {
             continue;
           }
           instance[key] = body[key];
         }
         requestObj = instance;
       } catch (e) {
-        this.logger.Warning('Failed to instantiate request ctor', { Command, error: e });
+        this.logger.Warning("Failed to instantiate request ctor", { Command, error: e });
       }
     }
 
@@ -97,7 +97,7 @@ export class WebMediator {
       const response = await this.dispatcher.Send(requestObj);
       const envelope: Envelope = {
         Headers: {
-          Type: 'RESPONSE',
+          Type: "RESPONSE",
           Command: Command,
           CorrelationId: CorrelationId,
         },
@@ -107,7 +107,7 @@ export class WebMediator {
     } catch (error) {
       const envelope: Envelope = {
         Headers: {
-          Type: 'RESPONSE',
+          Type: "RESPONSE",
           Command: Command,
           CorrelationId: CorrelationId,
         },

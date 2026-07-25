@@ -1,4 +1,4 @@
-import { PackageDiagnosticSeverity } from '../Enums/PackageDiagnosticSeverity';
+import { PackageDiagnosticSeverity } from "../Enums/PackageDiagnosticSeverity";
 
 /**
  * Represents a diagnostic message about package management
@@ -9,7 +9,7 @@ export class PackageDiagnostic {
     public readonly message: string,
     public readonly packageName: string,
     public readonly projectPath?: string,
-    public readonly filePath?: string
+    public readonly filePath?: string,
   ) {}
 
   /**
@@ -19,14 +19,14 @@ export class PackageDiagnostic {
     message: string,
     packageName: string,
     projectPath?: string,
-    filePath?: string
+    filePath?: string,
   ): PackageDiagnostic {
     return new PackageDiagnostic(
       PackageDiagnosticSeverity.Warning,
       message,
       packageName,
       projectPath,
-      filePath
+      filePath,
     );
   }
 
@@ -37,14 +37,14 @@ export class PackageDiagnostic {
     message: string,
     packageName: string,
     projectPath?: string,
-    filePath?: string
+    filePath?: string,
   ): PackageDiagnostic {
     return new PackageDiagnostic(
       PackageDiagnosticSeverity.Error,
       message,
       packageName,
       projectPath,
-      filePath
+      filePath,
     );
   }
 
@@ -55,14 +55,14 @@ export class PackageDiagnostic {
     message: string,
     packageName: string,
     projectPath?: string,
-    filePath?: string
+    filePath?: string,
   ): PackageDiagnostic {
     return new PackageDiagnostic(
       PackageDiagnosticSeverity.Info,
       message,
       packageName,
       projectPath,
-      filePath
+      filePath,
     );
   }
 }

@@ -1,20 +1,20 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { singleton } from 'tsyringe';
-import { SolutionFolder, SolutionProject } from '../../Domain/Solutions/Entities/SolutionFolder';
-import { SolutionItemId } from '../../Domain/Solutions/ValueObjects/SolutionItemId';
+import * as fs from "fs";
+import * as path from "path";
+import { singleton } from "tsyringe";
+import { SolutionFolder, SolutionProject } from "../../Domain/Solutions/Entities/SolutionFolder";
+import { SolutionItemId } from "../../Domain/Solutions/ValueObjects/SolutionItemId";
 
 /**
  * Project type GUIDs used in .sln files
  */
 export const ProjectTypeGuids = {
-  SolutionFolder: '{2150E333-8FDC-42A3-9474-1A3956D46DE8}',
-  CSharpProject: '{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}',
-  CSharpSdkProject: '{9A19103F-16F7-4668-BE54-9A1E7A4F7556}',
-  FSharpProject: '{F2A71F9B-5D33-465A-A702-920D77279786}',
-  VBNetProject: '{F184B08F-C81C-45F6-A57F-5ABD9991F28F}',
-  WebProject: '{E24C65DC-7377-472B-9ABA-BC803B73C61A}',
-  WebApplicationProject: '{603C0E0B-DB56-11DC-BE95-000D561079B0}',
+  SolutionFolder: "{2150E333-8FDC-42A3-9474-1A3956D46DE8}",
+  CSharpProject: "{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}",
+  CSharpSdkProject: "{9A19103F-16F7-4668-BE54-9A1E7A4F7556}",
+  FSharpProject: "{F2A71F9B-5D33-465A-A702-920D77279786}",
+  VBNetProject: "{F184B08F-C81C-45F6-A57F-5ABD9991F28F}",
+  WebProject: "{E24C65DC-7377-472B-9ABA-BC803B73C61A}",
+  WebApplicationProject: "{603C0E0B-DB56-11DC-BE95-000D561079B0}",
 };
 
 interface SlnProjectEntry {
@@ -42,7 +42,7 @@ export class SlnParser {
     folders: SolutionFolder[];
     rootItems: (SolutionFolder | SolutionProject)[];
   } {
-    const content = fs.readFileSync(solutionPath, 'utf-8');
+    const content = fs.readFileSync(solutionPath, "utf-8");
     const solutionDir = path.dirname(solutionPath);
 
     const projectEntries = this.extractProjectEntries(content);
@@ -53,7 +53,8 @@ export class SlnParser {
 
   private extractProjectEntries(content: string): SlnProjectEntry[] {
     const entries: SlnProjectEntry[] = [];
-    const projectRegex = /Project\("({[^}]+})"\)\s*=\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"({[^}]+})"/g;
+    const projectRegex =
+      /Project\("({[^}]+})"\)\s*=\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"({[^}]+})"/g;
 
     let match;
     while ((match = projectRegex.exec(content)) !== null) {
@@ -71,7 +72,8 @@ export class SlnParser {
   private extractNestedProjects(content: string): SlnNestedProject[] {
     const nested: SlnNestedProject[] = [];
 
-    const nestedSectionRegex = /GlobalSection\(NestedProjects\)\s*=\s*preSolution([\s\S]*?)EndGlobalSection/;
+    const nestedSectionRegex =
+      /GlobalSection\(NestedProjects\)\s*=\s*preSolution([\s\S]*?)EndGlobalSection/;
     const nestedMatch = nestedSectionRegex.exec(content);
 
     if (nestedMatch) {
@@ -93,7 +95,7 @@ export class SlnParser {
   private buildHierarchy(
     projectEntries: SlnProjectEntry[],
     nestedProjects: SlnNestedProject[],
-    solutionDir: string
+    solutionDir: string,
   ): {
     projects: SolutionProject[];
     folders: SolutionFolder[];
@@ -166,13 +168,13 @@ export class SlnParser {
       return false;
     }
 
-    if (!filePath.toLowerCase().endsWith('.sln')) {
+    if (!filePath.toLowerCase().endsWith(".sln")) {
       return false;
     }
 
     try {
-      const content = fs.readFileSync(filePath, 'utf-8');
-      return content.includes('Microsoft Visual Studio Solution File');
+      const content = fs.readFileSync(filePath, "utf-8");
+      return content.includes("Microsoft Visual Studio Solution File");
     } catch {
       return false;
     }

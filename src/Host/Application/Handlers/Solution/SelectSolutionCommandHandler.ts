@@ -1,8 +1,8 @@
-import { injectable } from 'tsyringe';
-import { type ICommandHandler } from '@Shared/Abstractions/Messaging/ICommandHandler';
-import { SelectSolutionCommand } from '@Shared/Features/Commands/SelectSolutionCommand';
-import { HandlerFor } from '@Shared/Infrastructure/Messaging/HandlerFor';
-import { SolutionDetector } from '@Infrastructure/Solution/SolutionDetector';
+import { injectable } from "tsyringe";
+import { type ICommandHandler } from "@Shared/Abstractions/Messaging/ICommandHandler";
+import { SelectSolutionCommand } from "@Shared/Features/Commands/SelectSolutionCommand";
+import { HandlerFor } from "@Shared/Infrastructure/Messaging/HandlerFor";
+import { SolutionDetector } from "@Infrastructure/Solution/SolutionDetector";
 
 /**
  * Handler for SelectSolutionCommand

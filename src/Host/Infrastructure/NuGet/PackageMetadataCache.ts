@@ -1,5 +1,5 @@
-import { singleton } from 'tsyringe';
-import { type PackageUpdateInfoDto } from '@Shared/Features/Dtos/PackageUpdateInfoDto';
+import { singleton } from "tsyringe";
+import { type PackageUpdateInfoDto } from "@Shared/Features/Dtos/PackageUpdateInfoDto";
 
 const TTL_MS = 30 * 60 * 1000;
 
@@ -15,7 +15,7 @@ export class PackageMetadataCache {
 
   public async getOrFetch(
     key: string,
-    fetcher: () => Promise<PackageUpdateInfoDto>
+    fetcher: () => Promise<PackageUpdateInfoDto>,
   ): Promise<PackageUpdateInfoDto> {
     const cached = this.entries.get(key);
     if (cached && Date.now() - cached.fetchedAt < TTL_MS) {
@@ -29,7 +29,7 @@ export class PackageMetadataCache {
 
     const promise = fetcher()
       .then((data) => {
-        if (data.fetchStatus === 'Ok') {
+        if (data.fetchStatus === "Ok") {
           this.entries.set(key, { data, fetchedAt: Date.now() });
         }
         return data;

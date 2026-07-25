@@ -1,7 +1,7 @@
-import * as fs from 'fs';
-import { XMLParser } from 'fast-xml-parser';
-import { singleton } from 'tsyringe';
-import { type ProjectSdkType } from '../../Domain/Projects/Enums/ProjectSdkType';
+import * as fs from "fs";
+import { XMLParser } from "fast-xml-parser";
+import { singleton } from "tsyringe";
+import { type ProjectSdkType } from "../../Domain/Projects/Enums/ProjectSdkType";
 
 /**
  * Represents a parsed .csproj file with extracted TFM information
@@ -41,7 +41,7 @@ export interface PropertyGroup {
 export class CsprojParser {
   private readonly xmlParser = new XMLParser({
     ignoreAttributes: false,
-    attributeNamePrefix: '@_',
+    attributeNamePrefix: "@_",
     parseAttributeValue: false,
     trimValues: true,
   });
@@ -50,7 +50,7 @@ export class CsprojParser {
    * Parses a .csproj file
    */
   public parse(csprojPath: string): ParsedCsproj {
-    const content = fs.readFileSync(csprojPath, 'utf-8');
+    const content = fs.readFileSync(csprojPath, "utf-8");
     const parsed = this.xmlParser.parse(content);
 
     if (!parsed.Project) {
@@ -60,7 +60,7 @@ export class CsprojParser {
     const project = parsed.Project;
 
     const sdkType = this.determineSdkType(project);
-    const sdk = project['@_Sdk'];
+    const sdk = project["@_Sdk"];
 
     const propertyGroups = this.extractPropertyGroups(project);
     const tfmInfo = this.extractTargetFrameworks(propertyGroups);
@@ -75,15 +75,15 @@ export class CsprojParser {
   }
 
   private determineSdkType(project: any): ProjectSdkType {
-    if (project['@_Sdk']) {
-      return 'SDK-Style';
+    if (project["@_Sdk"]) {
+      return "SDK-Style";
     }
 
-    if (project['@_ToolsVersion'] || project['@_DefaultTargets']) {
-      return 'Legacy';
+    if (project["@_ToolsVersion"] || project["@_DefaultTargets"]) {
+      return "Legacy";
     }
 
-    return 'Unknown';
+    return "Unknown";
   }
 
   private extractPropertyGroups(project: any): PropertyGroup[] {
@@ -96,20 +96,20 @@ export class CsprojParser {
       : [project.PropertyGroup];
 
     return groups.map((group: any) => {
-      const condition = group['@_Condition'];
+      const condition = group["@_Condition"];
       const properties: Record<string, string> = {};
 
       for (const [key, value] of Object.entries(group)) {
-        if (key.startsWith('@_') || key === 'Condition') {
+        if (key.startsWith("@_") || key === "Condition") {
           continue;
         }
 
-        if (typeof value === 'string') {
+        if (typeof value === "string") {
           properties[key] = value;
-        } else if (typeof value === 'boolean' || typeof value === 'number') {
+        } else if (typeof value === "boolean" || typeof value === "number") {
           properties[key] = String(value);
-        } else if (typeof value === 'object' && value !== null) {
-          const textValue = (value as any)['#text'] || JSON.stringify(value);
+        } else if (typeof value === "object" && value !== null) {
+          const textValue = (value as any)["#text"] || JSON.stringify(value);
           properties[key] = textValue;
         }
       }
@@ -132,7 +132,10 @@ export class CsprojParser {
       if (!group.condition) {
         if (group.properties.TargetFrameworks) {
           const value = group.properties.TargetFrameworks;
-          targetFrameworks = value.split(';').map((f) => f.trim()).filter(Boolean);
+          targetFrameworks = value
+            .split(";")
+            .map((f) => f.trim())
+            .filter(Boolean);
         }
 
         if (group.properties.TargetFramework) {
@@ -151,7 +154,10 @@ export class CsprojParser {
         if (group.condition) {
           if (group.properties.TargetFrameworks) {
             const value = group.properties.TargetFrameworks;
-            targetFrameworks = value.split(';').map((f) => f.trim()).filter(Boolean);
+            targetFrameworks = value
+              .split(";")
+              .map((f) => f.trim())
+              .filter(Boolean);
             break;
           }
 
@@ -173,8 +179,8 @@ export class CsprojParser {
   }
 
   private convertLegacyFrameworkVersion(legacyVersion: string): string {
-    const version = legacyVersion.replace(/^v/, '');
-    const tfmNumber = version.replace(/\./g, '');
+    const version = legacyVersion.replace(/^v/, "");
+    const tfmNumber = version.replace(/\./g, "");
     return `net${tfmNumber}`;
   }
 

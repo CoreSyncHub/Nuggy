@@ -1,4 +1,4 @@
-export type PackageReferenceStyle = 'PackageReference' | 'CpmManaged' | 'PackagesConfig';
+export type PackageReferenceStyle = "PackageReference" | "CpmManaged" | "PackagesConfig";
 
 export interface PackageInstallationDto {
   projectPath: string;

@@ -1,4 +1,4 @@
-import { singleton } from 'tsyringe';
+import { singleton } from "tsyringe";
 
 /**
  * Type for translation keys using dot notation
@@ -26,7 +26,7 @@ type LanguageChangeCallback = (language: string) => void;
  */
 @singleton()
 export class TranslationService {
-  private currentLanguage: string = 'en';
+  private currentLanguage: string = "en";
   private translations: TranslationDictionary = {};
   private listeners: Set<LanguageChangeCallback> = new Set();
 
@@ -43,8 +43,8 @@ export class TranslationService {
       if (!response.ok) {
         console.error(`Failed to load language file: ${lang}.json`);
         // Fallback to English if the language file can't be loaded
-        if (lang !== 'en') {
-          await this.loadLanguage('en');
+        if (lang !== "en") {
+          await this.loadLanguage("en");
         }
         return;
       }
@@ -57,8 +57,8 @@ export class TranslationService {
     } catch (error) {
       console.error(`Error loading language ${lang}:`, error);
       // Fallback to English on error
-      if (lang !== 'en') {
-        await this.loadLanguage('en');
+      if (lang !== "en") {
+        await this.loadLanguage("en");
       }
     }
   }
@@ -71,11 +71,11 @@ export class TranslationService {
    */
   t(key: TranslationKey, params?: TranslationParams): string {
     // Navigate through the translation object using dot notation
-    const keys = key.split('.');
+    const keys = key.split(".");
     let value: any = this.translations;
 
     for (const k of keys) {
-      if (value && typeof value === 'object' && k in value) {
+      if (value && typeof value === "object" && k in value) {
         value = value[k];
       } else {
         // Key not found, return the key itself as fallback
@@ -85,7 +85,7 @@ export class TranslationService {
     }
 
     // If the final value is not a string, return the key
-    if (typeof value !== 'string') {
+    if (typeof value !== "string") {
       console.warn(`Translation value is not a string for key: ${key}`);
       return key;
     }
@@ -142,7 +142,7 @@ export class TranslationService {
       try {
         callback(this.currentLanguage);
       } catch (error) {
-        console.error('Error in language change listener:', error);
+        console.error("Error in language change listener:", error);
       }
     });
   }

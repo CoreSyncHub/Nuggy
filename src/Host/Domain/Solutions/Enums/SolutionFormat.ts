@@ -1,10 +1,10 @@
-import { type ObjectEnumType } from '@/Shared/Types/ObjetEnumType';
+import { type ObjectEnumType } from "@/Shared/Types/ObjetEnumType";
 
 export const SolutionFormat = {
   /** Classic .sln format with GUIDs */
-  Sln: 'sln',
+  Sln: "sln",
   /** New XML-based .slnx format */
-  Slnx: 'slnx',
+  Slnx: "slnx",
 } as const;
 
 export type SolutionFormat = ObjectEnumType<typeof SolutionFormat>;

@@ -1,24 +1,24 @@
-import * as vscode from 'vscode';
-import { type ILogger, LOGGER } from '@Application/Abstractions/Log/ILogger';
-import { getHtmlForWebview } from './webviewHtml';
-import { WebMediator } from './WebMediator';
-import { type IDispatcher, DISPATCHER } from '../../Shared/Abstractions/Messaging/IDispatcher';
-import { container } from 'tsyringe';
-import { GetLanguageQuery } from '@/Shared/Features/Queries/GetLanguageQuery';
-import { GetWorkspaceSolutionsQuery } from '@/Shared/Features/Queries/GetWorkspaceSolutionsQuery';
-import { GetSolutionStructureQuery } from '@/Shared/Features/Queries/GetSolutionStructureQuery';
-import { GetBuildConfigurationFilesQuery } from '@/Shared/Features/Queries/GetBuildConfigurationFilesQuery';
-import { GetProjectsTfmQuery } from '@/Shared/Features/Queries/GetProjectsTfmQuery';
-import { SelectSolutionCommand } from '@/Shared/Features/Commands/SelectSolutionCommand';
-import { GetSolutionPackagesQuery } from '@Shared/Features/Queries/GetSolutionPackagesQuery';
-import { GetPackageUpdateInfoQuery } from '@Shared/Features/Queries/GetPackageUpdateInfoQuery';
+import * as vscode from "vscode";
+import { type ILogger, LOGGER } from "@Application/Abstractions/Log/ILogger";
+import { getHtmlForWebview } from "./webviewHtml";
+import { WebMediator } from "./WebMediator";
+import { type IDispatcher, DISPATCHER } from "../../Shared/Abstractions/Messaging/IDispatcher";
+import { container } from "tsyringe";
+import { GetLanguageQuery } from "@/Shared/Features/Queries/GetLanguageQuery";
+import { GetWorkspaceSolutionsQuery } from "@/Shared/Features/Queries/GetWorkspaceSolutionsQuery";
+import { GetSolutionStructureQuery } from "@/Shared/Features/Queries/GetSolutionStructureQuery";
+import { GetBuildConfigurationFilesQuery } from "@/Shared/Features/Queries/GetBuildConfigurationFilesQuery";
+import { GetProjectsTfmQuery } from "@/Shared/Features/Queries/GetProjectsTfmQuery";
+import { SelectSolutionCommand } from "@/Shared/Features/Commands/SelectSolutionCommand";
+import { GetSolutionPackagesQuery } from "@Shared/Features/Queries/GetSolutionPackagesQuery";
+import { GetPackageUpdateInfoQuery } from "@Shared/Features/Queries/GetPackageUpdateInfoQuery";
 
 /**
  * Provider for the NuGet Explorer webview displayed in the bottom panel.
  * All business logic is now handled through WebMediator/Dispatcher pattern.
  */
 export class NuGetWebviewProvider implements vscode.WebviewViewProvider {
-  public static readonly viewType = 'nuget-explorer.webview';
+  public static readonly viewType = "nuget-explorer.webview";
 
   private webviewView?: vscode.WebviewView;
   private webMediator?: WebMediator;
@@ -31,15 +31,15 @@ export class NuGetWebviewProvider implements vscode.WebviewViewProvider {
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
     _context: vscode.WebviewViewResolveContext,
-    _token: vscode.CancellationToken
+    _token: vscode.CancellationToken,
   ): void {
     this.webviewView = webviewView;
 
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [
-        vscode.Uri.joinPath(this.extensionUri, 'dist'),
-        vscode.Uri.joinPath(this.extensionUri, 'node_modules'),
+        vscode.Uri.joinPath(this.extensionUri, "dist"),
+        vscode.Uri.joinPath(this.extensionUri, "node_modules"),
       ],
     };
 
@@ -53,26 +53,17 @@ export class NuGetWebviewProvider implements vscode.WebviewViewProvider {
     this.webMediator = new WebMediator(webviewView.webview, dispatcher, logger);
 
     // Register known request/command DTOs so WebMediator can rehydrate instances from JSON.
-    this.webMediator.registerRequestType('GetLanguageQuery', GetLanguageQuery);
+    this.webMediator.registerRequestType("GetLanguageQuery", GetLanguageQuery);
+    this.webMediator.registerRequestType("GetWorkspaceSolutionsQuery", GetWorkspaceSolutionsQuery);
+    this.webMediator.registerRequestType("GetSolutionStructureQuery", GetSolutionStructureQuery);
     this.webMediator.registerRequestType(
-      'GetWorkspaceSolutionsQuery',
-      GetWorkspaceSolutionsQuery
+      "GetBuildConfigurationFilesQuery",
+      GetBuildConfigurationFilesQuery,
     );
-    this.webMediator.registerRequestType(
-      'GetSolutionStructureQuery',
-      GetSolutionStructureQuery
-    );
-    this.webMediator.registerRequestType(
-      'GetBuildConfigurationFilesQuery',
-      GetBuildConfigurationFilesQuery
-    );
-    this.webMediator.registerRequestType(
-      'GetProjectsTfmQuery',
-      GetProjectsTfmQuery
-    );
-    this.webMediator.registerRequestType('SelectSolutionCommand', SelectSolutionCommand);
-    this.webMediator.registerRequestType('GetSolutionPackagesQuery', GetSolutionPackagesQuery);
-    this.webMediator.registerRequestType('GetPackageUpdateInfoQuery', GetPackageUpdateInfoQuery);
+    this.webMediator.registerRequestType("GetProjectsTfmQuery", GetProjectsTfmQuery);
+    this.webMediator.registerRequestType("SelectSolutionCommand", SelectSolutionCommand);
+    this.webMediator.registerRequestType("GetSolutionPackagesQuery", GetSolutionPackagesQuery);
+    this.webMediator.registerRequestType("GetPackageUpdateInfoQuery", GetPackageUpdateInfoQuery);
   }
 
   /**
@@ -81,7 +72,7 @@ export class NuGetWebviewProvider implements vscode.WebviewViewProvider {
    */
   public notifyLanguageChanged(language: string): void {
     if (this.webMediator) {
-      this.webMediator.sendEvent('LanguageChangedEvent', { language });
+      this.webMediator.sendEvent("LanguageChangedEvent", { language });
     }
   }
 }

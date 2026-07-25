@@ -9,7 +9,7 @@ export interface SolutionDto {
   name: string;
 
   /** Format: 'sln' or 'slnx' */
-  format: 'sln' | 'slnx';
+  format: "sln" | "slnx";
 
   /** Workspace folder name */
   workspaceFolder: string;

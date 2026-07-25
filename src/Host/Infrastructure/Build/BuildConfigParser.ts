@@ -1,9 +1,9 @@
-import * as fs from 'fs';
-import { XMLParser } from 'fast-xml-parser';
-import { singleton } from 'tsyringe';
-import { type BuildConfigFile } from '../../Domain/Build/Entities/BuildConfigFile';
-import { type ILogger, LOGGER } from '../../Application/Abstractions/Log/ILogger';
-import { injectToken } from '@Shared/DependencyInjection/inject';
+import * as fs from "fs";
+import { XMLParser } from "fast-xml-parser";
+import { singleton } from "tsyringe";
+import { type BuildConfigFile } from "../../Domain/Build/Entities/BuildConfigFile";
+import { type ILogger, LOGGER } from "../../Application/Abstractions/Log/ILogger";
+import { injectToken } from "@Shared/DependencyInjection/inject";
 
 /**
  * Parser for MSBuild configuration files (.props and .targets)
@@ -12,7 +12,7 @@ import { injectToken } from '@Shared/DependencyInjection/inject';
 export class BuildConfigParser {
   private readonly xmlParser = new XMLParser({
     ignoreAttributes: false,
-    attributeNamePrefix: '@_',
+    attributeNamePrefix: "@_",
     parseAttributeValue: false,
     trimValues: true,
   });
@@ -24,7 +24,7 @@ export class BuildConfigParser {
    */
   public parse(filePath: string, configFile: BuildConfigFile): void {
     try {
-      const content = fs.readFileSync(filePath, 'utf-8');
+      const content = fs.readFileSync(filePath, "utf-8");
       const parsed = this.xmlParser.parse(content);
 
       if (!parsed.Project) {
@@ -51,14 +51,14 @@ export class BuildConfigParser {
 
     for (const group of propertyGroups) {
       for (const [key, value] of Object.entries(group)) {
-        if (key.startsWith('@_') || key === 'Condition') {
+        if (key.startsWith("@_") || key === "Condition") {
           continue;
         }
 
-        if (typeof value === 'string') {
+        if (typeof value === "string") {
           configFile.setProperty(key, value);
-        } else if (typeof value === 'object' && value !== null) {
-          const textValue = (value as any)['#text'] || JSON.stringify(value);
+        } else if (typeof value === "object" && value !== null) {
+          const textValue = (value as any)["#text"] || JSON.stringify(value);
           configFile.setProperty(key, textValue);
         }
       }
@@ -73,16 +73,16 @@ export class BuildConfigParser {
     const imports = Array.isArray(project.Import) ? project.Import : [project.Import];
 
     const parentImportPatterns = [
-      '$(MSBuildThisFileDirectory)',
-      'GetDirectoryNameOfFileAbove',
-      '..\\Directory.Build.props',
-      '../Directory.Build.props',
-      '..\\Directory.Build.targets',
-      '../Directory.Build.targets',
+      "$(MSBuildThisFileDirectory)",
+      "GetDirectoryNameOfFileAbove",
+      "..\\Directory.Build.props",
+      "../Directory.Build.props",
+      "..\\Directory.Build.targets",
+      "../Directory.Build.targets",
     ];
 
     for (const importElement of imports) {
-      const projectAttr = importElement['@_Project'];
+      const projectAttr = importElement["@_Project"];
       if (!projectAttr) {
         continue;
       }
@@ -109,11 +109,11 @@ export class BuildConfigParser {
     const props = configFile.properties;
 
     return {
-      targetFramework: props.get('TargetFramework'),
-      langVersion: props.get('LangVersion'),
-      nullable: props.get('Nullable'),
-      implicitUsings: props.get('ImplicitUsings'),
-      managePackageVersionsCentrally: props.get('ManagePackageVersionsCentrally'),
+      targetFramework: props.get("TargetFramework"),
+      langVersion: props.get("LangVersion"),
+      nullable: props.get("Nullable"),
+      implicitUsings: props.get("ImplicitUsings"),
+      managePackageVersionsCentrally: props.get("ManagePackageVersionsCentrally"),
     };
   }
 }

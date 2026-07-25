@@ -1,7 +1,7 @@
-import { injectable } from 'tsyringe';
-import * as path from 'path';
-import { type IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
-import { GetPackageManagementDiagnosticQuery } from '@Shared/Features/Queries/GetPackageManagementDiagnosticQuery';
+import { injectable } from "tsyringe";
+import * as path from "path";
+import { type IQueryHandler } from "@Shared/Abstractions/Messaging/IQueryHandler";
+import { GetPackageManagementDiagnosticQuery } from "@Shared/Features/Queries/GetPackageManagementDiagnosticQuery";
 import {
   type PackageManagementDiagnosticDto,
   type PackageVersionDto,
@@ -9,17 +9,17 @@ import {
   type LegacyPackageDto,
   type PackageDiagnosticDto,
   type ProjectTypeSummaryDto,
-} from '@Shared/Features/Dtos/PackageManagementDto';
-import { HandlerFor } from '@Shared/Infrastructure/Messaging/HandlerFor';
-import { SlnParser } from '@Infrastructure/Solution/SlnParser';
-import { SlnxParser } from '@Infrastructure/Solution/SlnxParser';
-import { BuildConfigDetector } from '@Infrastructure/Build/BuildConfigDetector';
-import { BuildConfigParser } from '@Infrastructure/Build/BuildConfigParser';
-import { PackageReferenceParser } from '@Infrastructure/Packages/PackageReferenceParser';
-import { type PackageReference } from '@Domain/Packages/Entities/PackageReference';
-import { PackagesConfigParser } from '@Infrastructure/Packages/PackagesConfigParser';
-import { PackageManagementDiagnosticService } from '@Infrastructure/Packages/PackageManagementDiagnosticService';
-import { PackageDiagnosticSeverity } from '@Domain/Packages/Enums/PackageDiagnosticSeverity';
+} from "@Shared/Features/Dtos/PackageManagementDto";
+import { HandlerFor } from "@Shared/Infrastructure/Messaging/HandlerFor";
+import { SlnParser } from "@Infrastructure/Solution/SlnParser";
+import { SlnxParser } from "@Infrastructure/Solution/SlnxParser";
+import { BuildConfigDetector } from "@Infrastructure/Build/BuildConfigDetector";
+import { BuildConfigParser } from "@Infrastructure/Build/BuildConfigParser";
+import { PackageReferenceParser } from "@Infrastructure/Packages/PackageReferenceParser";
+import { type PackageReference } from "@Domain/Packages/Entities/PackageReference";
+import { PackagesConfigParser } from "@Infrastructure/Packages/PackagesConfigParser";
+import { PackageManagementDiagnosticService } from "@Infrastructure/Packages/PackageManagementDiagnosticService";
+import { PackageDiagnosticSeverity } from "@Domain/Packages/Enums/PackageDiagnosticSeverity";
 
 /**
  * Handler for GetPackageManagementDiagnosticQuery
@@ -27,9 +27,10 @@ import { PackageDiagnosticSeverity } from '@Domain/Packages/Enums/PackageDiagnos
  */
 @injectable()
 @HandlerFor(GetPackageManagementDiagnosticQuery)
-export class GetPackageManagementDiagnosticQueryHandler
-  implements IQueryHandler<GetPackageManagementDiagnosticQuery, PackageManagementDiagnosticDto>
-{
+export class GetPackageManagementDiagnosticQueryHandler implements IQueryHandler<
+  GetPackageManagementDiagnosticQuery,
+  PackageManagementDiagnosticDto
+> {
   constructor(
     private readonly slnParser: SlnParser,
     private readonly slnxParser: SlnxParser,
@@ -37,28 +38,28 @@ export class GetPackageManagementDiagnosticQueryHandler
     private readonly buildConfigParser: BuildConfigParser,
     private readonly packageReferenceParser: PackageReferenceParser,
     private readonly packagesConfigParser: PackagesConfigParser,
-    private readonly packageManagementDiagnosticService: PackageManagementDiagnosticService
+    private readonly packageManagementDiagnosticService: PackageManagementDiagnosticService,
   ) {}
 
   async Handle(
-    query: GetPackageManagementDiagnosticQuery
+    query: GetPackageManagementDiagnosticQuery,
   ): Promise<PackageManagementDiagnosticDto> {
     const solutionPath = query.solutionPath;
     const solutionExt = path.extname(solutionPath).toLowerCase();
 
     let projectPaths: string[];
-    let solutionType: 'SLNX' | 'SLN';
+    let solutionType: "SLNX" | "SLN";
 
     const solutionName = path.basename(solutionPath, solutionExt);
 
-    if (solutionExt === '.slnx') {
+    if (solutionExt === ".slnx") {
       const parseResult = this.slnxParser.parse(solutionPath);
-      solutionType = 'SLNX';
+      solutionType = "SLNX";
       projectPaths = parseResult.projects.map((p) => p.path);
-    } else if (solutionExt === '.sln') {
+    } else if (solutionExt === ".sln") {
       const parseResult = this.slnParser.parse(solutionPath);
       projectPaths = parseResult.projects.map((p) => p.path);
-      solutionType = 'SLN';
+      solutionType = "SLN";
     } else {
       throw new Error(`Unsupported solution format: ${solutionExt}`);
     }
@@ -85,7 +86,7 @@ export class GetPackageManagementDiagnosticQueryHandler
     const diagnosticResult = this.packageManagementDiagnosticService.analyze(
       buildConfigFiles,
       packageReferences,
-      legacyPackages
+      legacyPackages,
     );
 
     const packageVersionDtos: PackageVersionDto[] = diagnosticResult.packageVersions.map((pv) => ({
@@ -126,7 +127,8 @@ export class GetPackageManagementDiagnosticQueryHandler
 
     const diagnosticsBySeverity = {
       errors: diagnosticDtos.filter((d) => d.severity === PackageDiagnosticSeverity.Error).length,
-      warnings: diagnosticDtos.filter((d) => d.severity === PackageDiagnosticSeverity.Warning).length,
+      warnings: diagnosticDtos.filter((d) => d.severity === PackageDiagnosticSeverity.Warning)
+        .length,
       infos: diagnosticDtos.filter((d) => d.severity === PackageDiagnosticSeverity.Info).length,
     };
 

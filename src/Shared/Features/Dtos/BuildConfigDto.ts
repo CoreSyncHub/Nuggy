@@ -6,7 +6,7 @@ export interface BuildConfigFileDto {
   path: string;
 
   /** Type of configuration file */
-  type: 'Directory.Build.props' | 'Directory.Build.targets' | 'Directory.Packages.props';
+  type: "Directory.Build.props" | "Directory.Build.targets" | "Directory.Packages.props";
 
   /** Directory containing this file */
   directory: string;

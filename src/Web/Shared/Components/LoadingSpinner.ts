@@ -1,14 +1,14 @@
-import { html, css } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-import { LitElement } from 'lit';
+import { html, css } from "lit";
+import { customElement, property } from "lit/decorators.js";
+import { LitElement } from "lit";
 
 /**
  * Loading Spinner Component
  * Displays a VSCode progress ring with optional message.
  */
-@customElement('loading-spinner')
+@customElement("loading-spinner")
 export class LoadingSpinner extends LitElement {
-  @property({ type: String }) message = '';
+  @property({ type: String }) message = "";
 
   static styles = css`
     :host {
@@ -29,13 +29,13 @@ export class LoadingSpinner extends LitElement {
   render() {
     return html`
       <fluent-progress-ring></fluent-progress-ring>
-      ${this.message ? html`<div class="message">${this.message}</div>` : ''}
+      ${this.message ? html`<div class="message">${this.message}</div>` : ""}
     `;
   }
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    'loading-spinner': LoadingSpinner;
+    "loading-spinner": LoadingSpinner;
   }
 }

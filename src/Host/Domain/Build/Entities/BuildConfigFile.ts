@@ -1,4 +1,4 @@
-import { BuildConfigFileType } from '../Enums/BuildConfigFileType';
+import { BuildConfigFileType } from "../Enums/BuildConfigFileType";
 
 /**
  * Represents a MSBuild configuration file (Directory.Build.props/targets or Directory.Packages.props)
@@ -34,7 +34,7 @@ export class BuildConfigFile {
     type: BuildConfigFileType,
     directory: string,
     parent: BuildConfigFile | null = null,
-    importsParent: boolean = false
+    importsParent: boolean = false,
   ) {
     this.path = path;
     this.type = type;

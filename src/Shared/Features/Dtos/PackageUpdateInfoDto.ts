@@ -1,5 +1,5 @@
-export type CompatibilityVerdict = 'Compatible' | 'Incompatible' | 'Unknown';
-export type PackageFetchStatus = 'Ok' | 'Offline' | 'NotFound' | 'RateLimited';
+export type CompatibilityVerdict = "Compatible" | "Incompatible" | "Unknown";
+export type PackageFetchStatus = "Ok" | "Offline" | "NotFound" | "RateLimited";
 
 export interface PackageDependencyDto {
   id: string;

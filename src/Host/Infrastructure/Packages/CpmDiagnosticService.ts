@@ -1,12 +1,12 @@
-import * as path from 'path';
-import { singleton } from 'tsyringe';
-import { type PackageVersion } from '../../Domain/Packages/Entities/PackageVersion';
-import { type PackageReference } from '../../Domain/Packages/Entities/PackageReference';
-import { PackageDiagnostic } from '../../Domain/Packages/Entities/PackageDiagnostic';
-import { PackageManagementMode } from '../../Domain/Packages/Enums/PackageManagementMode';
-import { type BuildConfigFile } from '../../Domain/Build/Entities/BuildConfigFile';
-import { BuildConfigFileType } from '../../Domain/Build/Enums/BuildConfigFileType';
-import { PackageVersionParser } from './PackageVersionParser';
+import * as path from "path";
+import { singleton } from "tsyringe";
+import { type PackageVersion } from "../../Domain/Packages/Entities/PackageVersion";
+import { type PackageReference } from "../../Domain/Packages/Entities/PackageReference";
+import { PackageDiagnostic } from "../../Domain/Packages/Entities/PackageDiagnostic";
+import { PackageManagementMode } from "../../Domain/Packages/Enums/PackageManagementMode";
+import { type BuildConfigFile } from "../../Domain/Build/Entities/BuildConfigFile";
+import { BuildConfigFileType } from "../../Domain/Build/Enums/BuildConfigFileType";
+import { PackageVersionParser } from "./PackageVersionParser";
 
 /**
  * Result of CPM diagnostic analysis for SDK-style projects only
@@ -43,12 +43,12 @@ export class CpmDiagnosticService {
    */
   public analyze(
     buildConfigFiles: BuildConfigFile[],
-    packageReferences: Map<string, PackageReference[]>
+    packageReferences: Map<string, PackageReference[]>,
   ): CpmDiagnosticResult {
     const diagnostics: PackageDiagnostic[] = [];
 
     const cpmFiles = buildConfigFiles.filter(
-      (f) => f.type === BuildConfigFileType.DirectoryPackagesProps
+      (f) => f.type === BuildConfigFileType.DirectoryPackagesProps,
     );
     const isCpmEnabled = cpmFiles.length > 0;
 
@@ -64,7 +64,7 @@ export class CpmDiagnosticService {
     if (isCpmEnabled) {
       const conflicts = this.detectVersionConflictsWithHierarchy(
         buildConfigFiles,
-        packageReferences
+        packageReferences,
       );
       diagnostics.push(...conflicts);
     }
@@ -73,7 +73,7 @@ export class CpmDiagnosticService {
       this.mapPackageVersionsToProjectsWithHierarchy(
         allPackageVersions,
         packageReferences,
-        buildConfigFiles
+        buildConfigFiles,
       );
     }
 
@@ -101,10 +101,10 @@ export class CpmDiagnosticService {
 
   private findClosestCpmFile(
     projectPath: string,
-    buildConfigFiles: BuildConfigFile[]
+    buildConfigFiles: BuildConfigFile[],
   ): BuildConfigFile | null {
     const cpmFiles = buildConfigFiles.filter(
-      (f) => f.type === BuildConfigFileType.DirectoryPackagesProps
+      (f) => f.type === BuildConfigFileType.DirectoryPackagesProps,
     );
 
     const projectDir = path.dirname(projectPath);
@@ -116,7 +116,9 @@ export class CpmDiagnosticService {
         return cpmFile;
       }
       const parentDir = path.dirname(currentDir);
-      if (parentDir === currentDir) { break; }
+      if (parentDir === currentDir) {
+        break;
+      }
       currentDir = parentDir;
     }
 
@@ -126,7 +128,7 @@ export class CpmDiagnosticService {
 
   private detectVersionConflictsWithHierarchy(
     buildConfigFiles: BuildConfigFile[],
-    packageReferences: Map<string, PackageReference[]>
+    packageReferences: Map<string, PackageReference[]>,
   ): PackageDiagnostic[] {
     const diagnostics: PackageDiagnostic[] = [];
 
@@ -148,8 +150,8 @@ export class CpmDiagnosticService {
                 `Package '${ref.name}' has a local version '${ref.version}' but is centrally managed in '${cpmFile.path}'. Remove the Version attribute from the PackageReference.`,
                 ref.name,
                 projectPath,
-                projectPath
-              )
+                projectPath,
+              ),
             );
           } else {
             diagnostics.push(
@@ -157,8 +159,8 @@ export class CpmDiagnosticService {
                 `Package '${ref.name}' has a local version '${ref.version}' but Central Package Management is enabled. Add this package to '${cpmFile.path}' and remove the Version attribute from the PackageReference.`,
                 ref.name,
                 projectPath,
-                projectPath
-              )
+                projectPath,
+              ),
             );
           }
         }
@@ -171,7 +173,7 @@ export class CpmDiagnosticService {
   private mapPackageVersionsToProjectsWithHierarchy(
     allPackageVersions: PackageVersion[],
     packageReferences: Map<string, PackageReference[]>,
-    buildConfigFiles: BuildConfigFile[]
+    buildConfigFiles: BuildConfigFile[],
   ): void {
     for (const [projectPath, references] of packageReferences) {
       const cpmFile = this.findClosestCpmFile(projectPath, buildConfigFiles);
@@ -181,7 +183,7 @@ export class CpmDiagnosticService {
       }
 
       const relevantPackageVersions = allPackageVersions.filter(
-        (pv) => pv.sourcePath === cpmFile.path
+        (pv) => pv.sourcePath === cpmFile.path,
       );
 
       for (const ref of references) {

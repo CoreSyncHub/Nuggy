@@ -1,4 +1,4 @@
-import { type SolutionItemId } from '../ValueObjects/SolutionItemId';
+import { type SolutionItemId } from "../ValueObjects/SolutionItemId";
 
 /**
  * Represents a virtual folder in a solution file (.sln or .slnx)
@@ -21,7 +21,7 @@ export class SolutionFolder {
     id: SolutionItemId,
     name: string,
     parentId: SolutionItemId | null = null,
-    children: (SolutionFolder | SolutionProject)[] = []
+    children: (SolutionFolder | SolutionProject)[] = [],
   ) {
     this.id = id;
     this.name = name;
@@ -111,7 +111,7 @@ export class SolutionProject {
     name: string,
     path: string,
     typeId: string | null = null,
-    parentId: SolutionItemId | null = null
+    parentId: SolutionItemId | null = null,
   ) {
     this.id = id;
     this.name = name;

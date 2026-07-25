@@ -1,8 +1,8 @@
-import * as vscode from 'vscode';
-import * as path from 'path';
-import { singleton } from 'tsyringe';
-import { SlnParser } from './SlnParser';
-import { SlnxParser } from './SlnxParser';
+import * as vscode from "vscode";
+import * as path from "path";
+import { singleton } from "tsyringe";
+import { SlnParser } from "./SlnParser";
+import { SlnxParser } from "./SlnxParser";
 
 /**
  * Represents a detected solution file in the workspace
@@ -15,7 +15,7 @@ export interface DetectedSolution {
   name: string;
 
   /** Format: 'sln' or 'slnx' */
-  format: 'sln' | 'slnx';
+  format: "sln" | "slnx";
 
   /** Workspace folder containing this solution */
   workspaceFolder: vscode.WorkspaceFolder;
@@ -28,7 +28,7 @@ export interface DetectedSolution {
 export class SolutionDetector {
   constructor(
     private readonly slnParser: SlnParser,
-    private readonly slnxParser: SlnxParser
+    private readonly slnxParser: SlnxParser,
   ) {}
 
   /**
@@ -42,10 +42,7 @@ export class SolutionDetector {
 
     const solutions: DetectedSolution[] = [];
 
-    const slnFiles = await vscode.workspace.findFiles(
-      '**/*.sln',
-      '**/node_modules/**'
-    );
+    const slnFiles = await vscode.workspace.findFiles("**/*.sln", "**/node_modules/**");
 
     for (const uri of slnFiles) {
       if (this.slnParser.isValidSlnFile(uri.fsPath)) {
@@ -53,18 +50,15 @@ export class SolutionDetector {
         if (workspaceFolder) {
           solutions.push({
             path: uri.fsPath,
-            name: path.basename(uri.fsPath, '.sln'),
-            format: 'sln',
+            name: path.basename(uri.fsPath, ".sln"),
+            format: "sln",
             workspaceFolder,
           });
         }
       }
     }
 
-    const slnxFiles = await vscode.workspace.findFiles(
-      '**/*.slnx',
-      '**/node_modules/**'
-    );
+    const slnxFiles = await vscode.workspace.findFiles("**/*.slnx", "**/node_modules/**");
 
     for (const uri of slnxFiles) {
       if (this.slnxParser.isValidSlnxFile(uri.fsPath)) {
@@ -72,8 +66,8 @@ export class SolutionDetector {
         if (workspaceFolder) {
           solutions.push({
             path: uri.fsPath,
-            name: path.basename(uri.fsPath, '.slnx'),
-            format: 'slnx',
+            name: path.basename(uri.fsPath, ".slnx"),
+            format: "slnx",
             workspaceFolder,
           });
         }
@@ -87,31 +81,23 @@ export class SolutionDetector {
    * Gets the selected solution from workspace settings
    */
   public getSelectedSolution(): string | undefined {
-    const config = vscode.workspace.getConfiguration('nuget-explorer');
-    return config.get<string>('selectedSolution');
+    const config = vscode.workspace.getConfiguration("nuget-explorer");
+    return config.get<string>("selectedSolution");
   }
 
   /**
    * Sets the selected solution in workspace settings
    */
   public async setSelectedSolution(solutionPath: string): Promise<void> {
-    const config = vscode.workspace.getConfiguration('nuget-explorer');
-    await config.update(
-      'selectedSolution',
-      solutionPath,
-      vscode.ConfigurationTarget.Workspace
-    );
+    const config = vscode.workspace.getConfiguration("nuget-explorer");
+    await config.update("selectedSolution", solutionPath, vscode.ConfigurationTarget.Workspace);
   }
 
   /**
    * Clears the selected solution from workspace settings
    */
   public async clearSelectedSolution(): Promise<void> {
-    const config = vscode.workspace.getConfiguration('nuget-explorer');
-    await config.update(
-      'selectedSolution',
-      undefined,
-      vscode.ConfigurationTarget.Workspace
-    );
+    const config = vscode.workspace.getConfiguration("nuget-explorer");
+    await config.update("selectedSolution", undefined, vscode.ConfigurationTarget.Workspace);
   }
 }
