@@ -1,8 +1,8 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { GetPackageManagementDiagnosticQuery } from '@Shared/Features/Queries/GetPackageManagementDiagnosticQuery';
-import { PackageManagementDiagnosticDto } from '@/Shared/Features/Dtos/PackageManagementDto';
-import { ProjectsTfmDto } from '@/Shared/Features/Dtos/ProjectTfmDto';
+import { type PackageManagementDiagnosticDto } from '@/Shared/Features/Dtos/PackageManagementDto';
+import { type ProjectsTfmDto } from '@/Shared/Features/Dtos/ProjectTfmDto';
 import { GetProjectsTfmQuery } from '@/Shared/Features/Queries/GetProjectsTfmQuery';
 import { findFilesRecursive } from '@/Tests/Helpers/findFilesRecursive';
 import { createDiagnosticHandler, createTfmHandler } from '@/Tests/Helpers/createHandlers';

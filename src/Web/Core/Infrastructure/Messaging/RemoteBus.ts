@@ -1,8 +1,8 @@
-import { CancellationToken } from 'vscode';
-import { IBus } from '@Shared/Abstractions/Messaging/IBus';
-import { IRequest } from '@Shared/Abstractions/Messaging/IRequest';
+import { type CancellationToken } from 'vscode';
+import { type IBus } from '@Shared/Abstractions/Messaging/IBus';
+import { type IRequest } from '@Shared/Abstractions/Messaging/IRequest';
 import { singleton } from 'tsyringe';
-import { ILogger, LOGGER } from '@/Host/Application/Abstractions/Log/ILogger';
+import { type ILogger, LOGGER } from '@/Host/Application/Abstractions/Log/ILogger';
 import { injectToken } from '@Shared/DependencyInjection/inject';
 import type { VsCodeApi } from '../../Types/vscode';
 

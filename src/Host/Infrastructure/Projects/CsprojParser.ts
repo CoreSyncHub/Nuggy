@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { XMLParser } from 'fast-xml-parser';
 import { singleton } from 'tsyringe';
-import { ProjectSdkType } from '../../Domain/Projects/Enums/ProjectSdkType';
+import { type ProjectSdkType } from '../../Domain/Projects/Enums/ProjectSdkType';
 
 /**
  * Represents a parsed .csproj file with extracted TFM information

@@ -1,4 +1,4 @@
-import { NuGetConfigScope } from '../Enums/NuGetConfigScope';
+import { type NuGetConfigScope } from '../Enums/NuGetConfigScope';
 
 /**
  * Represents a NuGet package source

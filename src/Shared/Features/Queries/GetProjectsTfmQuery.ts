@@ -1,5 +1,5 @@
-import { IQuery } from '../../Abstractions/Messaging/IQuery';
-import { ProjectsTfmDto } from '../Dtos/ProjectTfmDto';
+import { type IQuery } from '../../Abstractions/Messaging/IQuery';
+import { type ProjectsTfmDto } from '../Dtos/ProjectTfmDto';
 
 /**
  * Query to get effective TFM information for all projects in a solution

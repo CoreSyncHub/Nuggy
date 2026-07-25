@@ -1,14 +1,14 @@
 import { injectable } from 'tsyringe';
 import * as path from 'path';
-import { IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
+import { type IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
 import { GetPackageManagementDiagnosticQuery } from '@Shared/Features/Queries/GetPackageManagementDiagnosticQuery';
 import {
-  PackageManagementDiagnosticDto,
-  PackageVersionDto,
-  PackageReferenceDto,
-  LegacyPackageDto,
-  PackageDiagnosticDto,
-  ProjectTypeSummaryDto,
+  type PackageManagementDiagnosticDto,
+  type PackageVersionDto,
+  type PackageReferenceDto,
+  type LegacyPackageDto,
+  type PackageDiagnosticDto,
+  type ProjectTypeSummaryDto,
 } from '@Shared/Features/Dtos/PackageManagementDto';
 import { HandlerFor } from '@Shared/Infrastructure/Messaging/HandlerFor';
 import { SlnParser } from '@Infrastructure/Solution/SlnParser';
@@ -16,7 +16,7 @@ import { SlnxParser } from '@Infrastructure/Solution/SlnxParser';
 import { BuildConfigDetector } from '@Infrastructure/Build/BuildConfigDetector';
 import { BuildConfigParser } from '@Infrastructure/Build/BuildConfigParser';
 import { PackageReferenceParser } from '@Infrastructure/Packages/PackageReferenceParser';
-import { PackageReference } from '@Domain/Packages/Entities/PackageReference';
+import { type PackageReference } from '@Domain/Packages/Entities/PackageReference';
 import { PackagesConfigParser } from '@Infrastructure/Packages/PackagesConfigParser';
 import { PackageManagementDiagnosticService } from '@Infrastructure/Packages/PackageManagementDiagnosticService';
 import { PackageDiagnosticSeverity } from '@Domain/Packages/Enums/PackageDiagnosticSeverity';

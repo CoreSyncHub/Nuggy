@@ -3,7 +3,7 @@ import { XMLParser } from 'fast-xml-parser';
 import { singleton } from 'tsyringe';
 import { PackageReference } from '../../Domain/Packages/Entities/PackageReference';
 import { PackageIdentity } from '../../Domain/Packages/ValueObjects/PackageIdentity';
-import { ILogger, LOGGER } from '../../Application/Abstractions/Log/ILogger';
+import { type ILogger, LOGGER } from '../../Application/Abstractions/Log/ILogger';
 import { injectToken } from '@Shared/DependencyInjection/inject';
 
 /**

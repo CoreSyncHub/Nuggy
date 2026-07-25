@@ -1,7 +1,7 @@
-import { CancellationToken } from 'vscode';
-import { IDispatcher } from '../../Abstractions/Messaging/IDispatcher';
-import { IRequest } from '../../Abstractions/Messaging/IRequest';
-import { IBus } from '../../Abstractions/Messaging/IBus';
+import { type CancellationToken } from 'vscode';
+import { type IDispatcher } from '../../Abstractions/Messaging/IDispatcher';
+import { type IRequest } from '../../Abstractions/Messaging/IRequest';
+import { type IBus } from '../../Abstractions/Messaging/IBus';
 import { injectable } from 'tsyringe';
 import { BUS } from '../../Abstractions/Messaging/IBus';
 import { injectToken } from '@/Shared/DependencyInjection/inject';

@@ -1,8 +1,8 @@
 import { injectable } from 'tsyringe';
 import * as path from 'path';
-import { IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
+import { type IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
 import { GetBuildConfigurationFilesQuery } from '@Shared/Features/Queries/GetBuildConfigurationFilesQuery';
-import { BuildConfigStructureDto, BuildConfigFileDto } from '@Shared/Features/Dtos/BuildConfigDto';
+import { type BuildConfigStructureDto, type BuildConfigFileDto } from '@Shared/Features/Dtos/BuildConfigDto';
 import { HandlerFor } from '@Shared/Infrastructure/Messaging/HandlerFor';
 import { BuildConfigDetector } from '@Infrastructure/Build/BuildConfigDetector';
 import { BuildConfigParser } from '@Infrastructure/Build/BuildConfigParser';

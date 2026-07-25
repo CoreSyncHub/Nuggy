@@ -3,7 +3,7 @@ import * as os from 'os';
 import { NuGetConfigResolver } from '@Infrastructure/Packages/NuGetConfigResolver';
 import { NuGetConfigParser } from '@Infrastructure/Packages/NuGetConfigParser';
 import { NuGetConfigScope } from '@Domain/Packages/Enums/NuGetConfigScope';
-import { ILogger } from '@/Host/Application/Abstractions/Log/ILogger';
+import { type ILogger } from '@/Host/Application/Abstractions/Log/ILogger';
 
 // Mock filesystem and os
 jest.mock('fs');

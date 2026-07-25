@@ -1,8 +1,8 @@
-import { CancellationToken } from 'vscode';
-import { IBus } from '@Shared/Abstractions/Messaging/IBus';
-import { IRequest } from '@Shared/Abstractions/Messaging/IRequest';
+import { type CancellationToken } from 'vscode';
+import { type IBus } from '@Shared/Abstractions/Messaging/IBus';
+import { type IRequest } from '@Shared/Abstractions/Messaging/IRequest';
 import { handlersMap, behaviorsMap } from '@Shared/Infrastructure/Messaging/HandlerRegistry';
-import { RequestHandlerDelegate } from '@Shared/Abstractions/Behaviors/IPipelineBehavior';
+import { type RequestHandlerDelegate } from '@Shared/Abstractions/Behaviors/IPipelineBehavior';
 import { injectable, container } from 'tsyringe';
 
 /**

@@ -1,9 +1,9 @@
-import { IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
+import { type IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
 import { HandlerFor } from '@Shared/Infrastructure/Messaging/HandlerFor';
 import { GetLanguageQuery } from '@Queries/GetLanguageQuery';
 import { injectable } from 'tsyringe';
 import * as vscode from 'vscode';
-import { ILogger, LOGGER } from '../../Abstractions/Log/ILogger';
+import { type ILogger, LOGGER } from '../../Abstractions/Log/ILogger';
 import { injectToken } from '@Shared/DependencyInjection/inject';
 
 /**

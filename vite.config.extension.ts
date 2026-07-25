@@ -1,11 +1,28 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import { builtinModules } from 'module';
+import swc from 'unplugin-swc';
 
 /**
  * Vite configuration for the VS Code extension (Node.js environment)
  */
 export default defineConfig({
+  // SWC émet les métadonnées de décorateurs (design:paramtypes) requises par
+  // tsyringe au runtime — esbuild ne sait pas les émettre.
+  plugins: [
+    swc.vite({
+      jsc: {
+        parser: { syntax: 'typescript', decorators: true },
+        transform: {
+          legacyDecorator: true,
+          decoratorMetadata: true,
+          useDefineForClassFields: false,
+        },
+        keepClassNames: true,
+        target: 'es2022',
+      },
+    }),
+  ],
   build: {
     outDir: 'dist',
     emptyOutDir: false,

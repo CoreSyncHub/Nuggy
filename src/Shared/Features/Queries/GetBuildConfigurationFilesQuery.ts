@@ -1,5 +1,5 @@
-import { IQuery } from '../../Abstractions/Messaging/IQuery';
-import { BuildConfigStructureDto } from '../Dtos/BuildConfigDto';
+import { type IQuery } from '../../Abstractions/Messaging/IQuery';
+import { type BuildConfigStructureDto } from '../Dtos/BuildConfigDto';
 
 /**
  * Query to get all MSBuild configuration files in the workspace

@@ -1,4 +1,4 @@
-import { ObjectEnumType } from '@/Shared/Types/ObjetEnumType';
+import { type ObjectEnumType } from '@/Shared/Types/ObjetEnumType';
 
 /**
  * Represents how package versions are managed in a project

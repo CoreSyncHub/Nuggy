@@ -1,7 +1,7 @@
 import { singleton } from "tsyringe";
-import { NuGetSource } from "../../Domain/Packages/Entities/NuGetSource";
+import { type NuGetSource } from "../../Domain/Packages/Entities/NuGetSource";
 import { NuGetConfigScope } from "../../Domain/Packages/Enums/NuGetConfigScope";
-import { PackageSourceMapping } from "../../Domain/Packages/Entities/PackageSourceMapping";
+import { type PackageSourceMapping } from "../../Domain/Packages/Entities/PackageSourceMapping";
 import { NuGetConfigParser } from "./NuGetConfigParser";
 
 /**

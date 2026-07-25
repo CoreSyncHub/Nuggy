@@ -1,5 +1,5 @@
-import { Project } from '../../Projects/Entities/Project';
-import { SolutionFormat } from '../Enums/SolutionFormat';
+import { type Project } from '../../Projects/Entities/Project';
+import { type SolutionFormat } from '../Enums/SolutionFormat';
 import { SolutionFolder, SolutionProject } from './SolutionFolder';
 
 /**

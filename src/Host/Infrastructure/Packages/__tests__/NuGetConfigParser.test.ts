@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import { NuGetConfigParser } from '../NuGetConfigParser';
 import { NuGetConfigScope } from '@Domain/Packages/Enums/NuGetConfigScope';
-import { ILogger } from '../../../Application/Abstractions/Log/ILogger';
+import { type ILogger } from '../../../Application/Abstractions/Log/ILogger';
 
 // Mock filesystem and os
 jest.mock('fs');

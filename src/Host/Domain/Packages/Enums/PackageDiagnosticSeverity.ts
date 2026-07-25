@@ -1,4 +1,4 @@
-import { ObjectEnumType } from '@/Shared/Types/ObjetEnumType';
+import { type ObjectEnumType } from '@/Shared/Types/ObjetEnumType';
 
 /**
  * Severity level for package diagnostics

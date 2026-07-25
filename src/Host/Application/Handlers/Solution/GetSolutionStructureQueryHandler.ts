@@ -1,12 +1,12 @@
 import { injectable } from 'tsyringe';
 import * as path from 'path';
 import * as fs from 'fs';
-import { IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
+import { type IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
 import { GetSolutionStructureQuery } from '@Shared/Features/Queries/GetSolutionStructureQuery';
 import {
-  SolutionStructureDto,
-  SolutionProjectDto,
-  SolutionFolderDto,
+  type SolutionStructureDto,
+  type SolutionProjectDto,
+  type SolutionFolderDto,
 } from '@Shared/Features/Dtos/SolutionDto';
 import { HandlerFor } from '@Shared/Infrastructure/Messaging/HandlerFor';
 import { SlnParser } from '@Infrastructure/Solution/SlnParser';

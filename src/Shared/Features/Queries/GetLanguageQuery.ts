@@ -1,4 +1,4 @@
-import { IQuery } from '../../Abstractions/Messaging/IQuery';
+import { type IQuery } from '../../Abstractions/Messaging/IQuery';
 
 /**
  * Query to get the current language setting from VSCode configuration.
