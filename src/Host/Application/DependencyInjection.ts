@@ -1,6 +1,6 @@
 import { DependencyInjectionProvider } from '@Shared/DependencyInjection/DependencyInjectionProvider';
 import { Dispatcher } from '@Shared/Infrastructure/Messaging/Dispatcher';
-import { DISPATCHER, IDispatcher } from '@Shared/Abstractions/Messaging/IDispatcher';
+import { DISPATCHER, type IDispatcher } from '@Shared/Abstractions/Messaging/IDispatcher';
 import { GetLanguageQueryHandler } from './Handlers/Language/GetLanguageQueryHandler';
 import { GetWorkspaceSolutionsQueryHandler } from './Handlers/Solution/GetWorkspaceSolutionsQueryHandler';
 import { GetSolutionStructureQueryHandler } from './Handlers/Solution/GetSolutionStructureQueryHandler';
@@ -8,6 +8,8 @@ import { SelectSolutionCommandHandler } from './Handlers/Solution/SelectSolution
 import { GetBuildConfigurationFilesQueryHandler } from './Handlers/Build/GetBuildConfigurationFilesQueryHandler';
 import { GetProjectsTfmQueryHandler } from './Handlers/Projects/GetProjectsTfmQueryHandler';
 import { GetPackageManagementDiagnosticQueryHandler } from './Handlers/Packages/GetPackageManagementDiagnosticQueryHandler';
+import { GetSolutionPackagesQueryHandler } from './Handlers/Packages/GetSolutionPackagesQueryHandler';
+import { GetPackageUpdateInfoQueryHandler } from './Handlers/Packages/GetPackageUpdateInfoQueryHandler';
 
 export class ApplicationDependencyInjection extends DependencyInjectionProvider {
   public Provide(): void {
@@ -43,5 +45,7 @@ export class ApplicationDependencyInjection extends DependencyInjectionProvider 
 
   private ProvidePackages(): void {
     this.RegisterClass(GetPackageManagementDiagnosticQueryHandler);
+    this.RegisterClass(GetSolutionPackagesQueryHandler);
+    this.RegisterClass(GetPackageUpdateInfoQueryHandler);
   }
 }
