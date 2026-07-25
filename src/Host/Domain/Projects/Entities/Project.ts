@@ -1,5 +1,5 @@
-import { Package } from '../../Packages/Entities/Package';
-import { ProjectType } from '../Enums/ProjectType';
+import { type Package } from '../../Packages/Entities/Package';
+import { type ProjectType } from '../Enums/ProjectType';
 
 /**
  * Represents a .NET project (.csproj file) with its packages and metadata

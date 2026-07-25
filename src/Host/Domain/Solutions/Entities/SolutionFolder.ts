@@ -1,4 +1,4 @@
-import { SolutionItemId } from '../ValueObjects/SolutionItemId';
+import { type SolutionItemId } from '../ValueObjects/SolutionItemId';
 
 /**
  * Represents a virtual folder in a solution file (.sln or .slnx)

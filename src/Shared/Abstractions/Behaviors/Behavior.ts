@@ -1,5 +1,5 @@
 import { behaviorsMap } from '../../Infrastructure/Messaging/HandlerRegistry';
-import { IPipelineBehavior } from './IPipelineBehavior';
+import { type IPipelineBehavior } from './IPipelineBehavior';
 
 /**
  * Decorator to register a behavior in the pipeline.

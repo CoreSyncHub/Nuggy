@@ -1,6 +1,6 @@
 import type { Webview } from 'vscode';
 import type { IDispatcher } from '@Shared/Abstractions/Messaging/IDispatcher';
-import { ILogger, LOGGER } from '@Application/Abstractions/Log/ILogger';
+import { type ILogger, LOGGER } from '@Application/Abstractions/Log/ILogger';
 import { injectToken } from '@Shared/DependencyInjection/inject';
 
 type MessageHeaders = {

@@ -3,7 +3,7 @@ import { TfmResolver, TfmSource } from '../TfmResolver';
 import { CsprojParser } from '../CsprojParser';
 import { BuildConfigFile } from '../../../Domain/Build/Entities/BuildConfigFile';
 import { BuildConfigFileType } from '../../../Domain/Build/Enums/BuildConfigFileType';
-import { ILogger } from '../../../Application/Abstractions/Log/ILogger';
+import { type ILogger } from '../../../Application/Abstractions/Log/ILogger';
 
 // Mock filesystem
 jest.mock('fs');

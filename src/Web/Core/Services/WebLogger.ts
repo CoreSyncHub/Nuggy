@@ -1,5 +1,5 @@
 import { singleton } from 'tsyringe';
-import { ILogger } from '@/Host/Application/Abstractions/Log/ILogger';
+import { type ILogger } from '@/Host/Application/Abstractions/Log/ILogger';
 
 /**
  * Logger implementation for WebView.

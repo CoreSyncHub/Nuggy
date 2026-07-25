@@ -1,4 +1,4 @@
-import { PackageIdentity } from '../ValueObjects/PackageIdentity';
+import { type PackageIdentity } from '../ValueObjects/PackageIdentity';
 
 /**
  * Represents a PackageVersion entry from Directory.Packages.props

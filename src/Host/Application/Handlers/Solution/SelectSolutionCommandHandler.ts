@@ -1,5 +1,5 @@
 import { injectable } from 'tsyringe';
-import { ICommandHandler } from '@Shared/Abstractions/Messaging/ICommandHandler';
+import { type ICommandHandler } from '@Shared/Abstractions/Messaging/ICommandHandler';
 import { SelectSolutionCommand } from '@Shared/Features/Commands/SelectSolutionCommand';
 import { HandlerFor } from '@Shared/Infrastructure/Messaging/HandlerFor';
 import { SolutionDetector } from '@Infrastructure/Solution/SolutionDetector';

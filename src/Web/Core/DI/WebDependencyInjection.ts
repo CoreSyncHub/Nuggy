@@ -1,9 +1,9 @@
 import { DependencyInjectionProvider } from '@Shared/DependencyInjection/DependencyInjectionProvider';
 import { Dispatcher } from '@Shared/Infrastructure/Messaging/Dispatcher';
-import { DISPATCHER, IDispatcher } from '@Shared/Abstractions/Messaging/IDispatcher';
-import { IBus, BUS } from '@Shared/Abstractions/Messaging/IBus';
+import { DISPATCHER, type IDispatcher } from '@Shared/Abstractions/Messaging/IDispatcher';
+import { type IBus, BUS } from '@Shared/Abstractions/Messaging/IBus';
 import { RemoteBus } from '../Infrastructure/Messaging/RemoteBus';
-import { ILogger, LOGGER } from '@/Host/Application/Abstractions/Log/ILogger';
+import { type ILogger, LOGGER } from '@/Host/Application/Abstractions/Log/ILogger';
 import { WebLogger } from '../Services/WebLogger';
 
 /**

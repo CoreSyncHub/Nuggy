@@ -1,4 +1,4 @@
-import { IRequestHandler } from './IRequestHandler';
+import { type IRequestHandler } from './IRequestHandler';
 
 /**
  * Defines a handler for a query.

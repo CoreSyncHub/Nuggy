@@ -1,16 +1,12 @@
-import { DependencyContainer, container, injectable } from 'tsyringe';
-import { IServiceProvider } from '@Application/Abstractions/ServiceProvider/IServiceProvider';
+import { type DependencyContainer, container, injectable } from 'tsyringe';
+import { type IServiceProvider } from '@Application/Abstractions/ServiceProvider/IServiceProvider';
 
 /**
  * Simple ServiceProvider wrapper around tsyringe container
  */
 @injectable()
 export class ServiceProvider implements IServiceProvider {
-  private readonly _container: DependencyContainer;
-
-  constructor(containerInstance?: DependencyContainer) {
-    this._container = containerInstance ?? container;
-  }
+  private readonly _container: DependencyContainer = container;
 
   /** @inheritdoc */
   resolve<T>(token: new (...args: any[]) => T): T {

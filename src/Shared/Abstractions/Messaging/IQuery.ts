@@ -1,4 +1,4 @@
-import { IRequest } from './IRequest';
+import { type IRequest } from './IRequest';
 
 /**
  * Represents a query that reads state and returns a result.

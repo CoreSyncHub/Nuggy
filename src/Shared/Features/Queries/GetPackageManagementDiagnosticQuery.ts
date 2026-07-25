@@ -1,5 +1,5 @@
-import { IQuery } from '../../Abstractions/Messaging/IQuery';
-import { PackageManagementDiagnosticDto } from '../Dtos/PackageManagementDto';
+import { type IQuery } from '../../Abstractions/Messaging/IQuery';
+import { type PackageManagementDiagnosticDto } from '../Dtos/PackageManagementDto';
 
 /**
  * Query to get package management diagnostic information

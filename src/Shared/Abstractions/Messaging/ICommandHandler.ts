@@ -1,4 +1,4 @@
-import { IRequestHandler } from './IRequestHandler';
+import { type IRequestHandler } from './IRequestHandler';
 
 export interface ICommandHandler<TCommand, TResponse>
   extends IRequestHandler<TCommand, TResponse> {}

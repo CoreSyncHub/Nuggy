@@ -1,4 +1,4 @@
-import { CancellationToken } from 'vscode';
+import { type CancellationToken } from 'vscode';
 
 /**
  * Defines a handler for a request.

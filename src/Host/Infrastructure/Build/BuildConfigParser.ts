@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import { XMLParser } from 'fast-xml-parser';
 import { singleton } from 'tsyringe';
-import { BuildConfigFile } from '../../Domain/Build/Entities/BuildConfigFile';
-import { ILogger, LOGGER } from '../../Application/Abstractions/Log/ILogger';
+import { type BuildConfigFile } from '../../Domain/Build/Entities/BuildConfigFile';
+import { type ILogger, LOGGER } from '../../Application/Abstractions/Log/ILogger';
 import { injectToken } from '@Shared/DependencyInjection/inject';
 
 /**

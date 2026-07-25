@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import { PackagesConfigParser } from '../PackagesConfigParser';
-import { ILogger } from '../../../Application/Abstractions/Log/ILogger';
+import { type ILogger } from '../../../Application/Abstractions/Log/ILogger';
 
 // Mock filesystem
 jest.mock('fs');

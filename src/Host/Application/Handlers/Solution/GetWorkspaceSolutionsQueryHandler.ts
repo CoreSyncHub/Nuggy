@@ -1,7 +1,7 @@
 import { injectable } from 'tsyringe';
-import { IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
+import { type IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
 import { GetWorkspaceSolutionsQuery } from '@Shared/Features/Queries/GetWorkspaceSolutionsQuery';
-import { SolutionDto } from '@Shared/Features/Dtos/SolutionDto';
+import { type SolutionDto } from '@Shared/Features/Dtos/SolutionDto';
 import { HandlerFor } from '@Shared/Infrastructure/Messaging/HandlerFor';
 import { SolutionDetector } from '@Infrastructure/Solution/SolutionDetector';
 

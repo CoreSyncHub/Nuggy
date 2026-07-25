@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { injectable } from 'tsyringe';
-import { ILogger } from '@Application/Abstractions/Log/ILogger';
+import { type ILogger } from '@Application/Abstractions/Log/ILogger';
 
 /**
  * Logger implementation for VSCode Host.

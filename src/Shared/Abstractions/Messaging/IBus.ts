@@ -1,5 +1,5 @@
-import { CancellationToken } from 'vscode';
-import { IRequest } from './IRequest';
+import { type CancellationToken } from 'vscode';
+import { type IRequest } from './IRequest';
 import { InjectionToken } from '../../InjectionToken';
 
 /**
