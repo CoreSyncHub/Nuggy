@@ -31,7 +31,45 @@
     "availableUpdates": "Updates available",
     "upToDate": "Up to date",
     "authors": "Authors",
-    "downloads": "Downloads"
+    "downloads": "Downloads",
+    "noPackageSelected": "Select a package",
+    "detail": {
+      "loading": "Loading…",
+      "fetchStatus": {
+        "offline": "nuget.org unreachable — reselect the package to retry",
+        "notFound": "Package not found on nuget.org (private feed?)",
+        "rateLimited": "nuget.org is rate-limiting requests — try again in a moment"
+      },
+      "verifiedLabel": "verified",
+      "verifiedTooltip": "Reserved prefix — verified publisher",
+      "microsoftTooltip": "Official Microsoft package",
+      "byAuthor": "by {{author}}",
+      "projectSiteLink": "Project site",
+      "license": "License",
+      "sourceComingSoon": "Source selection: coming soon — Configuration epic",
+      "prereleaseLabel": "prereleases",
+      "installEverywhere": "Install everywhere",
+      "updateAllEverywhere": "Update all",
+      "uninstallEverywhere": "Uninstall everywhere",
+      "globalActionTooltip": "{{action}} — Coming soon (Epic 5)"
+    },
+    "dependencies": {
+      "title": "Dependencies by framework (v {{version}})",
+      "empty": "No dependencies",
+      "allFrameworks": "All frameworks"
+    },
+    "installations": {
+      "title": "Projects",
+      "comingSoonEpic5": "Coming soon — Epic 5"
+    },
+    "list": {
+      "filterPlaceholder": "Filter packages…",
+      "verdictAll": "All",
+      "verdictOk": "Compatible",
+      "verdictPartial": "Partial",
+      "verdictIncompatible": "Incompatible",
+      "verdictUnknown": "Unknown"
+    }
   },
   "search": {
     "placeholder": "Search NuGet packages...",

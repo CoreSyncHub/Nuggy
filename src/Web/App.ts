@@ -2,9 +2,10 @@ import { html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 import { BaseComponent } from "./Shared/Components/BaseComponent";
 import { TranslationService } from "./Core/Services/TranslationService";
-import { DISPATCHER, IDispatcher } from "@Shared/Abstractions/Messaging/IDispatcher";
-import { ILogger, LOGGER } from "@/Host/Application/Abstractions/Log/ILogger";
+import { DISPATCHER, type IDispatcher } from "@Shared/Abstractions/Messaging/IDispatcher";
+import { type ILogger, LOGGER } from "@/Host/Application/Abstractions/Log/ILogger";
 import { container } from "tsyringe";
+import "./Features/Packages/PackagesView";
 
 /**
  * Main App Component
@@ -137,7 +138,7 @@ export class App extends BaseComponent {
   `;
 
   render() {
-    return html` <div class="content"></div> `;
+    return html` <div class="content"><packages-view></packages-view></div> `;
   }
 }
 
