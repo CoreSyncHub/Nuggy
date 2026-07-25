@@ -1,5 +1,5 @@
-import { singleton } from 'tsyringe';
-import { type ILogger } from '@/Host/Application/Abstractions/Log/ILogger';
+import { singleton } from "tsyringe";
+import { type ILogger } from "@/Host/Application/Abstractions/Log/ILogger";
 
 /**
  * Logger implementation for WebView.
@@ -8,14 +8,14 @@ import { type ILogger } from '@/Host/Application/Abstractions/Log/ILogger';
 @singleton()
 export class WebLogger implements ILogger {
   private readonly isDevelopment: boolean;
-  private readonly prefix: string = '[NuGet Explorer]';
+  private readonly prefix: string = "[NuGet Explorer]";
 
   constructor() {
     this.isDevelopment = true;
   }
 
   Info(message: string, context?: Record<string, unknown>): void {
-    const formatted = this.formatMessage('INFO', message);
+    const formatted = this.formatMessage("INFO", message);
     if (context) {
       console.log(formatted, context);
     } else {
@@ -24,7 +24,7 @@ export class WebLogger implements ILogger {
   }
 
   Warning(message: string, context?: Record<string, unknown>): void {
-    const formatted = this.formatMessage('WARN', message);
+    const formatted = this.formatMessage("WARN", message);
     if (context) {
       console.warn(formatted, context);
     } else {
@@ -33,7 +33,7 @@ export class WebLogger implements ILogger {
   }
 
   Error(message: string, error?: Error, context?: Record<string, unknown>): void {
-    const formatted = this.formatMessage('ERROR', message);
+    const formatted = this.formatMessage("ERROR", message);
     if (error && context) {
       console.error(formatted, error, context);
     } else if (error) {
@@ -50,7 +50,7 @@ export class WebLogger implements ILogger {
       return; // Skip debug logs in production
     }
 
-    const formatted = this.formatMessage('DEBUG', message);
+    const formatted = this.formatMessage("DEBUG", message);
     if (context) {
       console.debug(formatted, context);
     } else {

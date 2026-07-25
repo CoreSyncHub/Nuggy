@@ -1,6 +1,6 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { singleton } from 'tsyringe';
+import * as fs from "fs";
+import * as path from "path";
+import { singleton } from "tsyringe";
 
 /**
  * Represents the content of a global.json file
@@ -12,7 +12,7 @@ export interface GlobalJson {
     allowPrerelease?: boolean;
   };
   msbuild?: {
-    'sdk-resolvers'?: {
+    "sdk-resolvers"?: {
       version?: string;
     };
   };
@@ -32,17 +32,19 @@ export class GlobalJsonParser {
     const root = path.parse(currentDir).root;
 
     while (currentDir !== root) {
-      const globalJsonPath = path.join(currentDir, 'global.json');
+      const globalJsonPath = path.join(currentDir, "global.json");
       if (fs.existsSync(globalJsonPath)) {
         return globalJsonPath;
       }
       const parentDir = path.dirname(currentDir);
-      if (parentDir === currentDir) { break; }
+      if (parentDir === currentDir) {
+        break;
+      }
       currentDir = parentDir;
     }
 
     // Check root directory
-    const rootGlobalJson = path.join(root, 'global.json');
+    const rootGlobalJson = path.join(root, "global.json");
     if (fs.existsSync(rootGlobalJson)) {
       return rootGlobalJson;
     }
@@ -55,7 +57,7 @@ export class GlobalJsonParser {
    */
   public parse(globalJsonPath: string): GlobalJson | null {
     try {
-      const content = fs.readFileSync(globalJsonPath, 'utf-8');
+      const content = fs.readFileSync(globalJsonPath, "utf-8");
       return JSON.parse(content) as GlobalJson;
     } catch {
       return null;

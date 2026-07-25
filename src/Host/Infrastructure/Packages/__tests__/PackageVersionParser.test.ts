@@ -1,11 +1,11 @@
-import * as fs from 'fs';
-import { PackageVersionParser } from '../PackageVersionParser';
+import * as fs from "fs";
+import { PackageVersionParser } from "../PackageVersionParser";
 
 // Mock filesystem
-jest.mock('fs');
+jest.mock("fs");
 const mockFs = fs as jest.Mocked<typeof fs>;
 
-describe('PackageVersionParser', () => {
+describe("PackageVersionParser", () => {
   let parser: PackageVersionParser;
 
   beforeEach(() => {
@@ -13,8 +13,8 @@ describe('PackageVersionParser', () => {
     parser = new PackageVersionParser();
   });
 
-  describe('parse', () => {
-    it('should parse PackageVersion entries from Directory.Packages.props', () => {
+  describe("parse", () => {
+    it("should parse PackageVersion entries from Directory.Packages.props", () => {
       const content = `<Project>
   <ItemGroup>
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
@@ -25,18 +25,18 @@ describe('PackageVersionParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = parser.parse('/Solution/Directory.Packages.props');
+      const result = parser.parse("/Solution/Directory.Packages.props");
 
       expect(result).toHaveLength(3);
-      expect(result[0].name).toBe('Newtonsoft.Json');
-      expect(result[0].version).toBe('13.0.3');
-      expect(result[1].name).toBe('Serilog');
-      expect(result[1].version).toBe('3.1.1');
-      expect(result[2].name).toBe('AutoMapper');
-      expect(result[2].version).toBe('12.0.1');
+      expect(result[0].name).toBe("Newtonsoft.Json");
+      expect(result[0].version).toBe("13.0.3");
+      expect(result[1].name).toBe("Serilog");
+      expect(result[1].version).toBe("3.1.1");
+      expect(result[2].name).toBe("AutoMapper");
+      expect(result[2].version).toBe("12.0.1");
     });
 
-    it('should handle multiple ItemGroups', () => {
+    it("should handle multiple ItemGroups", () => {
       const content = `<Project>
   <ItemGroup>
     <PackageVersion Include="Package1" Version="1.0.0" />
@@ -48,14 +48,14 @@ describe('PackageVersionParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = parser.parse('/Solution/Directory.Packages.props');
+      const result = parser.parse("/Solution/Directory.Packages.props");
 
       expect(result).toHaveLength(2);
-      expect(result[0].name).toBe('Package1');
-      expect(result[1].name).toBe('Package2');
+      expect(result[0].name).toBe("Package1");
+      expect(result[1].name).toBe("Package2");
     });
 
-    it('should return empty array if no ItemGroup exists', () => {
+    it("should return empty array if no ItemGroup exists", () => {
       const content = `<Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -64,24 +64,24 @@ describe('PackageVersionParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = parser.parse('/Solution/Directory.Packages.props');
+      const result = parser.parse("/Solution/Directory.Packages.props");
 
       expect(result).toHaveLength(0);
     });
 
-    it('should handle invalid XML by throwing an error', () => {
+    it("should handle invalid XML by throwing an error", () => {
       const content = `<Invalid`;
 
       mockFs.readFileSync.mockReturnValue(content);
 
       expect(() => {
-        parser.parse('/Solution/Directory.Packages.props');
+        parser.parse("/Solution/Directory.Packages.props");
       }).toThrow();
     });
   });
 
-  describe('isCpmEnabled', () => {
-    it('should return true if ManagePackageVersionsCentrally is true', () => {
+  describe("isCpmEnabled", () => {
+    it("should return true if ManagePackageVersionsCentrally is true", () => {
       const content = `<Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -90,12 +90,12 @@ describe('PackageVersionParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = parser.isCpmEnabled('/Solution/Directory.Packages.props');
+      const result = parser.isCpmEnabled("/Solution/Directory.Packages.props");
 
       expect(result).toBe(true);
     });
 
-    it('should return false if ManagePackageVersionsCentrally is false', () => {
+    it("should return false if ManagePackageVersionsCentrally is false", () => {
       const content = `<Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
@@ -104,12 +104,12 @@ describe('PackageVersionParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = parser.isCpmEnabled('/Solution/Directory.Packages.props');
+      const result = parser.isCpmEnabled("/Solution/Directory.Packages.props");
 
       expect(result).toBe(false);
     });
 
-    it('should return false if ManagePackageVersionsCentrally is not present', () => {
+    it("should return false if ManagePackageVersionsCentrally is not present", () => {
       const content = `<Project>
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -118,17 +118,17 @@ describe('PackageVersionParser', () => {
 
       mockFs.readFileSync.mockReturnValue(content);
 
-      const result = parser.isCpmEnabled('/Solution/Directory.Packages.props');
+      const result = parser.isCpmEnabled("/Solution/Directory.Packages.props");
 
       expect(result).toBe(false);
     });
 
-    it('should handle errors gracefully', () => {
+    it("should handle errors gracefully", () => {
       mockFs.readFileSync.mockImplementation(() => {
-        throw new Error('File not found');
+        throw new Error("File not found");
       });
 
-      const result = parser.isCpmEnabled('/Solution/Directory.Packages.props');
+      const result = parser.isCpmEnabled("/Solution/Directory.Packages.props");
 
       expect(result).toBe(false);
     });

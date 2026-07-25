@@ -1,4 +1,4 @@
-import { singleton } from 'tsyringe';
+import { singleton } from "tsyringe";
 
 const TTL_MS = 60 * 1000;
 
@@ -21,7 +21,7 @@ export class ProjectTfmCache {
 
   public async getOrResolve(
     solutionPath: string,
-    resolver: () => Promise<Map<string, string[]>>
+    resolver: () => Promise<Map<string, string[]>>,
   ): Promise<Map<string, string[]>> {
     const cached = this.entries.get(solutionPath);
     if (cached && Date.now() - cached.fetchedAt < TTL_MS) {

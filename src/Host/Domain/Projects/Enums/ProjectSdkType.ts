@@ -1,4 +1,4 @@
-import { type ObjectEnumType } from '@/Shared/Types/ObjetEnumType';
+import { type ObjectEnumType } from "@/Shared/Types/ObjetEnumType";
 
 /**
  * Represents the SDK type of a .NET project
@@ -9,19 +9,19 @@ export const ProjectSdkType = {
    * Identified by the presence of the Sdk attribute in the Project element
    * Example: <Project Sdk="Microsoft.NET.Sdk">
    */
-  SdkStyle: 'SDK-Style',
+  SdkStyle: "SDK-Style",
 
   /**
    * Legacy project format (.NET Framework, pre-.NET Core)
    * Uses packages.config and verbose .csproj format
    * No Sdk attribute in Project element
    */
-  Legacy: 'Legacy',
+  Legacy: "Legacy",
 
   /**
    * Unknown or unrecognized project format
    */
-  Unknown: 'Unknown',
+  Unknown: "Unknown",
 } as const;
 
 export type ProjectSdkType = ObjectEnumType<typeof ProjectSdkType>;

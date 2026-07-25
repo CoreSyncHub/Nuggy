@@ -1,16 +1,20 @@
-import * as fs from 'fs';
-jest.mock('fs');
+import * as fs from "fs";
+jest.mock("fs");
 // Force POSIX path semantics so the mocked-fs fixtures behave identically on
 // every OS (path.win32.join would rewrite '/' to '\\' and break exact-string
 // mocks). Platform-specific production code uses path.win32 explicitly.
-jest.mock('path', () => jest.requireActual('path').posix);
-jest.mock('vscode', () => ({
-  workspace: { findFiles: jest.fn().mockResolvedValue([]) },
-  Uri: { file: (p: string) => ({ fsPath: p }) },
-}), { virtual: true });
+jest.mock("path", () => jest.requireActual("path").posix);
+jest.mock(
+  "vscode",
+  () => ({
+    workspace: { findFiles: jest.fn().mockResolvedValue([]) },
+    Uri: { file: (p: string) => ({ fsPath: p }) },
+  }),
+  { virtual: true },
+);
 
-import { GetSolutionPackagesQuery } from '@Shared/Features/Queries/GetSolutionPackagesQuery';
-import { createSolutionPackagesHandler } from '../../../../../Tests/Helpers/createHandlers';
+import { GetSolutionPackagesQuery } from "@Shared/Features/Queries/GetSolutionPackagesQuery";
+import { createSolutionPackagesHandler } from "../../../../../Tests/Helpers/createHandlers";
 
 const mockFs = fs as jest.Mocked<typeof fs>;
 
@@ -36,56 +40,58 @@ const CORE_CSPROJ = `<Project Sdk="Microsoft.NET.Sdk">
   </ItemGroup>
 </Project>`;
 
-describe('GetSolutionPackagesQueryHandler', () => {
+describe("GetSolutionPackagesQueryHandler", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     const files: Record<string, string> = {
-      '/Solution/MySolution.sln': SLN,
-      '/Solution/Api/Api.csproj': API_CSPROJ,
-      '/Solution/Core/Core.csproj': CORE_CSPROJ,
+      "/Solution/MySolution.sln": SLN,
+      "/Solution/Api/Api.csproj": API_CSPROJ,
+      "/Solution/Core/Core.csproj": CORE_CSPROJ,
     };
     mockFs.existsSync.mockImplementation((p) => (p as string) in files);
     mockFs.readFileSync.mockImplementation((p) => {
       const content = files[p as string];
-      if (content === undefined) throw new Error(`ENOENT: ${p}`);
+      if (content === undefined) {
+        throw new Error(`ENOENT: ${p}`);
+      }
       return content;
     });
     // NuGetConfigParser.findSolutionLocalConfigs walks up from the solution
     // path and calls statSync(...).isFile() on it before searching for
     // NuGet.Config files in each ancestor directory.
     mockFs.statSync.mockImplementation(
-      (p) => ({ isFile: () => (p as string) in files }) as fs.Stats
+      (p) => ({ isFile: () => (p as string) in files }) as fs.Stats,
     );
   });
 
-  it('consolide les packages par id avec installations par projet', async () => {
+  it("consolide les packages par id avec installations par projet", async () => {
     const handler = createSolutionPackagesHandler();
-    const dto = await handler.Handle(new GetSolutionPackagesQuery('/Solution/MySolution.sln'));
+    const dto = await handler.Handle(new GetSolutionPackagesQuery("/Solution/MySolution.sln"));
 
-    expect(dto.packages.map((p) => p.id)).toEqual(['Newtonsoft.Json.Bson', 'Serilog']);
+    expect(dto.packages.map((p) => p.id)).toEqual(["Newtonsoft.Json.Bson", "Serilog"]);
 
     const bson = dto.packages[0];
     expect(bson.installations).toHaveLength(2);
     expect(bson.installations[0]).toEqual({
-      projectPath: '/Solution/Api/Api.csproj',
-      projectName: 'Api',
-      effectiveTfms: ['net8.0'],
-      installedVersion: '1.0.2',
-      referenceStyle: 'PackageReference',
+      projectPath: "/Solution/Api/Api.csproj",
+      projectName: "Api",
+      effectiveTfms: ["net8.0"],
+      installedVersion: "1.0.2",
+      referenceStyle: "PackageReference",
     });
-    expect(bson.installations[1].installedVersion).toBe('1.0.3');
+    expect(bson.installations[1].installedVersion).toBe("1.0.3");
     expect(bson.iconUrl).toBe(
-      'https://api.nuget.org/v3-flatcontainer/newtonsoft.json.bson/1.0.2/icon'
+      "https://api.nuget.org/v3-flatcontainer/newtonsoft.json.bson/1.0.2/icon",
     );
   });
 
-  it('sans NuGet.Config, aucun feed non interrogé', async () => {
+  it("sans NuGet.Config, aucun feed non interrogé", async () => {
     const handler = createSolutionPackagesHandler();
-    const dto = await handler.Handle(new GetSolutionPackagesQuery('/Solution/MySolution.sln'));
+    const dto = await handler.Handle(new GetSolutionPackagesQuery("/Solution/MySolution.sln"));
     expect(dto.uninterrogatedFeeds).toEqual([]);
   });
 
-  it('consolide un même package référencé avec des casses d\'id différentes selon les projets', async () => {
+  it("consolide un même package référencé avec des casses d'id différentes selon les projets", async () => {
     const API_CASING_CSPROJ = `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup>
   <ItemGroup>
@@ -99,25 +105,27 @@ describe('GetSolutionPackagesQueryHandler', () => {
   </ItemGroup>
 </Project>`;
     const files: Record<string, string> = {
-      '/Solution/MySolution.sln': SLN,
-      '/Solution/Api/Api.csproj': API_CASING_CSPROJ,
-      '/Solution/Core/Core.csproj': CORE_CASING_CSPROJ,
+      "/Solution/MySolution.sln": SLN,
+      "/Solution/Api/Api.csproj": API_CASING_CSPROJ,
+      "/Solution/Core/Core.csproj": CORE_CASING_CSPROJ,
     };
     mockFs.existsSync.mockImplementation((p) => (p as string) in files);
     mockFs.readFileSync.mockImplementation((p) => {
       const content = files[p as string];
-      if (content === undefined) throw new Error(`ENOENT: ${p}`);
+      if (content === undefined) {
+        throw new Error(`ENOENT: ${p}`);
+      }
       return content;
     });
     mockFs.statSync.mockImplementation(
-      (p) => ({ isFile: () => (p as string) in files }) as fs.Stats
+      (p) => ({ isFile: () => (p as string) in files }) as fs.Stats,
     );
 
     const handler = createSolutionPackagesHandler();
-    const dto = await handler.Handle(new GetSolutionPackagesQuery('/Solution/MySolution.sln'));
+    const dto = await handler.Handle(new GetSolutionPackagesQuery("/Solution/MySolution.sln"));
 
     expect(dto.packages).toHaveLength(1);
-    expect(dto.packages[0].id).toBe('Serilog');
+    expect(dto.packages[0].id).toBe("Serilog");
     expect(dto.packages[0].installations).toHaveLength(2);
   });
 });

@@ -1,34 +1,34 @@
-import * as path from 'path';
-import { BuildConfigDetector } from '../BuildConfigDetector';
-import { BuildConfigFile } from '../../../Domain/Build/Entities/BuildConfigFile';
-import { BuildConfigFileType } from '../../../Domain/Build/Enums/BuildConfigFileType';
+import * as path from "path";
+import { BuildConfigDetector } from "../BuildConfigDetector";
+import { BuildConfigFile } from "../../../Domain/Build/Entities/BuildConfigFile";
+import { BuildConfigFileType } from "../../../Domain/Build/Enums/BuildConfigFileType";
 
-describe('BuildConfigDetector', () => {
+describe("BuildConfigDetector", () => {
   let detector: BuildConfigDetector;
 
   beforeEach(() => {
     detector = new BuildConfigDetector();
   });
 
-  describe('buildHierarchy', () => {
-    it('should establish parent-child relationships for files in nested directories', () => {
+  describe("buildHierarchy", () => {
+    it("should establish parent-child relationships for files in nested directories", () => {
       // Create mock files at different levels
       const rootProps = new BuildConfigFile(
-        '/Solution/Directory.Build.props',
+        "/Solution/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution'
+        "/Solution",
       );
 
       const srcProps = new BuildConfigFile(
-        '/Solution/src/Directory.Build.props',
+        "/Solution/src/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution/src'
+        "/Solution/src",
       );
 
       const libProps = new BuildConfigFile(
-        '/Solution/src/lib/Directory.Build.props',
+        "/Solution/src/lib/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution/src/lib'
+        "/Solution/src/lib",
       );
 
       const files = [rootProps, srcProps, libProps];
@@ -50,23 +50,23 @@ describe('BuildConfigDetector', () => {
       expect(libProps.children).toHaveLength(0);
     });
 
-    it('should handle multiple file types independently', () => {
+    it("should handle multiple file types independently", () => {
       const rootProps = new BuildConfigFile(
-        '/Solution/Directory.Build.props',
+        "/Solution/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution'
+        "/Solution",
       );
 
       const rootTargets = new BuildConfigFile(
-        '/Solution/Directory.Build.targets',
+        "/Solution/Directory.Build.targets",
         BuildConfigFileType.DirectoryBuildTargets,
-        '/Solution'
+        "/Solution",
       );
 
       const srcProps = new BuildConfigFile(
-        '/Solution/src/Directory.Build.props',
+        "/Solution/src/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution/src'
+        "/Solution/src",
       );
 
       const files = [rootProps, rootTargets, srcProps];
@@ -83,23 +83,23 @@ describe('BuildConfigDetector', () => {
       expect(rootTargets.children).toHaveLength(0);
     });
 
-    it('should handle files at the same level (siblings)', () => {
+    it("should handle files at the same level (siblings)", () => {
       const rootProps = new BuildConfigFile(
-        '/Solution/Directory.Build.props',
+        "/Solution/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution'
+        "/Solution",
       );
 
       const src1Props = new BuildConfigFile(
-        '/Solution/Project1/Directory.Build.props',
+        "/Solution/Project1/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution/Project1'
+        "/Solution/Project1",
       );
 
       const src2Props = new BuildConfigFile(
-        '/Solution/Project2/Directory.Build.props',
+        "/Solution/Project2/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution/Project2'
+        "/Solution/Project2",
       );
 
       const files = [rootProps, src1Props, src2Props];
@@ -117,25 +117,25 @@ describe('BuildConfigDetector', () => {
     });
   });
 
-  describe('findAffectingConfigFile', () => {
-    it('should find the closest config file affecting a project', () => {
+  describe("findAffectingConfigFile", () => {
+    it("should find the closest config file affecting a project", () => {
       const rootProps = new BuildConfigFile(
-        '/Solution/Directory.Build.props',
+        "/Solution/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution'
+        "/Solution",
       );
 
       const srcProps = new BuildConfigFile(
-        '/Solution/src/Directory.Build.props',
+        "/Solution/src/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution/src'
+        "/Solution/src",
       );
 
       const files = [rootProps, srcProps];
       detector.buildHierarchy(files);
 
       // Project in src should be affected by srcProps
-      const projectPath = '/Solution/src/MyProject/MyProject.csproj';
+      const projectPath = "/Solution/src/MyProject/MyProject.csproj";
       const projectPaths = [projectPath];
 
       detector.mapAffectedProjects(files, projectPaths);
@@ -144,17 +144,17 @@ describe('BuildConfigDetector', () => {
       expect(rootProps.affectedProjects).not.toContain(projectPath);
     });
 
-    it('should fall back to parent if no config in project directory', () => {
+    it("should fall back to parent if no config in project directory", () => {
       const rootProps = new BuildConfigFile(
-        '/Solution/Directory.Build.props',
+        "/Solution/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution'
+        "/Solution",
       );
 
       const files = [rootProps];
 
       // Project in subdirectory without its own Directory.Build.props
-      const projectPath = '/Solution/src/MyProject/MyProject.csproj';
+      const projectPath = "/Solution/src/MyProject/MyProject.csproj";
       const projectPaths = [projectPath];
 
       detector.mapAffectedProjects(files, projectPaths);
@@ -164,18 +164,18 @@ describe('BuildConfigDetector', () => {
     });
   });
 
-  describe('getRootFiles', () => {
-    it('should return only files without parents', () => {
+  describe("getRootFiles", () => {
+    it("should return only files without parents", () => {
       const rootProps = new BuildConfigFile(
-        '/Solution/Directory.Build.props',
+        "/Solution/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution'
+        "/Solution",
       );
 
       const srcProps = new BuildConfigFile(
-        '/Solution/src/Directory.Build.props',
+        "/Solution/src/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution/src'
+        "/Solution/src",
       );
 
       const files = [rootProps, srcProps];
@@ -188,40 +188,40 @@ describe('BuildConfigDetector', () => {
     });
   });
 
-  describe('isCpmEnabled', () => {
-    it('should return true if Directory.Packages.props exists', () => {
+  describe("isCpmEnabled", () => {
+    it("should return true if Directory.Packages.props exists", () => {
       const cpmFile = new BuildConfigFile(
-        '/Solution/Directory.Packages.props',
+        "/Solution/Directory.Packages.props",
         BuildConfigFileType.DirectoryPackagesProps,
-        '/Solution'
+        "/Solution",
       );
 
       expect(detector.isCpmEnabled([cpmFile])).toBe(true);
     });
 
-    it('should return false if no CPM file exists', () => {
+    it("should return false if no CPM file exists", () => {
       const propsFile = new BuildConfigFile(
-        '/Solution/Directory.Build.props',
+        "/Solution/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution'
+        "/Solution",
       );
 
       expect(detector.isCpmEnabled([propsFile])).toBe(false);
     });
   });
 
-  describe('getCpmFile', () => {
-    it('should return the CPM file if it exists', () => {
+  describe("getCpmFile", () => {
+    it("should return the CPM file if it exists", () => {
       const cpmFile = new BuildConfigFile(
-        '/Solution/Directory.Packages.props',
+        "/Solution/Directory.Packages.props",
         BuildConfigFileType.DirectoryPackagesProps,
-        '/Solution'
+        "/Solution",
       );
 
       const propsFile = new BuildConfigFile(
-        '/Solution/Directory.Build.props',
+        "/Solution/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution'
+        "/Solution",
       );
 
       const result = detector.getCpmFile([cpmFile, propsFile]);
@@ -229,11 +229,11 @@ describe('BuildConfigDetector', () => {
       expect(result).toBe(cpmFile);
     });
 
-    it('should return null if no CPM file exists', () => {
+    it("should return null if no CPM file exists", () => {
       const propsFile = new BuildConfigFile(
-        '/Solution/Directory.Build.props',
+        "/Solution/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution'
+        "/Solution",
       );
 
       const result = detector.getCpmFile([propsFile]);
@@ -242,81 +242,79 @@ describe('BuildConfigDetector', () => {
     });
   });
 
-  describe('mapAffectedProjects', () => {
-    it('should map projects to their affecting Directory.Build.props files', async () => {
+  describe("mapAffectedProjects", () => {
+    it("should map projects to their affecting Directory.Build.props files", async () => {
       const rootProps = new BuildConfigFile(
-        '/Solution/Directory.Build.props',
+        "/Solution/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution'
+        "/Solution",
       );
 
       const nestedProps = new BuildConfigFile(
-        '/Solution/src/Directory.Build.props',
+        "/Solution/src/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution/src'
+        "/Solution/src",
       );
 
       const configFiles = [rootProps, nestedProps];
 
       const projectPaths = [
-        '/Solution/Project1/Project1.csproj',
-        '/Solution/src/Project2/Project2.csproj',
+        "/Solution/Project1/Project1.csproj",
+        "/Solution/src/Project2/Project2.csproj",
       ];
 
       await detector.mapAffectedProjects(configFiles, projectPaths);
 
       // Project1 should be affected by root props
-      expect(rootProps.affectedProjects).toContain('/Solution/Project1/Project1.csproj');
+      expect(rootProps.affectedProjects).toContain("/Solution/Project1/Project1.csproj");
 
       // Project2 should be affected by nested props (closer)
-      expect(nestedProps.affectedProjects).toContain(
-        '/Solution/src/Project2/Project2.csproj'
-      );
+      expect(nestedProps.affectedProjects).toContain("/Solution/src/Project2/Project2.csproj");
     });
 
-    it('should map projects to Directory.Build.targets files', async () => {
+    it("should map projects to Directory.Build.targets files", async () => {
       const targetsFile = new BuildConfigFile(
-        '/Solution/Directory.Build.targets',
+        "/Solution/Directory.Build.targets",
         BuildConfigFileType.DirectoryBuildTargets,
-        '/Solution'
+        "/Solution",
       );
 
       const configFiles = [targetsFile];
 
-      const projectPaths = ['/Solution/Project/Project.csproj'];
+      const projectPaths = ["/Solution/Project/Project.csproj"];
 
       await detector.mapAffectedProjects(configFiles, projectPaths);
 
-      expect(targetsFile.affectedProjects).toContain('/Solution/Project/Project.csproj');
+      expect(targetsFile.affectedProjects).toContain("/Solution/Project/Project.csproj");
     });
 
-    it('should map projects to Directory.Packages.props files', async () => {
+    it("should map projects to Directory.Packages.props files", async () => {
       const packagesFile = new BuildConfigFile(
-        '/Solution/Directory.Packages.props',
+        "/Solution/Directory.Packages.props",
         BuildConfigFileType.DirectoryPackagesProps,
-        '/Solution'
+        "/Solution",
       );
 
       const configFiles = [packagesFile];
 
-      const projectPaths = ['/Solution/Project/Project.csproj'];
+      const projectPaths = ["/Solution/Project/Project.csproj"];
 
       await detector.mapAffectedProjects(configFiles, projectPaths);
 
-      expect(packagesFile.affectedProjects).toContain('/Solution/Project/Project.csproj');
+      expect(packagesFile.affectedProjects).toContain("/Solution/Project/Project.csproj");
     });
 
-    it('should handle projects with no affecting config files', async () => {
+    it("should handle projects with no affecting config files", async () => {
       const propsFile = new BuildConfigFile(
-        '/Solution/src/Directory.Build.props',
+        "/Solution/src/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution/src'
+        "/Solution/src",
       );
 
       const configFiles = [propsFile];
 
       // Project outside the src directory
-      const projectPaths = ['/OtherSolution/Project/Project.csproj'];
+      const projectPaths = ["/OtherSolution/Project/Project.csproj"];
 
       await detector.mapAffectedProjects(configFiles, projectPaths);
 

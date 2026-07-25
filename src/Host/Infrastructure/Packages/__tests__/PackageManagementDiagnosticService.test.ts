@@ -1,36 +1,36 @@
-import * as fs from 'fs';
-import { PackageManagementDiagnosticService } from '../PackageManagementDiagnosticService';
-import { CpmDiagnosticService } from '../CpmDiagnosticService';
-import { PackageVersionParser } from '../PackageVersionParser';
-import { PackageReference } from '@Domain/Packages/Entities/PackageReference';
-import { LegacyPackage } from '@Domain/Packages/Entities/LegacyPackage';
-import { PackageIdentity } from '@Domain/Packages/ValueObjects/PackageIdentity';
-import { BuildConfigFile } from '@Domain/Build/Entities/BuildConfigFile';
-import { BuildConfigFileType } from '@Domain/Build/Enums/BuildConfigFileType';
-import { PackageManagementMode } from '@Domain/Packages/Enums/PackageManagementMode';
+import * as fs from "fs";
+import { PackageManagementDiagnosticService } from "../PackageManagementDiagnosticService";
+import { CpmDiagnosticService } from "../CpmDiagnosticService";
+import { PackageVersionParser } from "../PackageVersionParser";
+import { PackageReference } from "@Domain/Packages/Entities/PackageReference";
+import { LegacyPackage } from "@Domain/Packages/Entities/LegacyPackage";
+import { PackageIdentity } from "@Domain/Packages/ValueObjects/PackageIdentity";
+import { BuildConfigFile } from "@Domain/Build/Entities/BuildConfigFile";
+import { BuildConfigFileType } from "@Domain/Build/Enums/BuildConfigFileType";
+import { PackageManagementMode } from "@Domain/Packages/Enums/PackageManagementMode";
 
 // Mock filesystem
-jest.mock('fs');
+jest.mock("fs");
 const mockFs = fs as jest.Mocked<typeof fs>;
 
-describe('PackageManagementDiagnosticService', () => {
+describe("PackageManagementDiagnosticService", () => {
   let service: PackageManagementDiagnosticService;
 
   beforeEach(() => {
     jest.clearAllMocks();
     // Default mock: empty CPM file
-    mockFs.readFileSync.mockReturnValue('<Project></Project>');
+    mockFs.readFileSync.mockReturnValue("<Project></Project>");
     const packageVersionParser = new PackageVersionParser();
     const cpmDiagnosticService = new CpmDiagnosticService(packageVersionParser);
     service = new PackageManagementDiagnosticService(cpmDiagnosticService);
   });
 
-  describe('analyze - SDK-style projects only', () => {
-    it('should analyze SDK-style projects with CPM', () => {
+  describe("analyze - SDK-style projects only", () => {
+    it("should analyze SDK-style projects with CPM", () => {
       const cpmFile = new BuildConfigFile(
-        '/Solution/Directory.Packages.props',
+        "/Solution/Directory.Packages.props",
         BuildConfigFileType.DirectoryPackagesProps,
-        '/Solution'
+        "/Solution",
       );
 
       const cpmContent = `<Project>
@@ -42,19 +42,15 @@ describe('PackageManagementDiagnosticService', () => {
       mockFs.readFileSync.mockReturnValue(cpmContent);
 
       const packageReferences = new Map<string, PackageReference[]>();
-      packageReferences.set('/Solution/Project1/Project1.csproj', [
+      packageReferences.set("/Solution/Project1/Project1.csproj", [
         new PackageReference(
-          new PackageIdentity('Package1'),
-          '/Solution/Project1/Project1.csproj',
-          false
+          new PackageIdentity("Package1"),
+          "/Solution/Project1/Project1.csproj",
+          false,
         ),
       ]);
 
-      const result = service.analyze(
-        [cpmFile],
-        packageReferences,
-        new Map()
-      );
+      const result = service.analyze([cpmFile], packageReferences, new Map());
 
       expect(result.isCpmEnabled).toBe(true);
       expect(result.mode).toBe(PackageManagementMode.Central);
@@ -66,27 +62,23 @@ describe('PackageManagementDiagnosticService', () => {
       expect(result.projectTypeSummary.cpmEnabledProjects).toBe(1);
     });
 
-    it('should analyze SDK-style projects without CPM', () => {
+    it("should analyze SDK-style projects without CPM", () => {
       const propsFile = new BuildConfigFile(
-        '/Solution/Directory.Build.props',
+        "/Solution/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution'
+        "/Solution",
       );
 
       const packageReferences = new Map<string, PackageReference[]>();
-      packageReferences.set('/Solution/Project1/Project1.csproj', [
+      packageReferences.set("/Solution/Project1/Project1.csproj", [
         new PackageReference(
-          new PackageIdentity('Package1', '1.0.0'),
-          '/Solution/Project1/Project1.csproj',
-          true
+          new PackageIdentity("Package1", "1.0.0"),
+          "/Solution/Project1/Project1.csproj",
+          true,
         ),
       ]);
 
-      const result = service.analyze(
-        [propsFile],
-        packageReferences,
-        new Map()
-      );
+      const result = service.analyze([propsFile], packageReferences, new Map());
 
       expect(result.isCpmEnabled).toBe(false);
       expect(result.mode).toBe(PackageManagementMode.Local);
@@ -97,23 +89,19 @@ describe('PackageManagementDiagnosticService', () => {
     });
   });
 
-  describe('analyze - Legacy projects only', () => {
-    it('should analyze legacy projects with packages.config', () => {
+  describe("analyze - Legacy projects only", () => {
+    it("should analyze legacy projects with packages.config", () => {
       const legacyPackages = new Map<string, LegacyPackage[]>();
-      legacyPackages.set('/Solution/LegacyProject/LegacyProject.csproj', [
+      legacyPackages.set("/Solution/LegacyProject/LegacyProject.csproj", [
         new LegacyPackage(
-          new PackageIdentity('Newtonsoft.Json', '12.0.3'),
-          '/Solution/LegacyProject/LegacyProject.csproj',
-          '/Solution/LegacyProject/packages.config',
-          'net472'
+          new PackageIdentity("Newtonsoft.Json", "12.0.3"),
+          "/Solution/LegacyProject/LegacyProject.csproj",
+          "/Solution/LegacyProject/packages.config",
+          "net472",
         ),
       ]);
 
-      const result = service.analyze(
-        [],
-        new Map(),
-        legacyPackages
-      );
+      const result = service.analyze([], new Map(), legacyPackages);
 
       expect(result.isCpmEnabled).toBe(false);
       expect(result.mode).toBe(PackageManagementMode.Local);
@@ -125,12 +113,12 @@ describe('PackageManagementDiagnosticService', () => {
     });
   });
 
-  describe('analyze - Mixed SDK-style and Legacy projects', () => {
-    it('should detect mixed mode and transitional solution when both SDK-style and legacy projects exist', () => {
+  describe("analyze - Mixed SDK-style and Legacy projects", () => {
+    it("should detect mixed mode and transitional solution when both SDK-style and legacy projects exist", () => {
       const cpmFile = new BuildConfigFile(
-        '/Solution/Directory.Packages.props',
+        "/Solution/Directory.Packages.props",
         BuildConfigFileType.DirectoryPackagesProps,
-        '/Solution'
+        "/Solution",
       );
 
       const cpmContent = `<Project>
@@ -142,29 +130,25 @@ describe('PackageManagementDiagnosticService', () => {
       mockFs.readFileSync.mockReturnValue(cpmContent);
 
       const packageReferences = new Map<string, PackageReference[]>();
-      packageReferences.set('/Solution/ModernProject/ModernProject.csproj', [
+      packageReferences.set("/Solution/ModernProject/ModernProject.csproj", [
         new PackageReference(
-          new PackageIdentity('Package1'),
-          '/Solution/ModernProject/ModernProject.csproj',
-          false
+          new PackageIdentity("Package1"),
+          "/Solution/ModernProject/ModernProject.csproj",
+          false,
         ),
       ]);
 
       const legacyPackages = new Map<string, LegacyPackage[]>();
-      legacyPackages.set('/Solution/LegacyProject/LegacyProject.csproj', [
+      legacyPackages.set("/Solution/LegacyProject/LegacyProject.csproj", [
         new LegacyPackage(
-          new PackageIdentity('Newtonsoft.Json', '12.0.3'),
-          '/Solution/LegacyProject/LegacyProject.csproj',
-          '/Solution/LegacyProject/packages.config',
-          'net472'
+          new PackageIdentity("Newtonsoft.Json", "12.0.3"),
+          "/Solution/LegacyProject/LegacyProject.csproj",
+          "/Solution/LegacyProject/packages.config",
+          "net472",
         ),
       ]);
 
-      const result = service.analyze(
-        [cpmFile],
-        packageReferences,
-        legacyPackages
-      );
+      const result = service.analyze([cpmFile], packageReferences, legacyPackages);
 
       expect(result.isCpmEnabled).toBe(true);
       expect(result.mode).toBe(PackageManagementMode.Mixed);
@@ -176,43 +160,39 @@ describe('PackageManagementDiagnosticService', () => {
       expect(result.projectTypeSummary.cpmEnabledProjects).toBe(1);
 
       // Should have an Info diagnostic about transitional solution
-      const infoDiagnostics = result.diagnostics.filter((d) => d.severity === 'Info');
+      const infoDiagnostics = result.diagnostics.filter((d) => d.severity === "Info");
       expect(infoDiagnostics.length).toBeGreaterThan(0);
-      expect(infoDiagnostics[0].message).toContain('legacy .NET Framework');
-      expect(infoDiagnostics[0].message).toContain('modern SDK-style');
+      expect(infoDiagnostics[0].message).toContain("legacy .NET Framework");
+      expect(infoDiagnostics[0].message).toContain("modern SDK-style");
     });
 
-    it('should detect mixed mode and transitional solution when SDK-style local and legacy projects exist', () => {
+    it("should detect mixed mode and transitional solution when SDK-style local and legacy projects exist", () => {
       const propsFile = new BuildConfigFile(
-        '/Solution/Directory.Build.props',
+        "/Solution/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution'
+        "/Solution",
       );
 
       const packageReferences = new Map<string, PackageReference[]>();
-      packageReferences.set('/Solution/ModernProject/ModernProject.csproj', [
+      packageReferences.set("/Solution/ModernProject/ModernProject.csproj", [
         new PackageReference(
-          new PackageIdentity('Package1', '1.0.0'),
-          '/Solution/ModernProject/ModernProject.csproj',
-          true
+          new PackageIdentity("Package1", "1.0.0"),
+          "/Solution/ModernProject/ModernProject.csproj",
+          true,
         ),
       ]);
 
       const legacyPackages = new Map<string, LegacyPackage[]>();
-      legacyPackages.set('/Solution/LegacyProject/LegacyProject.csproj', [
+      legacyPackages.set("/Solution/LegacyProject/LegacyProject.csproj", [
         new LegacyPackage(
-          new PackageIdentity('Newtonsoft.Json', '12.0.3'),
-          '/Solution/LegacyProject/LegacyProject.csproj',
-          '/Solution/LegacyProject/packages.config',
-          'net472'
+          new PackageIdentity("Newtonsoft.Json", "12.0.3"),
+          "/Solution/LegacyProject/LegacyProject.csproj",
+          "/Solution/LegacyProject/packages.config",
+          "net472",
         ),
       ]);
 
-      const result = service.analyze(
-        [propsFile],
-        packageReferences,
-        legacyPackages
-      );
+      const result = service.analyze([propsFile], packageReferences, legacyPackages);
 
       expect(result.isCpmEnabled).toBe(false);
       expect(result.mode).toBe(PackageManagementMode.Mixed);
@@ -222,9 +202,9 @@ describe('PackageManagementDiagnosticService', () => {
       expect(result.projectTypeSummary.legacyFrameworkProjects).toBe(1);
 
       // Should have an Info diagnostic about transitional solution
-      const infoDiagnostics = result.diagnostics.filter((d) => d.severity === 'Info');
+      const infoDiagnostics = result.diagnostics.filter((d) => d.severity === "Info");
       expect(infoDiagnostics.length).toBeGreaterThan(0);
-      expect(infoDiagnostics[0].message).toContain('progressive migration');
+      expect(infoDiagnostics[0].message).toContain("progressive migration");
     });
   });
 });

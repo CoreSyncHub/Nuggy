@@ -1,5 +1,5 @@
-import { container } from 'tsyringe';
-import { type InjectionToken } from '../InjectionToken';
+import { container } from "tsyringe";
+import { type InjectionToken } from "../InjectionToken";
 
 export type PrimitiveTypes = string | number | boolean | null | undefined;
 

@@ -1,11 +1,11 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import { XMLParser } from 'fast-xml-parser';
-import { singleton } from 'tsyringe';
-import { LegacyPackage } from '../../Domain/Packages/Entities/LegacyPackage';
-import { PackageIdentity } from '../../Domain/Packages/ValueObjects/PackageIdentity';
-import { type ILogger, LOGGER } from '../../Application/Abstractions/Log/ILogger';
-import { injectToken } from '@Shared/DependencyInjection/inject';
+import * as fs from "fs";
+import * as path from "path";
+import { XMLParser } from "fast-xml-parser";
+import { singleton } from "tsyringe";
+import { LegacyPackage } from "../../Domain/Packages/Entities/LegacyPackage";
+import { PackageIdentity } from "../../Domain/Packages/ValueObjects/PackageIdentity";
+import { type ILogger, LOGGER } from "../../Application/Abstractions/Log/ILogger";
+import { injectToken } from "@Shared/DependencyInjection/inject";
 
 /**
  * Parser for packages.config files (legacy NuGet format)
@@ -14,7 +14,7 @@ import { injectToken } from '@Shared/DependencyInjection/inject';
 export class PackagesConfigParser {
   private readonly xmlParser = new XMLParser({
     ignoreAttributes: false,
-    attributeNamePrefix: '@_',
+    attributeNamePrefix: "@_",
   });
 
   constructor(@injectToken(LOGGER) private readonly logger: ILogger) {}
@@ -24,7 +24,7 @@ export class PackagesConfigParser {
    */
   public parse(configPath: string, projectPath: string): LegacyPackage[] {
     try {
-      const content = fs.readFileSync(configPath, 'utf-8');
+      const content = fs.readFileSync(configPath, "utf-8");
       const parsed = this.xmlParser.parse(content);
 
       if (!parsed.packages || !parsed.packages.package) {
@@ -36,9 +36,9 @@ export class PackagesConfigParser {
         : [parsed.packages.package];
 
       return packageElements.map((pkg: any) => {
-        const name = pkg['@_id'];
-        const version = pkg['@_version'];
-        const targetFramework = pkg['@_targetFramework'];
+        const name = pkg["@_id"];
+        const version = pkg["@_version"];
+        const targetFramework = pkg["@_targetFramework"];
 
         const identity = new PackageIdentity(name, version);
         return new LegacyPackage(identity, projectPath, configPath, targetFramework);
@@ -73,7 +73,7 @@ export class PackagesConfigParser {
    */
   public findPackagesConfig(projectPath: string): string | undefined {
     const projectDir = path.dirname(projectPath);
-    const configPath = path.join(projectDir, 'packages.config');
+    const configPath = path.join(projectDir, "packages.config");
 
     if (fs.existsSync(configPath)) {
       return configPath;

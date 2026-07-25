@@ -2,7 +2,7 @@
  * Escape HTML special characters to prevent XSS.
  */
 export function escapeHtml(text: string): string {
-  const div = document.createElement('div');
+  const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML;
 }
@@ -31,8 +31,8 @@ export function isNewerVersion(latest: string, current: string): boolean {
   }
 
   const parseVersion = (v: string): number[] => {
-    const cleanVersion = v.split('-')[0];
-    return cleanVersion.split('.').map((n) => Number.parseInt(n, 10) || 0);
+    const cleanVersion = v.split("-")[0];
+    return cleanVersion.split(".").map((n) => Number.parseInt(n, 10) || 0);
   };
 
   const latestParts = parseVersion(latest);

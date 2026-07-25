@@ -7,13 +7,7 @@ import { html, type TemplateResult } from "lit";
  * jamais les deux badges.
  */
 export function verifiedBadgeIcon(fill: string, size: number, title: string): TemplateResult {
-  return html`<svg
-    width=${size}
-    height=${size}
-    viewBox="0 0 24 24"
-    role="img"
-    aria-label=${title}
-  >
+  return html`<svg width=${size} height=${size} viewBox="0 0 24 24" role="img" aria-label=${title}>
     <title>${title}</title>
     <path
       fill=${fill}

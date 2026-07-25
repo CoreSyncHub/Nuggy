@@ -1,23 +1,23 @@
-import * as fs from 'fs';
-import * as vscode from 'vscode';
-import { GetBuildConfigurationFilesQueryHandler } from '../GetBuildConfigurationFilesQueryHandler';
-import { GetBuildConfigurationFilesQuery } from '@Shared/Features/Queries/GetBuildConfigurationFilesQuery';
-import { BuildConfigDetector } from '@Infrastructure/Build/BuildConfigDetector';
-import { BuildConfigParser } from '@Infrastructure/Build/BuildConfigParser';
-import { SlnParser } from '@Infrastructure/Solution/SlnParser';
-import { SlnxParser } from '@Infrastructure/Solution/SlnxParser';
-import { BuildConfigFileType } from '@Domain/Build/Enums/BuildConfigFileType';
-import { type ILogger } from '@/Host/Application/Abstractions/Log/ILogger';
+import * as fs from "fs";
+import * as vscode from "vscode";
+import { GetBuildConfigurationFilesQueryHandler } from "../GetBuildConfigurationFilesQueryHandler";
+import { GetBuildConfigurationFilesQuery } from "@Shared/Features/Queries/GetBuildConfigurationFilesQuery";
+import { BuildConfigDetector } from "@Infrastructure/Build/BuildConfigDetector";
+import { BuildConfigParser } from "@Infrastructure/Build/BuildConfigParser";
+import { SlnParser } from "@Infrastructure/Solution/SlnParser";
+import { SlnxParser } from "@Infrastructure/Solution/SlnxParser";
+import { BuildConfigFileType } from "@Domain/Build/Enums/BuildConfigFileType";
+import { type ILogger } from "@/Host/Application/Abstractions/Log/ILogger";
 
 // Mock dependencies
-jest.mock('fs');
+jest.mock("fs");
 // Force POSIX path semantics so the mocked-fs fixtures behave identically on
 // every OS (path.win32.join would rewrite '/' to '\\' and break exact-string
 // mocks). Platform-specific production code uses path.win32 explicitly.
-jest.mock('path', () => jest.requireActual('path').posix);
-jest.mock('vscode', () => ({
+jest.mock("path", () => jest.requireActual("path").posix);
+jest.mock("vscode", () => ({
   workspace: {
-    workspaceFolders: [{ uri: { fsPath: '/Workspace' } }],
+    workspaceFolders: [{ uri: { fsPath: "/Workspace" } }],
     findFiles: jest.fn(),
   },
   RelativePattern: jest.fn(),
@@ -36,7 +36,7 @@ const mockLogger: ILogger = {
   Debug: jest.fn(),
 };
 
-describe('GetBuildConfigurationFilesQueryHandler', () => {
+describe("GetBuildConfigurationFilesQueryHandler", () => {
   let handler: GetBuildConfigurationFilesQueryHandler;
 
   beforeEach(() => {
@@ -45,15 +45,15 @@ describe('GetBuildConfigurationFilesQueryHandler', () => {
       new BuildConfigDetector(),
       new BuildConfigParser(mockLogger),
       new SlnParser(),
-      new SlnxParser()
+      new SlnxParser(),
     );
 
     // Default mock for findFiles - return empty array
     mockVscode.workspace.findFiles = jest.fn().mockResolvedValue([]);
   });
 
-  describe('Handle - with solutionPath', () => {
-    it('should map affected projects when solutionPath is provided (.sln)', async () => {
+  describe("Handle - with solutionPath", () => {
+    it("should map affected projects when solutionPath is provided (.sln)", async () => {
       // Mock solution file content
       const slnContent = `Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Project1", "Project1\\Project1.csproj", "{GUID-1}"
@@ -65,7 +65,7 @@ EndProject`;
       mockFs.existsSync.mockReturnValue(true);
 
       // Mock Directory.Build.props files
-      const propsFileUri = { fsPath: '/Solution/Directory.Build.props' };
+      const propsFileUri = { fsPath: "/Solution/Directory.Build.props" };
       mockVscode.workspace.findFiles = jest.fn().mockResolvedValue([propsFileUri]);
 
       const propsFileContent = `<Project>
@@ -75,16 +75,16 @@ EndProject`;
 </Project>`;
 
       mockFs.readFileSync.mockImplementation((path) => {
-        if (path === '/Solution/test.sln') {
+        if (path === "/Solution/test.sln") {
           return slnContent;
         }
-        if (path === '/Solution/Directory.Build.props') {
+        if (path === "/Solution/Directory.Build.props") {
           return propsFileContent;
         }
-        return '';
+        return "";
       });
 
-      const query = new GetBuildConfigurationFilesQuery('/Solution/test.sln');
+      const query = new GetBuildConfigurationFilesQuery("/Solution/test.sln");
       const result = await handler.Handle(query);
 
       // Should have found build config files
@@ -92,14 +92,14 @@ EndProject`;
 
       // The props file should have affected projects mapped
       const propsFile = result.files.find(
-        (f) => f.type === BuildConfigFileType.DirectoryBuildProps
+        (f) => f.type === BuildConfigFileType.DirectoryBuildProps,
       );
       expect(propsFile).toBeDefined();
-      expect(propsFile!.affectedProjects).toContain('/Solution/Project1/Project1.csproj');
-      expect(propsFile!.affectedProjects).toContain('/Solution/src/Project2/Project2.csproj');
+      expect(propsFile!.affectedProjects).toContain("/Solution/Project1/Project1.csproj");
+      expect(propsFile!.affectedProjects).toContain("/Solution/src/Project2/Project2.csproj");
     });
 
-    it('should map affected projects when solutionPath is provided (.slnx)', async () => {
+    it("should map affected projects when solutionPath is provided (.slnx)", async () => {
       // Mock .slnx file content
       const slnxContent = `<?xml version="1.0" encoding="utf-8"?>
 <Solution>
@@ -111,7 +111,7 @@ EndProject`;
       mockFs.existsSync.mockReturnValue(true);
 
       // Mock Directory.Build.props files
-      const propsFileUri = { fsPath: '/Solution/Directory.Build.props' };
+      const propsFileUri = { fsPath: "/Solution/Directory.Build.props" };
       mockVscode.workspace.findFiles = jest.fn().mockResolvedValue([propsFileUri]);
 
       const propsFileContent = `<Project>
@@ -121,16 +121,16 @@ EndProject`;
 </Project>`;
 
       mockFs.readFileSync.mockImplementation((path) => {
-        if (path === '/Solution/test.slnx') {
+        if (path === "/Solution/test.slnx") {
           return slnxContent;
         }
-        if (path === '/Solution/Directory.Build.props') {
+        if (path === "/Solution/Directory.Build.props") {
           return propsFileContent;
         }
-        return '';
+        return "";
       });
 
-      const query = new GetBuildConfigurationFilesQuery('/Solution/test.slnx');
+      const query = new GetBuildConfigurationFilesQuery("/Solution/test.slnx");
       const result = await handler.Handle(query);
 
       // Should have found build config files
@@ -138,20 +138,20 @@ EndProject`;
 
       // The props file should have affected projects mapped
       const propsFile = result.files.find(
-        (f) => f.type === BuildConfigFileType.DirectoryBuildProps
+        (f) => f.type === BuildConfigFileType.DirectoryBuildProps,
       );
       expect(propsFile).toBeDefined();
-      expect(propsFile!.affectedProjects).toContain('/Solution/Project1/Project1.csproj');
-      expect(propsFile!.affectedProjects).toContain('/Solution/src/Project2/Project2.csproj');
+      expect(propsFile!.affectedProjects).toContain("/Solution/Project1/Project1.csproj");
+      expect(propsFile!.affectedProjects).toContain("/Solution/src/Project2/Project2.csproj");
     });
   });
 
-  describe('Handle - without solutionPath', () => {
-    it('should not map affected projects when solutionPath is not provided', async () => {
+  describe("Handle - without solutionPath", () => {
+    it("should not map affected projects when solutionPath is not provided", async () => {
       mockFs.existsSync.mockReturnValue(true);
 
       // Mock Directory.Build.props files
-      const propsFileUri = { fsPath: '/Workspace/Directory.Build.props' };
+      const propsFileUri = { fsPath: "/Workspace/Directory.Build.props" };
       mockVscode.workspace.findFiles = jest.fn().mockResolvedValue([propsFileUri]);
 
       const propsFileContent = `<Project>

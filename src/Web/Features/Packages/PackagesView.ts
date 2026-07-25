@@ -1,24 +1,24 @@
-import { html, css, LitElement } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
-import { container } from 'tsyringe';
-import { DISPATCHER, type IDispatcher } from '@Shared/Abstractions/Messaging/IDispatcher';
-import { type ILogger, LOGGER } from '@/Host/Application/Abstractions/Log/ILogger';
-import { GetSolutionPackagesQuery } from '@Shared/Features/Queries/GetSolutionPackagesQuery';
-import { GetWorkspaceSolutionsQuery } from '@Shared/Features/Queries/GetWorkspaceSolutionsQuery';
-import { GetPackageUpdateInfoQuery } from '@Shared/Features/Queries/GetPackageUpdateInfoQuery';
-import { type SolutionDto } from '@Shared/Features/Dtos/SolutionDto';
-import { type SolutionPackagesDto } from '@Shared/Features/Dtos/SolutionPackagesDto';
-import { type PackageUpdateInfoDto } from '@Shared/Features/Dtos/PackageUpdateInfoDto';
-import { TranslationService } from '../../Core/Services/TranslationService';
-import './PackageList';
-import './PackageDetail';
+import { html, css, LitElement } from "lit";
+import { customElement, state } from "lit/decorators.js";
+import { container } from "tsyringe";
+import { DISPATCHER, type IDispatcher } from "@Shared/Abstractions/Messaging/IDispatcher";
+import { type ILogger, LOGGER } from "@/Host/Application/Abstractions/Log/ILogger";
+import { GetSolutionPackagesQuery } from "@Shared/Features/Queries/GetSolutionPackagesQuery";
+import { GetWorkspaceSolutionsQuery } from "@Shared/Features/Queries/GetWorkspaceSolutionsQuery";
+import { GetPackageUpdateInfoQuery } from "@Shared/Features/Queries/GetPackageUpdateInfoQuery";
+import { type SolutionDto } from "@Shared/Features/Dtos/SolutionDto";
+import { type SolutionPackagesDto } from "@Shared/Features/Dtos/SolutionPackagesDto";
+import { type PackageUpdateInfoDto } from "@Shared/Features/Dtos/PackageUpdateInfoDto";
+import { TranslationService } from "../../Core/Services/TranslationService";
+import "./PackageList";
+import "./PackageDetail";
 
-@customElement('packages-view')
+@customElement("packages-view")
 export class PackagesView extends LitElement {
   private static readonly BATCH_SIZE = 5;
 
   @state() private data?: SolutionPackagesDto;
-  @state() private selectedId = '';
+  @state() private selectedId = "";
   @state() private verdictBadges = new Map<string, string>();
   /** Résultats en échec (fetchStatus !== 'Ok') volontairement absents de ce cache : les conserver
    *  figerait un DTO synthétique 'Offline' pour toujours, empêchant toute nouvelle tentative. */
@@ -34,7 +34,7 @@ export class PackagesView extends LitElement {
   private i18n!: TranslationService;
   private unsubscribeI18n?: () => void;
   /** Résolu à la connexion via GetWorkspaceSolutionsQuery (solution marquée isSelected, sinon la première détectée). */
-  protected solutionPath = '';
+  protected solutionPath = "";
 
   static styles = css`
     :host {
@@ -44,7 +44,13 @@ export class PackagesView extends LitElement {
       font-size: 13px;
       color: var(--vscode-foreground);
     }
-    .detail-placeholder { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--vscode-descriptionForeground); }
+    .detail-placeholder {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--vscode-descriptionForeground);
+    }
     .splitter {
       flex: none;
       width: 4px;
@@ -75,17 +81,17 @@ export class PackagesView extends LitElement {
       const width = startWidth + (move.clientX - startX);
       this.listWidth = Math.min(
         PackagesView.LIST_MAX_WIDTH,
-        Math.max(PackagesView.LIST_MIN_WIDTH, width)
+        Math.max(PackagesView.LIST_MIN_WIDTH, width),
       );
     };
     const onUp = (up: PointerEvent) => {
       splitter.releasePointerCapture(up.pointerId);
-      splitter.removeEventListener('pointermove', onMove);
-      splitter.removeEventListener('pointerup', onUp);
+      splitter.removeEventListener("pointermove", onMove);
+      splitter.removeEventListener("pointerup", onUp);
       this.isResizing = false;
     };
-    splitter.addEventListener('pointermove', onMove);
-    splitter.addEventListener('pointerup', onUp);
+    splitter.addEventListener("pointermove", onMove);
+    splitter.addEventListener("pointerup", onUp);
   }
 
   connectedCallback(): void {
@@ -108,23 +114,29 @@ export class PackagesView extends LitElement {
       await this.loadPackages();
       void this.fillBadges();
     } catch (error) {
-      this.logger.Error('Failed to load packages view data', error as Error);
+      this.logger.Error("Failed to load packages view data", error as Error);
     }
   }
 
   /** Détermine la solution active de la même façon que le reste de l'extension : la solution marquée `isSelected` (persistée en workspace settings via SelectSolutionCommand), avec repli sur la première solution détectée. */
   private async resolveSolutionPath(): Promise<void> {
-    const solutions = (await this.dispatcher.Send(new GetWorkspaceSolutionsQuery())) as SolutionDto[];
+    const solutions = (await this.dispatcher.Send(
+      new GetWorkspaceSolutionsQuery(),
+    )) as SolutionDto[];
     const solution = solutions.find((s) => s.isSelected) ?? solutions[0];
     if (!solution) {
-      this.logger.Warning('Aucune solution détectée dans le workspace : la vue packages restera vide.');
+      this.logger.Warning(
+        "Aucune solution détectée dans le workspace : la vue packages restera vide.",
+      );
       return;
     }
     this.solutionPath = solution.path;
   }
 
   protected async loadPackages(): Promise<void> {
-    if (!this.solutionPath) return;
+    if (!this.solutionPath) {
+      return;
+    }
     this.data = await this.dispatcher.Send(new GetSolutionPackagesQuery(this.solutionPath));
     this.requestUpdate();
   }
@@ -139,8 +151,8 @@ export class PackagesView extends LitElement {
       // HTTP 429 : on met la file en pause plutôt que d'amplifier la limitation en enchaînant les
       // lots suivants. Les badges restants gardent volontairement leur état par défaut 'loading'
       // (glyphe '…') plutôt qu'un 'unknown' trompeur — un reload ou une resélection relance le fetch.
-      if (results.some((info) => info.fetchStatus === 'RateLimited')) {
-        this.logger.Warning('nuget.org limite les requêtes (429) : file des badges mise en pause.');
+      if (results.some((info) => info.fetchStatus === "RateLimited")) {
+        this.logger.Warning("nuget.org limite les requêtes (429) : file des badges mise en pause.");
         break;
       }
     }
@@ -149,47 +161,63 @@ export class PackagesView extends LitElement {
   protected async loadUpdateInfo(packageId: string): Promise<PackageUpdateInfoDto> {
     const cached = this.updateInfoCache.get(packageId);
     if (cached) {
-      if (packageId === this.selectedId) this.selectedInfo = cached;
+      if (packageId === this.selectedId) {
+        this.selectedInfo = cached;
+      }
       return cached;
     }
     try {
       const info = (await this.dispatcher.Send(
-        new GetPackageUpdateInfoQuery(packageId, this.solutionPath)
+        new GetPackageUpdateInfoQuery(packageId, this.solutionPath),
       )) as PackageUpdateInfoDto;
       // Ne mettre en cache que les succès : un DTO d'échec caché figerait le statut pour toujours
       // et empêcherait toute nouvelle tentative lors d'une resélection du package.
-      if (info.fetchStatus === 'Ok') {
+      if (info.fetchStatus === "Ok") {
         this.updateInfoCache.set(packageId, info);
       }
       this.verdictBadges.set(packageId, this.aggregateBadge(info));
-      if (packageId === this.selectedId) this.selectedInfo = info;
+      if (packageId === this.selectedId) {
+        this.selectedInfo = info;
+      }
       return info;
     } catch {
       const fallback: PackageUpdateInfoDto = {
         id: packageId,
         verified: false,
         isMicrosoft: false,
-        authors: '',
+        authors: "",
         tags: [],
         links: { nugetPage: `https://www.nuget.org/packages/${packageId}` },
         versions: [],
-        fetchStatus: 'Offline',
+        fetchStatus: "Offline",
       };
-      this.verdictBadges.set(packageId, 'unknown');
-      if (packageId === this.selectedId) this.selectedInfo = fallback;
+      this.verdictBadges.set(packageId, "unknown");
+      if (packageId === this.selectedId) {
+        this.selectedInfo = fallback;
+      }
       return fallback;
     }
   }
 
   private aggregateBadge(info: PackageUpdateInfoDto): string {
-    if (info.fetchStatus !== 'Ok' || !info.latestStable) return 'unknown';
+    if (info.fetchStatus !== "Ok" || !info.latestStable) {
+      return "unknown";
+    }
     const latest = info.versions.find((v) => v.version === info.latestStable);
-    if (!latest) return 'unknown';
+    if (!latest) {
+      return "unknown";
+    }
     const verdicts = latest.verdictsByProject.map((p) => p.verdict);
-    if (verdicts.some((v) => v === 'Unknown')) return 'unknown';
-    if (verdicts.every((v) => v === 'Compatible')) return 'ok';
-    if (verdicts.every((v) => v === 'Incompatible')) return 'incompatible';
-    return 'partial';
+    if (verdicts.some((v) => v === "Unknown")) {
+      return "unknown";
+    }
+    if (verdicts.every((v) => v === "Compatible")) {
+      return "ok";
+    }
+    if (verdicts.every((v) => v === "Incompatible")) {
+      return "incompatible";
+    }
+    return "partial";
   }
 
   private onPackageSelected(e: CustomEvent<{ packageId: string }>): void {
@@ -202,21 +230,28 @@ export class PackagesView extends LitElement {
 
   render() {
     const selected = this.data?.packages.find((p) => p.id === this.selectedId);
-    return html`
-      <package-list
+    return html` <package-list
         .packages=${this.data?.packages ?? []}
         .verdictBadges=${this.verdictBadges}
         .uninterrogatedFeeds=${this.data?.uninterrogatedFeeds ?? []}
         .selectedId=${this.selectedId}
         style="width: ${this.listWidth}px"
-        @package-selected=${this.onPackageSelected}></package-list>
+        @package-selected=${this.onPackageSelected}
+      ></package-list>
       <div
-        class="splitter ${this.isResizing ? 'dragging' : ''}"
-        @pointerdown=${this.onSplitterPointerDown}></div>
+        class="splitter ${this.isResizing ? "dragging" : ""}"
+        @pointerdown=${this.onSplitterPointerDown}
+      ></div>
       ${selected
         ? html`<package-detail .package=${selected} .info=${this.selectedInfo}></package-detail>`
-        : html`<div class="detail-placeholder">${this.i18n.t('packages.noPackageSelected')}</div>`}`;
+        : html`<div class="detail-placeholder">
+            ${this.i18n.t("packages.noPackageSelected")}
+          </div>`}`;
   }
 }
 
-declare global { interface HTMLElementTagNameMap { 'packages-view': PackagesView; } }
+declare global {
+  interface HTMLElementTagNameMap {
+    "packages-view": PackagesView;
+  }
+}

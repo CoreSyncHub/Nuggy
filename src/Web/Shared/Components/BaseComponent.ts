@@ -1,5 +1,5 @@
-import { LitElement } from 'lit';
-import { container } from 'tsyringe';
+import { LitElement } from "lit";
+import { container } from "tsyringe";
 
 /**
  * Base class for all Lit components with DI support.

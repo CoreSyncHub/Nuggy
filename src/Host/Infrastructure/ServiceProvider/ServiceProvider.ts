@@ -1,5 +1,5 @@
-import { type DependencyContainer, container, injectable } from 'tsyringe';
-import { type IServiceProvider } from '@Application/Abstractions/ServiceProvider/IServiceProvider';
+import { type DependencyContainer, container, injectable } from "tsyringe";
+import { type IServiceProvider } from "@Application/Abstractions/ServiceProvider/IServiceProvider";
 
 /**
  * Simple ServiceProvider wrapper around tsyringe container

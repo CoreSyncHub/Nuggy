@@ -1,11 +1,11 @@
-import { singleton } from 'tsyringe';
-import { type PackageVersion } from '../../Domain/Packages/Entities/PackageVersion';
-import { type PackageReference } from '../../Domain/Packages/Entities/PackageReference';
-import { type LegacyPackage } from '../../Domain/Packages/Entities/LegacyPackage';
-import { PackageDiagnostic } from '../../Domain/Packages/Entities/PackageDiagnostic';
-import { PackageManagementMode } from '../../Domain/Packages/Enums/PackageManagementMode';
-import { type BuildConfigFile } from '../../Domain/Build/Entities/BuildConfigFile';
-import { CpmDiagnosticService } from './CpmDiagnosticService';
+import { singleton } from "tsyringe";
+import { type PackageVersion } from "../../Domain/Packages/Entities/PackageVersion";
+import { type PackageReference } from "../../Domain/Packages/Entities/PackageReference";
+import { type LegacyPackage } from "../../Domain/Packages/Entities/LegacyPackage";
+import { PackageDiagnostic } from "../../Domain/Packages/Entities/PackageDiagnostic";
+import { PackageManagementMode } from "../../Domain/Packages/Enums/PackageManagementMode";
+import { type BuildConfigFile } from "../../Domain/Build/Entities/BuildConfigFile";
+import { CpmDiagnosticService } from "./CpmDiagnosticService";
 
 /**
  * Summary of project types in the solution
@@ -69,14 +69,14 @@ export class PackageManagementDiagnosticService {
   public analyze(
     buildConfigFiles: BuildConfigFile[],
     packageReferences: Map<string, PackageReference[]>,
-    legacyPackages: Map<string, LegacyPackage[]>
+    legacyPackages: Map<string, LegacyPackage[]>,
   ): PackageManagementDiagnosticResult {
     const cpmResult = this.cpmDiagnosticService.analyze(buildConfigFiles, packageReferences);
 
     const projectTypeSummary = this.calculateProjectTypeSummary(
       packageReferences,
       legacyPackages,
-      cpmResult.isCpmEnabled
+      cpmResult.isCpmEnabled,
     );
 
     const isTransitional = this.isTransitionalSolution(projectTypeSummary);
@@ -102,7 +102,7 @@ export class PackageManagementDiagnosticService {
   private calculateProjectTypeSummary(
     packageReferences: Map<string, PackageReference[]>,
     legacyPackages: Map<string, LegacyPackage[]>,
-    isCpmEnabled: boolean
+    isCpmEnabled: boolean,
   ): ProjectTypeSummary {
     const legacyFrameworkProjects = legacyPackages.size;
     const sdkStyleProjects = packageReferences.size;
@@ -130,17 +130,17 @@ export class PackageManagementDiagnosticService {
 
   private createTransitionalSolutionInfo(summary: ProjectTypeSummary): PackageDiagnostic {
     const message =
-      `This solution contains both legacy .NET Framework projects (${summary.legacyFrameworkProjects} project${summary.legacyFrameworkProjects > 1 ? 's' : ''} with packages.config) ` +
-      `and modern SDK-style projects (${summary.sdkStyleProjects} project${summary.sdkStyleProjects > 1 ? 's' : ''} with PackageReference). ` +
+      `This solution contains both legacy .NET Framework projects (${summary.legacyFrameworkProjects} project${summary.legacyFrameworkProjects > 1 ? "s" : ""} with packages.config) ` +
+      `and modern SDK-style projects (${summary.sdkStyleProjects} project${summary.sdkStyleProjects > 1 ? "s" : ""} with PackageReference). ` +
       `This is typical of a progressive migration from .NET Framework to .NET Core/.NET.`;
 
-    return PackageDiagnostic.info(message, '', undefined, undefined);
+    return PackageDiagnostic.info(message, "", undefined, undefined);
   }
 
   private determineOverallMode(
     sdkStyleMode: PackageManagementMode,
     packageReferences: Map<string, PackageReference[]>,
-    legacyPackages: Map<string, LegacyPackage[]>
+    legacyPackages: Map<string, LegacyPackage[]>,
   ): PackageManagementMode {
     const hasLegacyProjects = legacyPackages.size > 0;
     const hasSdkStyleProjects = packageReferences.size > 0;

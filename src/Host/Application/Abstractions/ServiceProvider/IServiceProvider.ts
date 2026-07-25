@@ -1,4 +1,4 @@
-import { InjectionToken } from '@Shared/InjectionToken';
+import { InjectionToken } from "@Shared/InjectionToken";
 
 /**
  * Simple ServiceProvider wrapper around tsyringe container
@@ -17,4 +17,4 @@ export interface IServiceProvider {
   resolveAll<T>(tokens: Array<new (...args: any[]) => T>): T[];
 }
 
-export const SERVICE_PROVIDER = new InjectionToken<IServiceProvider>('ServiceProvider');
+export const SERVICE_PROVIDER = new InjectionToken<IServiceProvider>("ServiceProvider");

@@ -1,5 +1,5 @@
-import { type Package } from '../../Packages/Entities/Package';
-import { type ProjectType } from '../Enums/ProjectType';
+import { type Package } from "../../Packages/Entities/Package";
+import { type ProjectType } from "../Enums/ProjectType";
 
 /**
  * Represents a .NET project (.csproj file) with its packages and metadata
@@ -29,7 +29,7 @@ export class Project {
     packages: Package[] = [],
     type?: ProjectType,
     targetFramework?: string,
-    targetFrameworks?: string[]
+    targetFrameworks?: string[],
   ) {
     this.name = name;
     this.path = path;

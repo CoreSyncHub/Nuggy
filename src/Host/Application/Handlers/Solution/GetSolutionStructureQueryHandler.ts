@@ -1,18 +1,18 @@
-import { injectable } from 'tsyringe';
-import * as path from 'path';
-import * as fs from 'fs';
-import { type IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
-import { GetSolutionStructureQuery } from '@Shared/Features/Queries/GetSolutionStructureQuery';
+import { injectable } from "tsyringe";
+import * as path from "path";
+import * as fs from "fs";
+import { type IQueryHandler } from "@Shared/Abstractions/Messaging/IQueryHandler";
+import { GetSolutionStructureQuery } from "@Shared/Features/Queries/GetSolutionStructureQuery";
 import {
   type SolutionStructureDto,
   type SolutionProjectDto,
   type SolutionFolderDto,
-} from '@Shared/Features/Dtos/SolutionDto';
-import { HandlerFor } from '@Shared/Infrastructure/Messaging/HandlerFor';
-import { SlnParser } from '@Infrastructure/Solution/SlnParser';
-import { SlnxParser } from '@Infrastructure/Solution/SlnxParser';
-import { GlobalJsonParser } from '@Infrastructure/Solution/GlobalJsonParser';
-import { SolutionFolder, SolutionProject } from '@Domain/Solutions/Entities/SolutionFolder';
+} from "@Shared/Features/Dtos/SolutionDto";
+import { HandlerFor } from "@Shared/Infrastructure/Messaging/HandlerFor";
+import { SlnParser } from "@Infrastructure/Solution/SlnParser";
+import { SlnxParser } from "@Infrastructure/Solution/SlnxParser";
+import { GlobalJsonParser } from "@Infrastructure/Solution/GlobalJsonParser";
+import { SolutionFolder, SolutionProject } from "@Domain/Solutions/Entities/SolutionFolder";
 
 /**
  * Handler for GetSolutionStructureQuery
@@ -20,13 +20,14 @@ import { SolutionFolder, SolutionProject } from '@Domain/Solutions/Entities/Solu
  */
 @injectable()
 @HandlerFor(GetSolutionStructureQuery)
-export class GetSolutionStructureQueryHandler
-  implements IQueryHandler<GetSolutionStructureQuery, SolutionStructureDto>
-{
+export class GetSolutionStructureQueryHandler implements IQueryHandler<
+  GetSolutionStructureQuery,
+  SolutionStructureDto
+> {
   constructor(
     private readonly slnParser: SlnParser,
     private readonly slnxParser: SlnxParser,
-    private readonly globalJsonParser: GlobalJsonParser
+    private readonly globalJsonParser: GlobalJsonParser,
   ) {}
 
   async Handle(query: GetSolutionStructureQuery): Promise<SolutionStructureDto> {
@@ -41,9 +42,9 @@ export class GetSolutionStructureQueryHandler
       rootItems: (SolutionFolder | SolutionProject)[];
     };
 
-    if (solutionExt === '.slnx') {
+    if (solutionExt === ".slnx") {
       parseResult = this.slnxParser.parse(solutionPath);
-    } else if (solutionExt === '.sln') {
+    } else if (solutionExt === ".sln") {
       parseResult = this.slnParser.parse(solutionPath);
     } else {
       throw new Error(`Unsupported solution format: ${solutionExt}`);
@@ -52,7 +53,7 @@ export class GetSolutionStructureQueryHandler
     const { version: dotnetSdkVersion, globalJsonPath } =
       this.globalJsonParser.findSdkVersion(solutionDir);
 
-    const directoryPackagesPropsPath = path.join(solutionDir, 'Directory.Packages.props');
+    const directoryPackagesPropsPath = path.join(solutionDir, "Directory.Packages.props");
     const isCentrallyManaged = fs.existsSync(directoryPackagesPropsPath);
 
     const projectDtos: SolutionProjectDto[] = parseResult.projects.map((project) => ({
@@ -90,8 +91,8 @@ export class GetSolutionStructureQueryHandler
       solution: {
         path: solutionPath,
         name: solutionName,
-        format: solutionExt === '.slnx' ? 'slnx' : 'sln',
-        workspaceFolder: '',
+        format: solutionExt === ".slnx" ? "slnx" : "sln",
+        workspaceFolder: "",
         isSelected: false,
       },
       projects: projectDtos,

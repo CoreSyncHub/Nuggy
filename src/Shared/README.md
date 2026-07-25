@@ -20,15 +20,18 @@ Shared/
 ### Composants principaux
 
 #### 1. **IBus** - Abstraction de transport
+
 Responsable de router les requêtes vers leurs handlers, que ce soit localement ou à distance.
 
 - **LocalBus** (Host): Exécute les handlers en local via le conteneur DI
 - **RemoteBus** (WebView): Envoie les requêtes au Host via `postMessage`
 
 #### 2. **IDispatcher** - Point d'entrée unifié
+
 Interface unique pour envoyer des commandes et queries, indépendamment de l'environnement.
 
 #### 3. **IRequest<TResponse>** - Marqueur de requête
+
 Interface de base pour toutes les commandes et queries.
 
 ## Utilisation
@@ -37,14 +40,14 @@ Interface de base pour toutes les commandes et queries.
 
 ```typescript
 // 1. Définir la Query
-import { IQuery } from '../../../Shared/Abstractions/Messaging/IQuery';
+import { IQuery } from "../../../Shared/Abstractions/Messaging/IQuery";
 
 export class GetConfigQuery implements IQuery<SolutionConfig> {}
 
 // 2. Créer le Handler
-import { IQueryHandler } from '../../../Shared/Abstractions/Messaging/IQueryHandler';
-import { HandlerFor } from '../../../Shared/Infrastructure/Messaging/HandlerFor';
-import { injectable } from 'tsyringe';
+import { IQueryHandler } from "../../../Shared/Abstractions/Messaging/IQueryHandler";
+import { HandlerFor } from "../../../Shared/Infrastructure/Messaging/HandlerFor";
+import { injectable } from "tsyringe";
 
 @injectable()
 @HandlerFor(GetConfigQuery)
@@ -63,31 +66,31 @@ container.register(GetConfigQueryHandler, { useClass: GetConfigQueryHandler });
 ### Côté WebView - Utiliser la Query
 
 ```typescript
-import { container } from 'tsyringe';
-import { DISPATCHER } from '../../Shared/Abstractions/Messaging/IDispatcher';
-import { GetConfigQuery } from '../../Host/Application/Queries/GetConfigQuery';
+import { container } from "tsyringe";
+import { DISPATCHER } from "../../Shared/Abstractions/Messaging/IDispatcher";
+import { GetConfigQuery } from "../../Host/Application/Queries/GetConfigQuery";
 
 // Résoudre le dispatcher depuis le conteneur
 const dispatcher = container.resolve(DISPATCHER.toString());
 
 // Envoyer la query - elle sera automatiquement routée au Host via RemoteBus
 const config = await dispatcher.Send(new GetConfigQuery());
-console.log('Config reçue:', config);
+console.log("Config reçue:", config);
 ```
 
 ### Côté Host - Utiliser localement
 
 ```typescript
-import { container } from 'tsyringe';
-import { DISPATCHER } from '../../Shared/Abstractions/Messaging/IDispatcher';
-import { GetConfigQuery } from './Queries/GetConfigQuery';
+import { container } from "tsyringe";
+import { DISPATCHER } from "../../Shared/Abstractions/Messaging/IDispatcher";
+import { GetConfigQuery } from "./Queries/GetConfigQuery";
 
 // Résoudre le dispatcher
 const dispatcher = container.resolve(DISPATCHER.toString());
 
 // Envoyer la query - elle sera exécutée localement via LocalBus
 const config = await dispatcher.Send(new GetConfigQuery());
-console.log('Config:', config);
+console.log("Config:", config);
 ```
 
 ## Communication transparente
@@ -103,14 +106,16 @@ Le système est totalement transparent :
 ## Configuration DI
 
 ### Host (Infrastructure DI)
+
 ```typescript
-this.Register<IBus>(BUS, LocalBus);        // Exécution locale
+this.Register<IBus>(BUS, LocalBus); // Exécution locale
 this.Register<IDispatcher>(DISPATCHER, Dispatcher);
 ```
 
 ### WebView (Web DI)
+
 ```typescript
-this.Register<IBus>(BUS, RemoteBus);       // Communication distante
+this.Register<IBus>(BUS, RemoteBus); // Communication distante
 this.Register<IDispatcher>(DISPATCHER, Dispatcher);
 ```
 
@@ -127,21 +132,19 @@ this.Register<IDispatcher>(DISPATCHER, Dispatcher);
 Vous pouvez ajouter des behaviors pour intercepter les requêtes :
 
 ```typescript
-import { IPipelineBehavior } from '../../Shared/Abstractions/Behaviors/IPipelineBehavior';
-import { Behavior } from '../../Shared/Abstractions/Behaviors/Behavior';
+import { IPipelineBehavior } from "../../Shared/Abstractions/Behaviors/IPipelineBehavior";
+import { Behavior } from "../../Shared/Abstractions/Behaviors/Behavior";
 
 @Behavior()
 @injectable()
-export class LoggingBehavior<TRequest, TResponse>
-  implements IPipelineBehavior<TRequest, TResponse> {
-
-  async Handle(
-    request: TRequest,
-    next: RequestHandlerDelegate<TResponse>
-  ): Promise<TResponse> {
-    console.log('Executing:', request.constructor.name);
+export class LoggingBehavior<TRequest, TResponse> implements IPipelineBehavior<
+  TRequest,
+  TResponse
+> {
+  async Handle(request: TRequest, next: RequestHandlerDelegate<TResponse>): Promise<TResponse> {
+    console.log("Executing:", request.constructor.name);
     const response = await next();
-    console.log('Completed:', request.constructor.name);
+    console.log("Completed:", request.constructor.name);
     return response;
   }
 }

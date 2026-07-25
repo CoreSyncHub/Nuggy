@@ -1,14 +1,14 @@
-import * as fs from 'fs';
-import { BuildConfigParser } from '../BuildConfigParser';
-import { BuildConfigFile } from '../../../Domain/Build/Entities/BuildConfigFile';
-import { BuildConfigFileType } from '../../../Domain/Build/Enums/BuildConfigFileType';
-import { type ILogger } from '../../../Application/Abstractions/Log/ILogger';
+import * as fs from "fs";
+import { BuildConfigParser } from "../BuildConfigParser";
+import { BuildConfigFile } from "../../../Domain/Build/Entities/BuildConfigFile";
+import { BuildConfigFileType } from "../../../Domain/Build/Enums/BuildConfigFileType";
+import { type ILogger } from "../../../Application/Abstractions/Log/ILogger";
 
 // Mock filesystem
-jest.mock('fs');
+jest.mock("fs");
 const mockFs = fs as jest.Mocked<typeof fs>;
 
-describe('BuildConfigParser', () => {
+describe("BuildConfigParser", () => {
   let parser: BuildConfigParser;
   const mockLogger: ILogger = {
     Info: jest.fn(),
@@ -22,8 +22,8 @@ describe('BuildConfigParser', () => {
     parser = new BuildConfigParser(mockLogger);
   });
 
-  describe('parse', () => {
-    it('should extract properties from PropertyGroup', () => {
+  describe("parse", () => {
+    it("should extract properties from PropertyGroup", () => {
       const propsContent = `
 <Project>
   <PropertyGroup>
@@ -37,19 +37,19 @@ describe('BuildConfigParser', () => {
       mockFs.readFileSync.mockReturnValue(propsContent);
 
       const configFile = new BuildConfigFile(
-        '/Solution/Directory.Build.props',
+        "/Solution/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution'
+        "/Solution",
       );
 
       parser.parse(configFile.path, configFile);
 
-      expect(configFile.properties.get('TargetFramework')).toBe('net8.0');
-      expect(configFile.properties.get('Nullable')).toBe('enable');
-      expect(configFile.properties.get('LangVersion')).toBe('latest');
+      expect(configFile.properties.get("TargetFramework")).toBe("net8.0");
+      expect(configFile.properties.get("Nullable")).toBe("enable");
+      expect(configFile.properties.get("LangVersion")).toBe("latest");
     });
 
-    it('should handle multiple PropertyGroups', () => {
+    it("should handle multiple PropertyGroups", () => {
       const propsContent = `
 <Project>
   <PropertyGroup>
@@ -64,18 +64,18 @@ describe('BuildConfigParser', () => {
       mockFs.readFileSync.mockReturnValue(propsContent);
 
       const configFile = new BuildConfigFile(
-        '/Solution/Directory.Build.props',
+        "/Solution/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution'
+        "/Solution",
       );
 
       parser.parse(configFile.path, configFile);
 
-      expect(configFile.properties.get('TargetFramework')).toBe('net8.0');
-      expect(configFile.properties.get('Nullable')).toBe('enable');
+      expect(configFile.properties.get("TargetFramework")).toBe("net8.0");
+      expect(configFile.properties.get("Nullable")).toBe("enable");
     });
 
-    it('should detect parent import', () => {
+    it("should detect parent import", () => {
       const propsContent = `
 <Project>
   <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory).., Directory.Build.props))\\Directory.Build.props" />
@@ -88,9 +88,9 @@ describe('BuildConfigParser', () => {
       mockFs.readFileSync.mockReturnValue(propsContent);
 
       const configFile = new BuildConfigFile(
-        '/Solution/src/Directory.Build.props',
+        "/Solution/src/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution/src'
+        "/Solution/src",
       );
 
       parser.parse(configFile.path, configFile);
@@ -98,7 +98,7 @@ describe('BuildConfigParser', () => {
       expect(configFile.importsParent).toBe(true);
     });
 
-    it('should not set importsParent if no parent import exists', () => {
+    it("should not set importsParent if no parent import exists", () => {
       const propsContent = `
 <Project>
   <PropertyGroup>
@@ -110,9 +110,9 @@ describe('BuildConfigParser', () => {
       mockFs.readFileSync.mockReturnValue(propsContent);
 
       const configFile = new BuildConfigFile(
-        '/Solution/Directory.Build.props',
+        "/Solution/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution'
+        "/Solution",
       );
 
       parser.parse(configFile.path, configFile);
@@ -120,7 +120,7 @@ describe('BuildConfigParser', () => {
       expect(configFile.importsParent).toBe(false);
     });
 
-    it('should handle Directory.Packages.props files', () => {
+    it("should handle Directory.Packages.props files", () => {
       const packagesPropsContent = `<Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -130,9 +130,9 @@ describe('BuildConfigParser', () => {
       mockFs.readFileSync.mockReturnValue(packagesPropsContent);
 
       const configFile = new BuildConfigFile(
-        '/Solution/Directory.Packages.props',
+        "/Solution/Directory.Packages.props",
         BuildConfigFileType.DirectoryPackagesProps,
-        '/Solution'
+        "/Solution",
       );
 
       // Should not throw
@@ -142,13 +142,13 @@ describe('BuildConfigParser', () => {
       expect(configFile.properties.size).toBeGreaterThanOrEqual(0);
     });
 
-    it('should handle empty or invalid XML gracefully', () => {
-      mockFs.readFileSync.mockReturnValue('Invalid XML {]');
+    it("should handle empty or invalid XML gracefully", () => {
+      mockFs.readFileSync.mockReturnValue("Invalid XML {]");
 
       const configFile = new BuildConfigFile(
-        '/Solution/Directory.Build.props',
+        "/Solution/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution'
+        "/Solution",
       );
 
       // Should not throw
@@ -159,32 +159,32 @@ describe('BuildConfigParser', () => {
     });
   });
 
-  describe('getCommonProperties', () => {
-    it('should extract common properties', () => {
+  describe("getCommonProperties", () => {
+    it("should extract common properties", () => {
       const configFile = new BuildConfigFile(
-        '/Solution/Directory.Build.props',
+        "/Solution/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution'
+        "/Solution",
       );
 
-      configFile.setProperty('TargetFramework', 'net8.0');
-      configFile.setProperty('LangVersion', 'latest');
-      configFile.setProperty('Nullable', 'enable');
-      configFile.setProperty('ImplicitUsings', 'enable');
+      configFile.setProperty("TargetFramework", "net8.0");
+      configFile.setProperty("LangVersion", "latest");
+      configFile.setProperty("Nullable", "enable");
+      configFile.setProperty("ImplicitUsings", "enable");
 
       const commonProps = parser.getCommonProperties(configFile);
 
-      expect(commonProps.targetFramework).toBe('net8.0');
-      expect(commonProps.langVersion).toBe('latest');
-      expect(commonProps.nullable).toBe('enable');
-      expect(commonProps.implicitUsings).toBe('enable');
+      expect(commonProps.targetFramework).toBe("net8.0");
+      expect(commonProps.langVersion).toBe("latest");
+      expect(commonProps.nullable).toBe("enable");
+      expect(commonProps.implicitUsings).toBe("enable");
     });
 
-    it('should return undefined for missing common properties', () => {
+    it("should return undefined for missing common properties", () => {
       const configFile = new BuildConfigFile(
-        '/Solution/Directory.Build.props',
+        "/Solution/Directory.Build.props",
         BuildConfigFileType.DirectoryBuildProps,
-        '/Solution'
+        "/Solution",
       );
 
       const commonProps = parser.getCommonProperties(configFile);

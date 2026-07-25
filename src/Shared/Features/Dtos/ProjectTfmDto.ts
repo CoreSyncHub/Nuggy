@@ -18,10 +18,10 @@ export interface ProjectTfmDto {
   primaryTargetFramework: string;
 
   /** Source of the TFM (where it was defined) */
-  source: '.csproj' | 'Directory.Build.targets' | 'Directory.Build.props' | 'Not Found';
+  source: ".csproj" | "Directory.Build.targets" | "Directory.Build.props" | "Not Found";
 
   /** SDK type of the project */
-  sdkType: 'SDK-Style' | 'Legacy' | 'Unknown';
+  sdkType: "SDK-Style" | "Legacy" | "Unknown";
 
   /** SDK attribute value (for SDK-style projects) */
   sdk?: string;

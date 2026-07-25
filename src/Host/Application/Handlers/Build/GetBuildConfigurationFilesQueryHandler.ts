@@ -1,14 +1,17 @@
-import { injectable } from 'tsyringe';
-import * as path from 'path';
-import { type IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
-import { GetBuildConfigurationFilesQuery } from '@Shared/Features/Queries/GetBuildConfigurationFilesQuery';
-import { type BuildConfigStructureDto, type BuildConfigFileDto } from '@Shared/Features/Dtos/BuildConfigDto';
-import { HandlerFor } from '@Shared/Infrastructure/Messaging/HandlerFor';
-import { BuildConfigDetector } from '@Infrastructure/Build/BuildConfigDetector';
-import { BuildConfigParser } from '@Infrastructure/Build/BuildConfigParser';
-import { BuildConfigFileType } from '@Domain/Build/Enums/BuildConfigFileType';
-import { SlnParser } from '@Infrastructure/Solution/SlnParser';
-import { SlnxParser } from '@Infrastructure/Solution/SlnxParser';
+import { injectable } from "tsyringe";
+import * as path from "path";
+import { type IQueryHandler } from "@Shared/Abstractions/Messaging/IQueryHandler";
+import { GetBuildConfigurationFilesQuery } from "@Shared/Features/Queries/GetBuildConfigurationFilesQuery";
+import {
+  type BuildConfigStructureDto,
+  type BuildConfigFileDto,
+} from "@Shared/Features/Dtos/BuildConfigDto";
+import { HandlerFor } from "@Shared/Infrastructure/Messaging/HandlerFor";
+import { BuildConfigDetector } from "@Infrastructure/Build/BuildConfigDetector";
+import { BuildConfigParser } from "@Infrastructure/Build/BuildConfigParser";
+import { BuildConfigFileType } from "@Domain/Build/Enums/BuildConfigFileType";
+import { SlnParser } from "@Infrastructure/Solution/SlnParser";
+import { SlnxParser } from "@Infrastructure/Solution/SlnxParser";
 
 /**
  * Handler for GetBuildConfigurationFilesQuery
@@ -16,14 +19,15 @@ import { SlnxParser } from '@Infrastructure/Solution/SlnxParser';
  */
 @injectable()
 @HandlerFor(GetBuildConfigurationFilesQuery)
-export class GetBuildConfigurationFilesQueryHandler
-  implements IQueryHandler<GetBuildConfigurationFilesQuery, BuildConfigStructureDto>
-{
+export class GetBuildConfigurationFilesQueryHandler implements IQueryHandler<
+  GetBuildConfigurationFilesQuery,
+  BuildConfigStructureDto
+> {
   constructor(
     private readonly buildConfigDetector: BuildConfigDetector,
     private readonly buildConfigParser: BuildConfigParser,
     private readonly slnParser: SlnParser,
-    private readonly slnxParser: SlnxParser
+    private readonly slnxParser: SlnxParser,
   ) {}
 
   async Handle(query: GetBuildConfigurationFilesQuery): Promise<BuildConfigStructureDto> {
@@ -60,9 +64,13 @@ export class GetBuildConfigurationFilesQueryHandler
 
     const summary = {
       totalFiles: configFiles.length,
-      propsFiles: configFiles.filter((f) => f.type === BuildConfigFileType.DirectoryBuildProps).length,
-      targetsFiles: configFiles.filter((f) => f.type === BuildConfigFileType.DirectoryBuildTargets).length,
-      packagesPropsFiles: configFiles.filter((f) => f.type === BuildConfigFileType.DirectoryPackagesProps).length,
+      propsFiles: configFiles.filter((f) => f.type === BuildConfigFileType.DirectoryBuildProps)
+        .length,
+      targetsFiles: configFiles.filter((f) => f.type === BuildConfigFileType.DirectoryBuildTargets)
+        .length,
+      packagesPropsFiles: configFiles.filter(
+        (f) => f.type === BuildConfigFileType.DirectoryPackagesProps,
+      ).length,
       maxDepth: Math.max(0, ...configFiles.map((f) => f.getDepth())),
     };
 
@@ -78,10 +86,10 @@ export class GetBuildConfigurationFilesQueryHandler
   private getProjectPathsFromSolution(solutionPath: string): string[] {
     const solutionExt = path.extname(solutionPath).toLowerCase();
 
-    if (solutionExt === '.slnx') {
+    if (solutionExt === ".slnx") {
       const parseResult = this.slnxParser.parse(solutionPath);
       return parseResult.projects.map((p) => p.path);
-    } else if (solutionExt === '.sln') {
+    } else if (solutionExt === ".sln") {
       const parseResult = this.slnParser.parse(solutionPath);
       return parseResult.projects.map((p) => p.path);
     }

@@ -1,4 +1,4 @@
-import { type IPipelineBehavior } from '../../Abstractions/Behaviors/IPipelineBehavior';
+import { type IPipelineBehavior } from "../../Abstractions/Behaviors/IPipelineBehavior";
 
 /**
  * Global map storing request type -> handler type associations.

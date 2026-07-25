@@ -1,8 +1,8 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
 function getNonce(): string {
-  let text = '';
-  const possibleCharacters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let text = "";
+  const possibleCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   for (let i = 0; i < 32; i++) {
     text += possibleCharacters.charAt(Math.floor(Math.random() * possibleCharacters.length));
   }
@@ -11,10 +11,10 @@ function getNonce(): string {
 
 export function getHtmlForWebview(extensionUri: vscode.Uri, webview: vscode.Webview): string {
   const i18nUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(extensionUri, 'dist', 'i18n', 'locales')
+    vscode.Uri.joinPath(extensionUri, "dist", "i18n", "locales"),
   );
-  const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'dist', 'webview.js'));
-  const distUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'dist'));
+  const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, "dist", "webview.js"));
+  const distUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, "dist"));
 
   const nonce = getNonce();
 

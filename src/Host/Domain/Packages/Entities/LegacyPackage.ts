@@ -1,4 +1,4 @@
-import { type PackageIdentity } from '../ValueObjects/PackageIdentity';
+import { type PackageIdentity } from "../ValueObjects/PackageIdentity";
 
 /**
  * Represents a package from a legacy packages.config file
@@ -15,7 +15,7 @@ export class LegacyPackage {
     public readonly identity: PackageIdentity,
     public readonly projectPath: string,
     public readonly configPath: string,
-    public readonly targetFramework?: string
+    public readonly targetFramework?: string,
   ) {}
 
   /**
@@ -36,7 +36,7 @@ export class LegacyPackage {
    * Converts to string representation
    */
   public toString(): string {
-    const framework = this.targetFramework ? ` (${this.targetFramework})` : '';
+    const framework = this.targetFramework ? ` (${this.targetFramework})` : "";
     return `${this.identity.toString()}${framework}`;
   }
 }

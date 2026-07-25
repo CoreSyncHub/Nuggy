@@ -1,28 +1,29 @@
-import { injectable } from 'tsyringe';
-import * as path from 'path';
-import { type IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
-import { HandlerFor } from '@Shared/Infrastructure/Messaging/HandlerFor';
-import { GetSolutionPackagesQuery } from '@Shared/Features/Queries/GetSolutionPackagesQuery';
+import { injectable } from "tsyringe";
+import * as path from "path";
+import { type IQueryHandler } from "@Shared/Abstractions/Messaging/IQueryHandler";
+import { HandlerFor } from "@Shared/Infrastructure/Messaging/HandlerFor";
+import { GetSolutionPackagesQuery } from "@Shared/Features/Queries/GetSolutionPackagesQuery";
 import {
   type PackageInstallationDto,
   type SolutionPackageDto,
   type SolutionPackagesDto,
-} from '@Shared/Features/Dtos/SolutionPackagesDto';
-import { SlnParser } from '@Infrastructure/Solution/SlnParser';
-import { SlnxParser } from '@Infrastructure/Solution/SlnxParser';
-import { BuildConfigDetector } from '@Infrastructure/Build/BuildConfigDetector';
-import { BuildConfigParser } from '@Infrastructure/Build/BuildConfigParser';
-import { PackageReferenceParser } from '@Infrastructure/Packages/PackageReferenceParser';
-import { PackagesConfigParser } from '@Infrastructure/Packages/PackagesConfigParser';
-import { CpmDiagnosticService } from '@Infrastructure/Packages/CpmDiagnosticService';
-import { NuGetConfigResolver } from '@Infrastructure/Packages/NuGetConfigResolver';
-import { TfmResolver } from '@Infrastructure/Projects/TfmResolver';
+} from "@Shared/Features/Dtos/SolutionPackagesDto";
+import { SlnParser } from "@Infrastructure/Solution/SlnParser";
+import { SlnxParser } from "@Infrastructure/Solution/SlnxParser";
+import { BuildConfigDetector } from "@Infrastructure/Build/BuildConfigDetector";
+import { BuildConfigParser } from "@Infrastructure/Build/BuildConfigParser";
+import { PackageReferenceParser } from "@Infrastructure/Packages/PackageReferenceParser";
+import { PackagesConfigParser } from "@Infrastructure/Packages/PackagesConfigParser";
+import { CpmDiagnosticService } from "@Infrastructure/Packages/CpmDiagnosticService";
+import { NuGetConfigResolver } from "@Infrastructure/Packages/NuGetConfigResolver";
+import { TfmResolver } from "@Infrastructure/Projects/TfmResolver";
 
 @injectable()
 @HandlerFor(GetSolutionPackagesQuery)
-export class GetSolutionPackagesQueryHandler
-  implements IQueryHandler<GetSolutionPackagesQuery, SolutionPackagesDto>
-{
+export class GetSolutionPackagesQueryHandler implements IQueryHandler<
+  GetSolutionPackagesQuery,
+  SolutionPackagesDto
+> {
   constructor(
     private readonly slnParser: SlnParser,
     private readonly slnxParser: SlnxParser,
@@ -32,7 +33,7 @@ export class GetSolutionPackagesQueryHandler
     private readonly packagesConfigParser: PackagesConfigParser,
     private readonly cpmDiagnosticService: CpmDiagnosticService,
     private readonly nuGetConfigResolver: NuGetConfigResolver,
-    private readonly tfmResolver: TfmResolver
+    private readonly tfmResolver: TfmResolver,
   ) {}
 
   async Handle(query: GetSolutionPackagesQuery): Promise<SolutionPackagesDto> {
@@ -51,7 +52,7 @@ export class GetSolutionPackagesQueryHandler
     const packageReferences = this.packageReferenceParser.parseMultiple(sdkProjects);
     const cpmResult = this.cpmDiagnosticService.analyze(buildConfigFiles, packageReferences);
     const cpmVersionByPackage = new Map(
-      cpmResult.packageVersions.map((pv) => [pv.name.toLowerCase(), pv.version])
+      cpmResult.packageVersions.map((pv) => [pv.name.toLowerCase(), pv.version]),
     );
 
     // NuGet package ids are case-insensitive: consolidate on the lowercased
@@ -75,10 +76,10 @@ export class GetSolutionPackagesQueryHandler
         const isCpmManaged = !ref.hasLocalVersion && cpmVersion !== undefined;
         add(ref.name, {
           projectPath,
-          projectName: path.basename(projectPath, '.csproj'),
+          projectName: path.basename(projectPath, ".csproj"),
           effectiveTfms: tfmsOf(projectPath),
-          installedVersion: ref.version ?? cpmVersion ?? 'unknown',
-          referenceStyle: isCpmManaged ? 'CpmManaged' : 'PackageReference',
+          installedVersion: ref.version ?? cpmVersion ?? "unknown",
+          referenceStyle: isCpmManaged ? "CpmManaged" : "PackageReference",
         });
       }
     }
@@ -88,10 +89,10 @@ export class GetSolutionPackagesQueryHandler
       for (const legacy of packages) {
         add(legacy.name, {
           projectPath,
-          projectName: path.basename(projectPath, '.csproj'),
+          projectName: path.basename(projectPath, ".csproj"),
           effectiveTfms: tfmsOf(projectPath),
-          installedVersion: legacy.version ?? 'unknown',
-          referenceStyle: 'PackagesConfig',
+          installedVersion: legacy.version ?? "unknown",
+          referenceStyle: "PackagesConfig",
         });
       }
     }
@@ -100,7 +101,9 @@ export class GetSolutionPackagesQueryHandler
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, installations]) => {
         const id = displayNames.get(key)!;
-        const sorted = [...installations].sort((a, b) => a.projectName.localeCompare(b.projectName));
+        const sorted = [...installations].sort((a, b) =>
+          a.projectName.localeCompare(b.projectName),
+        );
         return {
           id,
           iconUrl: `https://api.nuget.org/v3-flatcontainer/${key}/${sorted[0].installedVersion}/icon`,
@@ -118,8 +121,12 @@ export class GetSolutionPackagesQueryHandler
 
   private parseProjects(solutionPath: string): string[] {
     const ext = path.extname(solutionPath).toLowerCase();
-    if (ext === '.slnx') return this.slnxParser.parse(solutionPath).projects.map((p) => p.path);
-    if (ext === '.sln') return this.slnParser.parse(solutionPath).projects.map((p) => p.path);
+    if (ext === ".slnx") {
+      return this.slnxParser.parse(solutionPath).projects.map((p) => p.path);
+    }
+    if (ext === ".sln") {
+      return this.slnParser.parse(solutionPath).projects.map((p) => p.path);
+    }
     throw new Error(`Unsupported solution format: ${ext}`);
   }
 }

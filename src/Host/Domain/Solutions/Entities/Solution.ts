@@ -1,6 +1,6 @@
-import { type Project } from '../../Projects/Entities/Project';
-import { type SolutionFormat } from '../Enums/SolutionFormat';
-import { SolutionFolder, SolutionProject } from './SolutionFolder';
+import { type Project } from "../../Projects/Entities/Project";
+import { type SolutionFormat } from "../Enums/SolutionFormat";
+import { SolutionFolder, SolutionProject } from "./SolutionFolder";
 
 /**
  * Represents a complete .NET solution with its structure and metadata
@@ -42,7 +42,7 @@ export class Solution {
     isCentrallyManaged: boolean = false,
     directoryPackagesPropsPath?: string,
     dotnetSdkVersion?: string,
-    globalJsonPath?: string
+    globalJsonPath?: string,
   ) {
     this.filePath = filePath;
     this.format = format;

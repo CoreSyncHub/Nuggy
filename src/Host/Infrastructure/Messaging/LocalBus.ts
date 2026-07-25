@@ -1,9 +1,9 @@
-import { type CancellationToken } from 'vscode';
-import { type IBus } from '@Shared/Abstractions/Messaging/IBus';
-import { type IRequest } from '@Shared/Abstractions/Messaging/IRequest';
-import { handlersMap, behaviorsMap } from '@Shared/Infrastructure/Messaging/HandlerRegistry';
-import { type RequestHandlerDelegate } from '@Shared/Abstractions/Behaviors/IPipelineBehavior';
-import { injectable, container } from 'tsyringe';
+import { type CancellationToken } from "vscode";
+import { type IBus } from "@Shared/Abstractions/Messaging/IBus";
+import { type IRequest } from "@Shared/Abstractions/Messaging/IRequest";
+import { handlersMap, behaviorsMap } from "@Shared/Infrastructure/Messaging/HandlerRegistry";
+import { type RequestHandlerDelegate } from "@Shared/Abstractions/Behaviors/IPipelineBehavior";
+import { injectable, container } from "tsyringe";
 
 /**
  * LocalBus executes requests in-process by resolving handlers from the DI container.
@@ -18,10 +18,10 @@ export class LocalBus implements IBus {
 
   public async Send<TResponse>(
     request: IRequest<TResponse>,
-    cancellationToken?: CancellationToken
+    cancellationToken?: CancellationToken,
   ): Promise<TResponse> {
     if (!request) {
-      throw new Error('Request cannot be null or undefined.');
+      throw new Error("Request cannot be null or undefined.");
     }
 
     const requestType = request.constructor as new (...args: any[]) => any;
@@ -41,7 +41,7 @@ export class LocalBus implements IBus {
 
     // Get the behaviors from the DI container
     const behaviors: any[] = Array.from(behaviorsMap).map((behaviorType) =>
-      container.resolve(behaviorType)
+      container.resolve(behaviorType),
     );
 
     // Create the handler delegate

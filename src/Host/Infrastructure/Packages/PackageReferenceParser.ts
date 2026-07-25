@@ -1,10 +1,10 @@
-import * as fs from 'fs';
-import { XMLParser } from 'fast-xml-parser';
-import { singleton } from 'tsyringe';
-import { PackageReference } from '../../Domain/Packages/Entities/PackageReference';
-import { PackageIdentity } from '../../Domain/Packages/ValueObjects/PackageIdentity';
-import { type ILogger, LOGGER } from '../../Application/Abstractions/Log/ILogger';
-import { injectToken } from '@Shared/DependencyInjection/inject';
+import * as fs from "fs";
+import { XMLParser } from "fast-xml-parser";
+import { singleton } from "tsyringe";
+import { PackageReference } from "../../Domain/Packages/Entities/PackageReference";
+import { PackageIdentity } from "../../Domain/Packages/ValueObjects/PackageIdentity";
+import { type ILogger, LOGGER } from "../../Application/Abstractions/Log/ILogger";
+import { injectToken } from "@Shared/DependencyInjection/inject";
 
 /**
  * Parser for extracting PackageReference entries from .csproj files
@@ -13,7 +13,7 @@ import { injectToken } from '@Shared/DependencyInjection/inject';
 export class PackageReferenceParser {
   private readonly xmlParser = new XMLParser({
     ignoreAttributes: false,
-    attributeNamePrefix: '@_',
+    attributeNamePrefix: "@_",
     parseAttributeValue: false,
     trimValues: true,
   });
@@ -24,7 +24,7 @@ export class PackageReferenceParser {
    * Parses a .csproj file and extracts all PackageReference entries
    */
   public parse(csprojPath: string): PackageReference[] {
-    const content = fs.readFileSync(csprojPath, 'utf-8');
+    const content = fs.readFileSync(csprojPath, "utf-8");
     const parsed = this.xmlParser.parse(content);
 
     if (!parsed.Project) {
@@ -38,9 +38,7 @@ export class PackageReferenceParser {
       return [];
     }
 
-    const itemGroups = Array.isArray(project.ItemGroup)
-      ? project.ItemGroup
-      : [project.ItemGroup];
+    const itemGroups = Array.isArray(project.ItemGroup) ? project.ItemGroup : [project.ItemGroup];
 
     for (const itemGroup of itemGroups) {
       if (itemGroup.PackageReference) {
@@ -49,8 +47,8 @@ export class PackageReferenceParser {
           : [itemGroup.PackageReference];
 
         for (const element of packageReferenceElements) {
-          const name = element['@_Include'];
-          const version = element['@_Version'];
+          const name = element["@_Include"];
+          const version = element["@_Version"];
 
           if (name) {
             const identity = new PackageIdentity(name, version);

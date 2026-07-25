@@ -1,10 +1,10 @@
-import { type CancellationToken } from 'vscode';
-import { type IDispatcher } from '../../Abstractions/Messaging/IDispatcher';
-import { type IRequest } from '../../Abstractions/Messaging/IRequest';
-import { type IBus } from '../../Abstractions/Messaging/IBus';
-import { injectable } from 'tsyringe';
-import { BUS } from '../../Abstractions/Messaging/IBus';
-import { injectToken } from '@/Shared/DependencyInjection/inject';
+import { type CancellationToken } from "vscode";
+import { type IDispatcher } from "../../Abstractions/Messaging/IDispatcher";
+import { type IRequest } from "../../Abstractions/Messaging/IRequest";
+import { type IBus } from "../../Abstractions/Messaging/IBus";
+import { injectable } from "tsyringe";
+import { BUS } from "../../Abstractions/Messaging/IBus";
+import { injectToken } from "@/Shared/DependencyInjection/inject";
 
 /**
  * Default implementation of IDispatcher.
@@ -18,10 +18,10 @@ export class Dispatcher implements IDispatcher {
   /** @inheritdoc */
   public async Send<TResponse>(
     request: IRequest<TResponse>,
-    cancellationToken?: CancellationToken
+    cancellationToken?: CancellationToken,
   ): Promise<TResponse> {
     if (!request) {
-      throw new Error('Request cannot be null or undefined.');
+      throw new Error("Request cannot be null or undefined.");
     }
 
     // Delegate to the bus (local or remote)

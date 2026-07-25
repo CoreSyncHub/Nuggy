@@ -1,4 +1,4 @@
-import { type PackageIdentity } from '../ValueObjects/PackageIdentity';
+import { type PackageIdentity } from "../ValueObjects/PackageIdentity";
 
 /**
  * Represents a PackageReference from a .csproj file
@@ -7,7 +7,7 @@ export class PackageReference {
   constructor(
     public readonly identity: PackageIdentity,
     public readonly projectPath: string,
-    public readonly hasLocalVersion: boolean
+    public readonly hasLocalVersion: boolean,
   ) {}
 
   /**

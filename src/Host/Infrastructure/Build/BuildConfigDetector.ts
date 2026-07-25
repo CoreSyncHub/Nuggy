@@ -1,8 +1,8 @@
-import * as vscode from 'vscode';
-import * as path from 'path';
-import { singleton } from 'tsyringe';
-import { BuildConfigFile } from '../../Domain/Build/Entities/BuildConfigFile';
-import { BuildConfigFileType } from '../../Domain/Build/Enums/BuildConfigFileType';
+import * as vscode from "vscode";
+import * as path from "path";
+import { singleton } from "tsyringe";
+import { BuildConfigFile } from "../../Domain/Build/Entities/BuildConfigFile";
+import { BuildConfigFileType } from "../../Domain/Build/Enums/BuildConfigFileType";
 
 /**
  * Service responsible for detecting and organizing MSBuild configuration files
@@ -21,35 +21,47 @@ export class BuildConfigDetector {
     const configFiles: BuildConfigFile[] = [];
 
     const propsFiles = await vscode.workspace.findFiles(
-      '**/Directory.Build.props',
-      '**/node_modules/**'
+      "**/Directory.Build.props",
+      "**/node_modules/**",
     );
 
     for (const uri of propsFiles) {
       configFiles.push(
-        new BuildConfigFile(uri.fsPath, BuildConfigFileType.DirectoryBuildProps, path.dirname(uri.fsPath))
+        new BuildConfigFile(
+          uri.fsPath,
+          BuildConfigFileType.DirectoryBuildProps,
+          path.dirname(uri.fsPath),
+        ),
       );
     }
 
     const targetsFiles = await vscode.workspace.findFiles(
-      '**/Directory.Build.targets',
-      '**/node_modules/**'
+      "**/Directory.Build.targets",
+      "**/node_modules/**",
     );
 
     for (const uri of targetsFiles) {
       configFiles.push(
-        new BuildConfigFile(uri.fsPath, BuildConfigFileType.DirectoryBuildTargets, path.dirname(uri.fsPath))
+        new BuildConfigFile(
+          uri.fsPath,
+          BuildConfigFileType.DirectoryBuildTargets,
+          path.dirname(uri.fsPath),
+        ),
       );
     }
 
     const packagesPropsFiles = await vscode.workspace.findFiles(
-      '**/Directory.Packages.props',
-      '**/node_modules/**'
+      "**/Directory.Packages.props",
+      "**/node_modules/**",
     );
 
     for (const uri of packagesPropsFiles) {
       configFiles.push(
-        new BuildConfigFile(uri.fsPath, BuildConfigFileType.DirectoryPackagesProps, path.dirname(uri.fsPath))
+        new BuildConfigFile(
+          uri.fsPath,
+          BuildConfigFileType.DirectoryPackagesProps,
+          path.dirname(uri.fsPath),
+        ),
       );
     }
 
@@ -90,14 +102,14 @@ export class BuildConfigDetector {
 
   private findParentConfigFile(
     file: BuildConfigFile,
-    allFiles: BuildConfigFile[]
+    allFiles: BuildConfigFile[],
   ): BuildConfigFile | null {
     const fileDir = file.directory;
     let currentDir = path.dirname(fileDir);
 
     while (currentDir && currentDir !== path.parse(currentDir).root) {
       const parentFile = allFiles.find(
-        (f) => f !== file && f.directory === currentDir && f.type === file.type
+        (f) => f !== file && f.directory === currentDir && f.type === file.type,
       );
 
       if (parentFile) {
@@ -105,12 +117,14 @@ export class BuildConfigDetector {
       }
 
       const parentDir = path.dirname(currentDir);
-      if (parentDir === currentDir) { break; }
+      if (parentDir === currentDir) {
+        break;
+      }
       currentDir = parentDir;
     }
 
     const rootFile = allFiles.find(
-      (f) => f !== file && f.directory === path.parse(fileDir).root && f.type === file.type
+      (f) => f !== file && f.directory === path.parse(fileDir).root && f.type === file.type,
     );
 
     return rootFile || null;
@@ -121,7 +135,7 @@ export class BuildConfigDetector {
    */
   public async mapAffectedProjects(
     configFiles: BuildConfigFile[],
-    projectPaths: string[]
+    projectPaths: string[],
   ): Promise<void> {
     for (const projectPath of projectPaths) {
       const projectDir = path.dirname(projectPath);
@@ -145,7 +159,7 @@ export class BuildConfigDetector {
   private findAffectingConfigFile(
     projectDir: string,
     configFiles: BuildConfigFile[],
-    type: BuildConfigFileType
+    type: BuildConfigFileType,
   ): BuildConfigFile | null {
     const filesOfType = configFiles.filter((f) => f.type === type);
 
@@ -158,7 +172,9 @@ export class BuildConfigDetector {
       }
 
       const parentDir = path.dirname(currentDir);
-      if (parentDir === currentDir) { break; }
+      if (parentDir === currentDir) {
+        break;
+      }
       currentDir = parentDir;
     }
 

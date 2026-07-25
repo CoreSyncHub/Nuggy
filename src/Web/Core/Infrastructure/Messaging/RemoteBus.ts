@@ -1,13 +1,13 @@
-import { type CancellationToken } from 'vscode';
-import { type IBus } from '@Shared/Abstractions/Messaging/IBus';
-import { type IRequest } from '@Shared/Abstractions/Messaging/IRequest';
-import { singleton } from 'tsyringe';
-import { type ILogger, LOGGER } from '@/Host/Application/Abstractions/Log/ILogger';
-import { injectToken } from '@Shared/DependencyInjection/inject';
-import type { VsCodeApi } from '../../Types/vscode';
+import { type CancellationToken } from "vscode";
+import { type IBus } from "@Shared/Abstractions/Messaging/IBus";
+import { type IRequest } from "@Shared/Abstractions/Messaging/IRequest";
+import { singleton } from "tsyringe";
+import { type ILogger, LOGGER } from "@/Host/Application/Abstractions/Log/ILogger";
+import { injectToken } from "@Shared/DependencyInjection/inject";
+import type { VsCodeApi } from "../../Types/vscode";
 
 type MessageHeaders = {
-  Type: 'REQUEST' | 'RESPONSE' | 'EVENT';
+  Type: "REQUEST" | "RESPONSE" | "EVENT";
   Command: string;
   CorrelationId: number;
 };
@@ -37,26 +37,26 @@ export class RemoteBus implements IBus {
 
   constructor(@injectToken(LOGGER) private readonly logger: ILogger) {
     // Listen for responses and events from the Host
-    window.addEventListener('message', (e: MessageEvent<Envelope>) => {
-      this.logger.Debug('Received message from Host', { data: e.data });
+    window.addEventListener("message", (e: MessageEvent<Envelope>) => {
+      this.logger.Debug("Received message from Host", { data: e.data });
       const msg = e.data;
       if (!msg || !msg.Headers) {
         return;
       }
 
-      if (msg.Headers.Type === 'RESPONSE') {
+      if (msg.Headers.Type === "RESPONSE") {
         const lock = this.locks.get(msg.Headers.CorrelationId);
         if (lock) {
           // Check if response contains an error
           const body = msg.Body as ErrorResponse | unknown;
-          if (body && typeof body === 'object' && '__error' in body) {
+          if (body && typeof body === "object" && "__error" in body) {
             lock.reject(new Error((body as ErrorResponse).__error));
           } else {
             lock.resolve(msg.Body);
           }
           this.locks.delete(msg.Headers.CorrelationId);
         }
-      } else if (msg.Headers.Type === 'EVENT') {
+      } else if (msg.Headers.Type === "EVENT") {
         // Handle EVENT messages from Host
         const eventName = msg.Headers.Command;
         const listeners = this.eventListeners.get(eventName);
@@ -96,21 +96,21 @@ export class RemoteBus implements IBus {
 
   public async Send<TResponse>(
     request: IRequest<TResponse>,
-    cancellationToken?: CancellationToken
+    cancellationToken?: CancellationToken,
   ): Promise<TResponse> {
     const vscode = RemoteBus.vscode;
     if (!vscode || !vscode.postMessage) {
-      throw new Error('vscode.postMessage not available');
+      throw new Error("vscode.postMessage not available");
     }
 
-    const commandName = request?.constructor?.name ?? 'Unknown';
-    this.logger.Debug('Sending request', { commandName, request });
+    const commandName = request?.constructor?.name ?? "Unknown";
+    this.logger.Debug("Sending request", { commandName, request });
 
     const correlationId = ++this.correlationIdCounter;
 
     const envelope: Envelope = {
       Headers: {
-        Type: 'REQUEST',
+        Type: "REQUEST",
         Command: commandName,
         CorrelationId: correlationId,
       },
@@ -123,10 +123,16 @@ export class RemoteBus implements IBus {
       const cleanup = () => clearTimeout(timeoutId);
 
       this.locks.set(correlationId, {
-        resolve: (v: unknown) => { cleanup(); resolve(v as TResponse); },
-        reject: (e: Error) => { cleanup(); reject(e); },
+        resolve: (v: unknown) => {
+          cleanup();
+          resolve(v as TResponse);
+        },
+        reject: (e: Error) => {
+          cleanup();
+          reject(e);
+        },
       });
-      this.logger.Debug('Sending message to Host', { envelope });
+      this.logger.Debug("Sending message to Host", { envelope });
       vscode.postMessage(envelope);
 
       // Timeout after 30 seconds

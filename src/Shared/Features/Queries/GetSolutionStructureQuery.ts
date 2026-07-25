@@ -1,5 +1,5 @@
-import { type IQuery } from '../../Abstractions/Messaging/IQuery';
-import { type SolutionStructureDto } from '../Dtos/SolutionDto';
+import { type IQuery } from "../../Abstractions/Messaging/IQuery";
+import { type SolutionStructureDto } from "../Dtos/SolutionDto";
 
 /**
  * Query to get the complete structure of a solution

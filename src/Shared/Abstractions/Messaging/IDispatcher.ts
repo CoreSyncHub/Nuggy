@@ -1,6 +1,6 @@
-import { type CancellationToken } from 'vscode';
-import { type IRequest } from './IRequest';
-import { InjectionToken } from '../../InjectionToken';
+import { type CancellationToken } from "vscode";
+import { type IRequest } from "./IRequest";
+import { InjectionToken } from "../../InjectionToken";
 
 /**
  * Dispatches requests (commands and queries) to their handlers.
@@ -14,8 +14,8 @@ export interface IDispatcher {
    */
   Send<TResponse>(
     request: IRequest<TResponse>,
-    cancellationToken?: CancellationToken
+    cancellationToken?: CancellationToken,
   ): Promise<TResponse>;
 }
 
-export const DISPATCHER = new InjectionToken<IDispatcher>('IDispatcher');
+export const DISPATCHER = new InjectionToken<IDispatcher>("IDispatcher");

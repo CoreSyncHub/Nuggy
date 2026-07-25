@@ -1,7 +1,7 @@
-import { type CancellationToken } from 'vscode';
+import { type CancellationToken } from "vscode";
 
 export type RequestHandlerDelegate<TResponse> = (
-  cancellationToken?: CancellationToken
+  cancellationToken?: CancellationToken,
 ) => Promise<TResponse>;
 
 export interface IPipelineBehavior<TRequest, TResponse> {
@@ -15,6 +15,6 @@ export interface IPipelineBehavior<TRequest, TResponse> {
   Handle(
     request: TRequest,
     next: RequestHandlerDelegate<TResponse>,
-    cancellationToken?: CancellationToken
+    cancellationToken?: CancellationToken,
   ): Promise<TResponse>;
 }
