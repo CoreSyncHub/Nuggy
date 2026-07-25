@@ -1,0 +1,17 @@
+{
+  "totalHits": 1,
+  "data": [
+    {
+      "id": "Newtonsoft.Json.Bson",
+      "version": "1.0.3",
+      "verified": true,
+      "authors": "James Newton-King",
+      "owners": ["jamesnk", "newtonsoft"],
+      "totalDownloads": 47312456,
+      "iconUrl": "https://api.nuget.org/v3-flatcontainer/newtonsoft.json.bson/1.0.3/icon",
+      "projectUrl": "https://github.com/JamesNK/Newtonsoft.Json.Bson",
+      "licenseUrl": "https://licenses.nuget.org/MIT",
+      "tags": ["bson", "json", "serializer"]
+    }
+  ]
+}

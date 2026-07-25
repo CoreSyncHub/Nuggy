@@ -4,9 +4,9 @@ import * as os from 'os';
 import { XMLParser } from 'fast-xml-parser';
 import { singleton } from 'tsyringe';
 import { NuGetSource } from '../../Domain/Packages/Entities/NuGetSource';
-import { NuGetConfigScope } from '../../Domain/Packages/Enums/NuGetConfigScope';
+import { type NuGetConfigScope } from '../../Domain/Packages/Enums/NuGetConfigScope';
 import { PackageSourceMapping } from '../../Domain/Packages/Entities/PackageSourceMapping';
-import { ILogger, LOGGER } from '../../Application/Abstractions/Log/ILogger';
+import { type ILogger, LOGGER } from '../../Application/Abstractions/Log/ILogger';
 import { injectToken } from '@Shared/DependencyInjection/inject';
 
 /**

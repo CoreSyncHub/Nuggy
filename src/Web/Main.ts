@@ -15,10 +15,10 @@ import {
 import { WebDependencyInjection } from './Core/DI/WebDependencyInjection';
 import './App';
 import { container } from 'tsyringe';
-import { ILogger, LOGGER } from '@/Host/Application/Abstractions/Log/ILogger';
+import { type ILogger, LOGGER } from '@/Host/Application/Abstractions/Log/ILogger';
 import { TranslationService } from './Core/Services/TranslationService';
 import { RemoteBus } from './Core/Infrastructure/Messaging/RemoteBus';
-import { IDispatcher, DISPATCHER } from '@Shared/Abstractions/Messaging/IDispatcher';
+import { type IDispatcher, DISPATCHER } from '@Shared/Abstractions/Messaging/IDispatcher';
 import { GetLanguageQuery } from '@Queries/GetLanguageQuery';
 
 // Hot reload for VS Code extensions is not supported

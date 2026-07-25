@@ -1,8 +1,8 @@
 import * as path from 'path';
 import { GetPackageManagementDiagnosticQuery } from '@Shared/Features/Queries/GetPackageManagementDiagnosticQuery';
-import { PackageManagementDiagnosticDto } from '@/Shared/Features/Dtos/PackageManagementDto';
+import { type PackageManagementDiagnosticDto } from '@/Shared/Features/Dtos/PackageManagementDto';
 import { GetProjectsTfmQuery } from '@/Shared/Features/Queries/GetProjectsTfmQuery';
-import { ProjectsTfmDto } from '@/Shared/Features/Dtos/ProjectTfmDto';
+import { type ProjectsTfmDto } from '@/Shared/Features/Dtos/ProjectTfmDto';
 import { createDiagnosticHandler, createTfmHandler } from '@/Tests/Helpers/createHandlers';
 
 /**

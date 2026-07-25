@@ -1,0 +1,57 @@
+{
+  "count": 1,
+  "items": [
+    {
+      "items": [
+        {
+          "catalogEntry": {
+            "id": "Newtonsoft.Json.Bson",
+            "version": "1.0.2",
+            "published": "2019-04-21T14:44:00Z",
+            "listed": true,
+            "dependencyGroups": [
+              {
+                "targetFramework": ".NETStandard2.0",
+                "dependencies": [{ "id": "Newtonsoft.Json", "range": "[12.0.1, )" }]
+              }
+            ]
+          }
+        },
+        {
+          "catalogEntry": {
+            "id": "Newtonsoft.Json.Bson",
+            "version": "1.0.3",
+            "published": "2024-06-08T10:00:00Z",
+            "listed": true,
+            "dependencyGroups": [
+              {
+                "targetFramework": ".NETFramework4.5",
+                "dependencies": [{ "id": "Newtonsoft.Json", "range": "[13.0.1, )" }]
+              },
+              {
+                "targetFramework": ".NETStandard1.3",
+                "dependencies": [
+                  { "id": "NETStandard.Library", "range": "[1.6.1, )" },
+                  { "id": "Newtonsoft.Json", "range": "[13.0.1, )" }
+                ]
+              },
+              {
+                "targetFramework": ".NETStandard2.0",
+                "dependencies": [{ "id": "Newtonsoft.Json", "range": "[13.0.1, )" }]
+              }
+            ]
+          }
+        },
+        {
+          "catalogEntry": {
+            "id": "Newtonsoft.Json.Bson",
+            "version": "1.1.0-beta.1",
+            "published": "2024-09-01T10:00:00Z",
+            "listed": true,
+            "dependencyGroups": []
+          }
+        }
+      ]
+    }
+  ]
+}

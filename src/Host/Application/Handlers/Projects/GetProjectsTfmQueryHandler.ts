@@ -1,8 +1,8 @@
 import { injectable } from 'tsyringe';
 import * as path from 'path';
-import { IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
+import { type IQueryHandler } from '@Shared/Abstractions/Messaging/IQueryHandler';
 import { GetProjectsTfmQuery } from '@Shared/Features/Queries/GetProjectsTfmQuery';
-import { ProjectsTfmDto, ProjectTfmDto } from '@Shared/Features/Dtos/ProjectTfmDto';
+import { type ProjectsTfmDto, type ProjectTfmDto } from '@Shared/Features/Dtos/ProjectTfmDto';
 import { HandlerFor } from '@Shared/Infrastructure/Messaging/HandlerFor';
 import { SlnParser } from '@Infrastructure/Solution/SlnParser';
 import { SlnxParser } from '@Infrastructure/Solution/SlnxParser';

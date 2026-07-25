@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import { BuildConfigParser } from '../BuildConfigParser';
 import { BuildConfigFile } from '../../../Domain/Build/Entities/BuildConfigFile';
 import { BuildConfigFileType } from '../../../Domain/Build/Enums/BuildConfigFileType';
-import { ILogger } from '../../../Application/Abstractions/Log/ILogger';
+import { type ILogger } from '../../../Application/Abstractions/Log/ILogger';
 
 // Mock filesystem
 jest.mock('fs');

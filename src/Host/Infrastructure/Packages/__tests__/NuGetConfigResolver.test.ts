@@ -1,5 +1,5 @@
 import { NuGetConfigResolver } from '../NuGetConfigResolver';
-import { NuGetConfigParser } from '../NuGetConfigParser';
+import { type NuGetConfigParser } from '../NuGetConfigParser';
 import { NuGetSource } from '@Domain/Packages/Entities/NuGetSource';
 import { NuGetConfigScope } from '@Domain/Packages/Enums/NuGetConfigScope';
 import { PackageSourceMapping } from '@Domain/Packages/Entities/PackageSourceMapping';

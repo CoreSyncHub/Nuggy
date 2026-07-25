@@ -14,18 +14,6 @@
     "vite.config.extension.ts": "vite",
     "vite.config.webview.ts": "vite"
   },
-  "cSpell.words": [
-    "dotnet",
-    "Dtos",
-    "Guids",
-    "msbuild",
-    "Nuggy",
-    "slnx",
-    "Tfms",
-    "tsyringe"
-  ],
-  "i18n-ally.localesPaths": [
-    "src/Web/i18n",
-    "src/Web/i18n/locales"
-  ]
+  "cSpell.words": ["dotnet", "Dtos", "Guids", "msbuild", "Nuggy", "slnx", "Tfms", "tsyringe"],
+  "i18n-ally.localesPaths": ["src/Web/i18n", "src/Web/i18n/locales"]
 }

@@ -1,10 +1,10 @@
 import { singleton } from 'tsyringe';
-import { PackageVersion } from '../../Domain/Packages/Entities/PackageVersion';
-import { PackageReference } from '../../Domain/Packages/Entities/PackageReference';
-import { LegacyPackage } from '../../Domain/Packages/Entities/LegacyPackage';
+import { type PackageVersion } from '../../Domain/Packages/Entities/PackageVersion';
+import { type PackageReference } from '../../Domain/Packages/Entities/PackageReference';
+import { type LegacyPackage } from '../../Domain/Packages/Entities/LegacyPackage';
 import { PackageDiagnostic } from '../../Domain/Packages/Entities/PackageDiagnostic';
 import { PackageManagementMode } from '../../Domain/Packages/Enums/PackageManagementMode';
-import { BuildConfigFile } from '../../Domain/Build/Entities/BuildConfigFile';
+import { type BuildConfigFile } from '../../Domain/Build/Entities/BuildConfigFile';
 import { CpmDiagnosticService } from './CpmDiagnosticService';
 
 /**

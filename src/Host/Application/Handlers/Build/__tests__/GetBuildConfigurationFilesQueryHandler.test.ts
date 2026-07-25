@@ -7,7 +7,7 @@ import { BuildConfigParser } from '@Infrastructure/Build/BuildConfigParser';
 import { SlnParser } from '@Infrastructure/Solution/SlnParser';
 import { SlnxParser } from '@Infrastructure/Solution/SlnxParser';
 import { BuildConfigFileType } from '@Domain/Build/Enums/BuildConfigFileType';
-import { ILogger } from '@/Host/Application/Abstractions/Log/ILogger';
+import { type ILogger } from '@/Host/Application/Abstractions/Log/ILogger';
 
 // Mock dependencies
 jest.mock('fs');

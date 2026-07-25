@@ -1,4 +1,4 @@
-import { ICommand } from '../../Abstractions/Messaging/ICommand';
+import { type ICommand } from '../../Abstractions/Messaging/ICommand';
 
 /**
  * Command to select a solution and persist the choice in workspace settings

@@ -1,5 +1,5 @@
 import { inject as tsyringeInject } from 'tsyringe';
-import { InjectionToken } from '../InjectionToken';
+import { type InjectionToken } from '../InjectionToken';
 
 /**
  * Type-safe wrapper around tsyringe's @inject decorator.

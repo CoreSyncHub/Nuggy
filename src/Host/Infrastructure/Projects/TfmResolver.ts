@@ -1,11 +1,11 @@
 import * as path from 'path';
 import { singleton } from 'tsyringe';
 import { CsprojParser } from './CsprojParser';
-import { BuildConfigFile } from '@Domain/Build/Entities/BuildConfigFile';
+import { type BuildConfigFile } from '@Domain/Build/Entities/BuildConfigFile';
 import { BuildConfigFileType } from '@Domain/Build/Enums/BuildConfigFileType';
-import { ProjectSdkType } from '@Domain/Projects/Enums/ProjectSdkType';
-import { ObjectEnumType } from '@/Shared/Types/ObjetEnumType';
-import { ILogger, LOGGER } from '@/Host/Application/Abstractions/Log/ILogger';
+import { type ProjectSdkType } from '@Domain/Projects/Enums/ProjectSdkType';
+import { type ObjectEnumType } from '@/Shared/Types/ObjetEnumType';
+import { type ILogger, LOGGER } from '@/Host/Application/Abstractions/Log/ILogger';
 import { injectToken } from '@Shared/DependencyInjection/inject';
 
 /**
