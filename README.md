@@ -148,13 +148,19 @@ Nuggy will automatically:
   - [x] Analysis of legacy files (`packages.config`) and mixed solutions
   - [x] NuGet configuration resolution (`NuGet.Config`)
 
+- [x] **EPIC 2**: Decision Engine and Compatibility Analysis
+  - [x] NuGet.org V3 API client with typed errors (`Offline` / `NotFound` / `RateLimited`) and TTL-based metadata cache
+  - [x] Solution-wide package aggregation and per-version, per-project compatibility verdicts (`GetSolutionPackagesQuery` / `GetPackageUpdateInfoQuery`)
+  - [x] DI wiring and WebMediator registration with end-to-end acceptance coverage
+  - [x] Packages view UI: consolidated list with lazy icon loading, progressive badge loading (batches of 5), and filters
+  - [x] Package detail panel: metadata, collapsible dependencies, per-project verdicts, prerelease toggle
+  - [x] Internationalization (fr/en) of the packages view
+
 ### 🚧 In Progress
 
-- [ ] **EPIC 2**: Decision Engine and Compatibility Analysis
+- [ ] **EPIC 3**: Enhanced CPM & Solution Consistency
 
 ### 📋 Planned
-
-- [ ] **EPIC 3**: Enhanced CPM & Solution Consistency
 
 - [ ] **EPIC 4**: Advanced Configuration & Runtime Engines
 
