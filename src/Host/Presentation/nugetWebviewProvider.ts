@@ -12,6 +12,10 @@ import { GetProjectsTfmQuery } from "@/Shared/Features/Queries/GetProjectsTfmQue
 import { SelectSolutionCommand } from "@/Shared/Features/Commands/SelectSolutionCommand";
 import { GetSolutionPackagesQuery } from "@Shared/Features/Queries/GetSolutionPackagesQuery";
 import { GetPackageUpdateInfoQuery } from "@Shared/Features/Queries/GetPackageUpdateInfoQuery";
+import { InstallPackageCommand } from "@Shared/Features/Commands/InstallPackageCommand";
+import { UpgradePackageCommand } from "@Shared/Features/Commands/UpgradePackageCommand";
+import { UninstallPackageCommand } from "@Shared/Features/Commands/UninstallPackageCommand";
+import { GetRestoreStatusQuery } from "@Shared/Features/Queries/GetRestoreStatusQuery";
 
 /**
  * Provider for the NuGet Explorer webview displayed in the bottom panel.
@@ -64,6 +68,10 @@ export class NuGetWebviewProvider implements vscode.WebviewViewProvider {
     this.webMediator.registerRequestType("SelectSolutionCommand", SelectSolutionCommand);
     this.webMediator.registerRequestType("GetSolutionPackagesQuery", GetSolutionPackagesQuery);
     this.webMediator.registerRequestType("GetPackageUpdateInfoQuery", GetPackageUpdateInfoQuery);
+    this.webMediator.registerRequestType("InstallPackageCommand", InstallPackageCommand);
+    this.webMediator.registerRequestType("UpgradePackageCommand", UpgradePackageCommand);
+    this.webMediator.registerRequestType("UninstallPackageCommand", UninstallPackageCommand);
+    this.webMediator.registerRequestType("GetRestoreStatusQuery", GetRestoreStatusQuery);
   }
 
   /**
