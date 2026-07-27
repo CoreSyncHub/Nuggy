@@ -25,6 +25,7 @@ import { UninstallPackageCommand } from "@Shared/Features/Commands/UninstallPack
 import { GetRestoreStatusQuery } from "@Shared/Features/Queries/GetRestoreStatusQuery";
 import { MsBuildTextEditor } from "@Infrastructure/MsBuild/MsBuildTextEditor";
 import { RestoreScheduler } from "@Infrastructure/MsBuild/RestoreScheduler";
+import { OperationLogStore } from "@Infrastructure/MsBuild/OperationLogStore";
 import { type IProcessRunner } from "@Infrastructure/MsBuild/ProcessRunner";
 import { PackageMetadataCache } from "@Infrastructure/NuGet/PackageMetadataCache";
 import { ProjectTfmCache } from "@Infrastructure/Projects/ProjectTfmCache";
@@ -110,7 +111,8 @@ describe("Acceptance: écritures de packages (Epic 5)", () => {
     const processRunner: IProcessRunner = {
       run: jest.fn().mockResolvedValue({ exitCode: 0, output: "", timedOut: false }),
     };
-    const restoreScheduler = new RestoreScheduler(processRunner, noOpLogger);
+    const operationLog = new OperationLogStore();
+    const restoreScheduler = new RestoreScheduler(operationLog, processRunner, noOpLogger);
     const restoreStatusHandler = new GetRestoreStatusQueryHandler(restoreScheduler);
 
     const metadataCache = new PackageMetadataCache();
