@@ -47,4 +47,25 @@ describe("ProjectTfmCache", () => {
     expect(data.get("/A.csproj")).toEqual(["net8.0"]);
     expect(resolver).toHaveBeenCalledTimes(2);
   });
+
+  it("invalidate() supprime l'entrée : le prochain appel re-résout", async () => {
+    const resolver = jest.fn().mockResolvedValue(new Map([["/A.csproj", ["net8.0"]]]));
+    await cache.getOrResolve("/Solution/A.sln", resolver);
+
+    cache.invalidate("/Solution/A.sln");
+    await cache.getOrResolve("/Solution/A.sln", resolver);
+
+    expect(resolver).toHaveBeenCalledTimes(2);
+  });
+
+  it("invalidate() n'affecte pas les autres solutions", async () => {
+    const resolver = jest.fn().mockResolvedValue(new Map());
+    await cache.getOrResolve("/Solution/A.sln", resolver);
+    await cache.getOrResolve("/Solution/B.sln", resolver);
+
+    cache.invalidate("/Solution/A.sln");
+    await cache.getOrResolve("/Solution/B.sln", resolver);
+
+    expect(resolver).toHaveBeenCalledTimes(2); // A puis B, B non re-résolu
+  });
 });

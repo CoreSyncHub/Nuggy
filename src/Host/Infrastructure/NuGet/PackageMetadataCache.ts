@@ -39,4 +39,10 @@ export class PackageMetadataCache {
     this.inFlight.set(key, promise);
     return promise;
   }
+
+  /** Supprime l'entrée en cache (et toute requête en vol) pour cette clé. */
+  public invalidate(key: string): void {
+    this.entries.delete(key);
+    this.inFlight.delete(key);
+  }
 }
