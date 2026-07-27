@@ -32,4 +32,9 @@ export class ProjectTfmCache {
     this.entries.set(solutionPath, { data, fetchedAt: Date.now() });
     return data;
   }
+
+  /** Supprime l'entrée en cache pour cette solution. */
+  public invalidate(key: string): void {
+    this.entries.delete(key);
+  }
 }

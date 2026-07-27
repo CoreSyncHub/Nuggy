@@ -1,6 +1,7 @@
 import { GetPackageManagementDiagnosticQueryHandler } from "@Application/Handlers/Packages/GetPackageManagementDiagnosticQueryHandler";
 import { GetProjectsTfmQueryHandler } from "@Application/Handlers/Projects/GetProjectsTfmQueryHandler";
 import { GetSolutionPackagesQueryHandler } from "@Application/Handlers/Packages/GetSolutionPackagesQueryHandler";
+import { PackageWriteTargetResolver } from "@Infrastructure/MsBuild/PackageWriteTargetResolver";
 import { SlnParser } from "@Infrastructure/Solution/SlnParser";
 import { SlnxParser } from "@Infrastructure/Solution/SlnxParser";
 import { BuildConfigDetector } from "@Infrastructure/Build/BuildConfigDetector";
@@ -80,5 +81,17 @@ export function createSolutionPackagesHandler(): GetSolutionPackagesQueryHandler
     cpmDiagnosticService,
     nuGetConfigResolver,
     tfmResolver
+  );
+}
+
+export function createPackageWriteTargetResolver(): PackageWriteTargetResolver {
+  return new PackageWriteTargetResolver(
+    new SlnParser(),
+    new SlnxParser(),
+    new BuildConfigDetector(),
+    new BuildConfigParser(noOpLogger),
+    new PackageReferenceParser(noOpLogger),
+    new PackagesConfigParser(noOpLogger),
+    new CpmDiagnosticService(new PackageVersionParser()),
   );
 }
