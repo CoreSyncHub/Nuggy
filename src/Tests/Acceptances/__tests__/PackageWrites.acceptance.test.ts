@@ -19,10 +19,12 @@ import { InstallPackageCommandHandler } from "@Application/Handlers/Packages/Ins
 import { UpgradePackageCommandHandler } from "@Application/Handlers/Packages/UpgradePackageCommandHandler";
 import { UninstallPackageCommandHandler } from "@Application/Handlers/Packages/UninstallPackageCommandHandler";
 import { GetRestoreStatusQueryHandler } from "@Application/Handlers/Packages/GetRestoreStatusQueryHandler";
+import { GetOperationLogQueryHandler } from "@Application/Handlers/Packages/GetOperationLogQueryHandler";
 import { InstallPackageCommand } from "@Shared/Features/Commands/InstallPackageCommand";
 import { UpgradePackageCommand } from "@Shared/Features/Commands/UpgradePackageCommand";
 import { UninstallPackageCommand } from "@Shared/Features/Commands/UninstallPackageCommand";
 import { GetRestoreStatusQuery } from "@Shared/Features/Queries/GetRestoreStatusQuery";
+import { GetOperationLogQuery } from "@Shared/Features/Queries/GetOperationLogQuery";
 import { MsBuildTextEditor } from "@Infrastructure/MsBuild/MsBuildTextEditor";
 import { RestoreScheduler } from "@Infrastructure/MsBuild/RestoreScheduler";
 import { OperationLogStore } from "@Infrastructure/MsBuild/OperationLogStore";
@@ -114,6 +116,7 @@ describe("Acceptance: écritures de packages (Epic 5)", () => {
     const operationLog = new OperationLogStore();
     const restoreScheduler = new RestoreScheduler(operationLog, processRunner, noOpLogger);
     const restoreStatusHandler = new GetRestoreStatusQueryHandler(restoreScheduler);
+    const operationLogHandler = new GetOperationLogQueryHandler(operationLog);
 
     const metadataCache = new PackageMetadataCache();
     const tfmCache = new ProjectTfmCache();
@@ -244,5 +247,22 @@ describe("Acceptance: écritures de packages (Epic 5)", () => {
     // Aucune confirmation utilisateur nécessaire : chaque étape ciblait
     // explicitement le projet Core (un seul candidat).
     expect(prompt.confirm).not.toHaveBeenCalled();
+
+    // ---- Journal : GetOperationLogQuery voit tout le scénario ----
+    const log = await operationLogHandler.Handle(new GetOperationLogQuery());
+
+    const writes = log.entries.filter((e) => e.kind === "write");
+    expect(writes.map((e) => e.operation)).toEqual(["uninstall", "upgrade", "install"]); // anté-chronologique
+
+    const restores = log.entries.filter((e) => e.kind === "restore");
+    expect(restores.length).toBeGreaterThan(0);
+    expect(restores.every((e) => e.status === "Succeeded")).toBe(true);
+    // Les trois écritures ont été débouncées ensemble : un seul restore a été
+    // programmé, donc l'entrée la plus récente du journal est CE restore, pas
+    // le dernier write (son rang dans le journal dépend du timing des timers
+    // factices). On vérifie donc l'ordre anté-chronologique par type plutôt
+    // qu'un ordre global entre types d'entrées.
+    const restoreRunIds = restores.map((e) => e.runId);
+    expect(restoreRunIds).toEqual([...restoreRunIds].sort((a, b) => b - a));
   });
 });

@@ -16,6 +16,7 @@ import { InstallPackageCommand } from "@Shared/Features/Commands/InstallPackageC
 import { UpgradePackageCommand } from "@Shared/Features/Commands/UpgradePackageCommand";
 import { UninstallPackageCommand } from "@Shared/Features/Commands/UninstallPackageCommand";
 import { GetRestoreStatusQuery } from "@Shared/Features/Queries/GetRestoreStatusQuery";
+import { GetOperationLogQuery } from "@Shared/Features/Queries/GetOperationLogQuery";
 
 /**
  * Provider for the NuGet Explorer webview displayed in the bottom panel.
@@ -72,6 +73,7 @@ export class NuGetWebviewProvider implements vscode.WebviewViewProvider {
     this.webMediator.registerRequestType("UpgradePackageCommand", UpgradePackageCommand);
     this.webMediator.registerRequestType("UninstallPackageCommand", UninstallPackageCommand);
     this.webMediator.registerRequestType("GetRestoreStatusQuery", GetRestoreStatusQuery);
+    this.webMediator.registerRequestType("GetOperationLogQuery", GetOperationLogQuery);
   }
 
   /**
