@@ -10,6 +10,10 @@ import { GetProjectsTfmQueryHandler } from "./Handlers/Projects/GetProjectsTfmQu
 import { GetPackageManagementDiagnosticQueryHandler } from "./Handlers/Packages/GetPackageManagementDiagnosticQueryHandler";
 import { GetSolutionPackagesQueryHandler } from "./Handlers/Packages/GetSolutionPackagesQueryHandler";
 import { GetPackageUpdateInfoQueryHandler } from "./Handlers/Packages/GetPackageUpdateInfoQueryHandler";
+import { InstallPackageCommandHandler } from "./Handlers/Packages/InstallPackageCommandHandler";
+import { UpgradePackageCommandHandler } from "./Handlers/Packages/UpgradePackageCommandHandler";
+import { UninstallPackageCommandHandler } from "./Handlers/Packages/UninstallPackageCommandHandler";
+import { GetRestoreStatusQueryHandler } from "./Handlers/Packages/GetRestoreStatusQueryHandler";
 
 export class ApplicationDependencyInjection extends DependencyInjectionProvider {
   public Provide(): void {
@@ -47,5 +51,9 @@ export class ApplicationDependencyInjection extends DependencyInjectionProvider 
     this.RegisterClass(GetPackageManagementDiagnosticQueryHandler);
     this.RegisterClass(GetSolutionPackagesQueryHandler);
     this.RegisterClass(GetPackageUpdateInfoQueryHandler);
+    this.RegisterClass(InstallPackageCommandHandler);
+    this.RegisterClass(UpgradePackageCommandHandler);
+    this.RegisterClass(UninstallPackageCommandHandler);
+    this.RegisterClass(GetRestoreStatusQueryHandler);
   }
 }

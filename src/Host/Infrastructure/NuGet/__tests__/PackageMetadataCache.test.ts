@@ -78,4 +78,46 @@ describe("PackageMetadataCache", () => {
     expect((await cache.getOrFetch("X", fetcher)).fetchStatus).toBe("Ok");
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
+
+  it("invalidate() supprime l'entrée : le prochain appel refetch", async () => {
+    const fetcher = jest.fn().mockResolvedValue(dto());
+    await cache.getOrFetch("X", fetcher);
+
+    cache.invalidate("X");
+    await cache.getOrFetch("X", fetcher);
+
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  it("invalidate() n'affecte pas les autres clés", async () => {
+    const fetcher = jest.fn().mockResolvedValue(dto());
+    await cache.getOrFetch("X", fetcher);
+    await cache.getOrFetch("Y", fetcher);
+
+    cache.invalidate("X");
+    await cache.getOrFetch("Y", fetcher);
+
+    expect(fetcher).toHaveBeenCalledTimes(2); // X puis Y, Y non refetché
+  });
+
+  it("invalidate() efface aussi une requête en vol : une nouvelle requête n'attend pas l'ancienne promesse", async () => {
+    let resolveFirst!: (v: PackageUpdateInfoDto) => void;
+    const firstFetcher = jest.fn().mockReturnValue(
+      new Promise<PackageUpdateInfoDto>((r) => {
+        resolveFirst = r;
+      }),
+    );
+    const p1 = cache.getOrFetch("X", firstFetcher);
+
+    cache.invalidate("X");
+
+    const secondFetcher = jest.fn().mockResolvedValue(dto());
+    const p2 = cache.getOrFetch("X", secondFetcher);
+
+    resolveFirst(dto());
+    await p1;
+
+    expect(await p2).toEqual(dto());
+    expect(secondFetcher).toHaveBeenCalledTimes(1);
+  });
 });
