@@ -14,6 +14,7 @@ import { InstallPackageCommandHandler } from "./Handlers/Packages/InstallPackage
 import { UpgradePackageCommandHandler } from "./Handlers/Packages/UpgradePackageCommandHandler";
 import { UninstallPackageCommandHandler } from "./Handlers/Packages/UninstallPackageCommandHandler";
 import { GetRestoreStatusQueryHandler } from "./Handlers/Packages/GetRestoreStatusQueryHandler";
+import { GetOperationLogQueryHandler } from "./Handlers/Packages/GetOperationLogQueryHandler";
 
 export class ApplicationDependencyInjection extends DependencyInjectionProvider {
   public Provide(): void {
@@ -55,5 +56,6 @@ export class ApplicationDependencyInjection extends DependencyInjectionProvider 
     this.RegisterClass(UpgradePackageCommandHandler);
     this.RegisterClass(UninstallPackageCommandHandler);
     this.RegisterClass(GetRestoreStatusQueryHandler);
+    this.RegisterClass(GetOperationLogQueryHandler);
   }
 }
