@@ -133,10 +133,13 @@ chaînes ISO UTC ; le formatage local (dates, durées) est fait côté Web.
 
 ### i18n
 
-Nouvelles clés fr/en : `tabs.packages`, `tabs.logs`, `logs.empty`, `logs.viewLogs`
-(« Voir les logs »), `logs.restoreRun`, `logs.truncated`, `logs.operation.install/
-upgrade/uninstall`, `logs.filesChanged`, `logs.skipped`. Les locales de/es restent en
-retard (backlog existant).
+Nouvelles clés fr/en : `tabs.packages`, `tabs.logs`, `logs.empty`, `logs.restoreTitle`,
+`logs.running`, `logs.durationSeconds`, `logs.exitCode`, `logs.whyTitle`,
+`logs.operation.install/upgrade/uninstall`, `logs.filesChanged`, `logs.skipped`,
+`logs.affectedProjects`, `packages.restore.viewLogs` (« Voir les logs → »),
+`packages.restore.moreLines`. La ligne de troncature de la sortie restore est produite
+côté Host en français, comme les autres messages Host (pas de clé i18n). Les locales
+de/es restent en retard (backlog existant).
 
 ## Gestion d'erreurs
 
