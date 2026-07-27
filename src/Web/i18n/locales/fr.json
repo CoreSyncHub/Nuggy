@@ -50,8 +50,7 @@
       "prereleaseLabel": "préversions",
       "installEverywhere": "Installer partout",
       "updateAllEverywhere": "Tout mettre à jour",
-      "uninstallEverywhere": "Supprimer partout",
-      "globalActionTooltip": "{{action}} — À venir (Epic 5)"
+      "uninstallEverywhere": "Supprimer partout"
     },
     "dependencies": {
       "title": "Dépendances par framework (v {{version}})",
@@ -60,7 +59,11 @@
     },
     "installations": {
       "title": "Projets",
-      "comingSoonEpic5": "À venir — Epic 5"
+      "legacyTooltip": "Projet legacy — migrez vers PackageReference",
+      "installTooltip": "Installer sur ce projet",
+      "updateTooltip": "Mettre à jour vers la version sélectionnée",
+      "uninstallTooltip": "Désinstaller de ce projet",
+      "cpmManagedTooltip": "Géré centralement — utilisez la mise à jour globale"
     },
     "list": {
       "filterPlaceholder": "Filtrer les packages…",
@@ -69,6 +72,16 @@
       "verdictPartial": "Partiels",
       "verdictIncompatible": "Incompatibles",
       "verdictUnknown": "Inconnus"
+    },
+    "restore": {
+      "running": "Restore en cours…",
+      "succeeded": "Restore terminé",
+      "failed": "Échec du restore",
+      "timedOut": "Statut du restore inconnu (délai dépassé)"
+    },
+    "write": {
+      "skipped": "{{count}} projet(s) ignoré(s) : ",
+      "error": "Échec de l'écriture : {{message}}"
     }
   },
   "search": {

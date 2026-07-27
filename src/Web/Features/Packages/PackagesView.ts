@@ -6,9 +6,15 @@ import { type ILogger, LOGGER } from "@/Host/Application/Abstractions/Log/ILogge
 import { GetSolutionPackagesQuery } from "@Shared/Features/Queries/GetSolutionPackagesQuery";
 import { GetWorkspaceSolutionsQuery } from "@Shared/Features/Queries/GetWorkspaceSolutionsQuery";
 import { GetPackageUpdateInfoQuery } from "@Shared/Features/Queries/GetPackageUpdateInfoQuery";
+import { GetRestoreStatusQuery } from "@Shared/Features/Queries/GetRestoreStatusQuery";
+import { InstallPackageCommand } from "@Shared/Features/Commands/InstallPackageCommand";
+import { UpgradePackageCommand } from "@Shared/Features/Commands/UpgradePackageCommand";
+import { UninstallPackageCommand } from "@Shared/Features/Commands/UninstallPackageCommand";
 import { type SolutionDto } from "@Shared/Features/Dtos/SolutionDto";
 import { type SolutionPackagesDto } from "@Shared/Features/Dtos/SolutionPackagesDto";
 import { type PackageUpdateInfoDto } from "@Shared/Features/Dtos/PackageUpdateInfoDto";
+import { type PackageWriteResultDto } from "@Shared/Features/Dtos/PackageWriteResultDto";
+import { type RestoreStatusDto } from "@Shared/Features/Dtos/RestoreStatusDto";
 import { TranslationService } from "../../Core/Services/TranslationService";
 import "./PackageList";
 import "./PackageDetail";
@@ -16,6 +22,13 @@ import "./PackageDetail";
 @customElement("packages-view")
 export class PackagesView extends LitElement {
   private static readonly BATCH_SIZE = 5;
+  private static readonly RESTORE_POLL_INTERVAL_MS = 1_000;
+  /** Doit dépasser le budget total côté Host (300 s restore, cf. RestoreScheduler.RESTORE_TIMEOUT_MS,
+   *  + 60 s d'enrichissement dotnet nuget why en cas d'échec, cf. RestoreScheduler.WHY_TOTAL_BUDGET_MS,
+   *  + marge) pour ne jamais couper le polling avant que le Host n'ait pu publier son propre état
+   *  terminal (Finding 4). */
+  private static readonly RESTORE_POLL_TIMEOUT_MS = 370_000;
+  private static readonly RESTORE_SUCCESS_HIDE_MS = 4_000;
 
   @state() private data?: SolutionPackagesDto;
   @state() private selectedId = "";
@@ -28,11 +41,28 @@ export class PackagesView extends LitElement {
    *  pour décider si un fetch peut être évité — resélectionner un package en échec relance toujours
    *  loadUpdateInfo. */
   @state() private selectedInfo?: PackageUpdateInfoDto;
+  /** Projets avec une action d'écriture en cours (Host non encore répondu) — relayé jusqu'aux
+   *  cartes de ProjectInstallations pour désactiver leurs boutons et afficher le spinner. */
+  @state() private busyProjects = new Set<string>();
+  /** Une action globale (toolbar de PackageDetail, sans projectPath) est en cours. */
+  @state() private globalBusy = false;
+  /** Dernier résultat d'écriture (succès ou échec) : consommé par le bandeau (Task 11). */
+  @state() private lastWriteResult?: PackageWriteResultDto;
+  /** Dernier statut restore connu (polling démarré après chaque écriture), consommé par le
+   *  bandeau. `undefined` tant qu'aucune écriture n'a eu lieu dans la session, et de nouveau après
+   *  l'auto-masquage 4 s suivant un `Succeeded` (cf. `startRestorePolling`). */
+  @state() private restoreStatus?: RestoreStatusDto;
 
   private dispatcher!: IDispatcher;
   private logger!: ILogger;
   private i18n!: TranslationService;
   private unsubscribeI18n?: () => void;
+  /** Incrémentée à chaque (re)démarrage du polling restore : invalide toute boucle précédente
+   *  encore en vol, garantissant qu'une seule tourne à la fois (une écriture pendant un polling en
+   *  cours le réarme au lieu d'empiler un second intervalle). */
+  private restorePollGeneration = 0;
+  private restorePollTimer?: ReturnType<typeof setTimeout>;
+  private restoreHideTimer?: ReturnType<typeof setTimeout>;
   /** Résolu à la connexion via GetWorkspaceSolutionsQuery (solution marquée isSelected, sinon la première détectée). */
   protected solutionPath = "";
 
@@ -106,6 +136,13 @@ export class PackagesView extends LitElement {
   disconnectedCallback(): void {
     super.disconnectedCallback();
     this.unsubscribeI18n?.();
+    this.restorePollGeneration++;
+    if (this.restorePollTimer) {
+      clearTimeout(this.restorePollTimer);
+    }
+    if (this.restoreHideTimer) {
+      clearTimeout(this.restoreHideTimer);
+    }
   }
 
   private async initialize(): Promise<void> {
@@ -221,11 +258,152 @@ export class PackagesView extends LitElement {
   }
 
   private onPackageSelected(e: CustomEvent<{ packageId: string }>): void {
+    const changed = e.detail.packageId !== this.selectedId;
     this.selectedId = e.detail.packageId;
     // Reflète immédiatement le dernier état connu (cache de succès, sinon 'loading' via undefined) ;
     // loadUpdateInfo relance toujours un fetch Host si aucun succès n'est en cache pour ce package.
     this.selectedInfo = this.updateInfoCache.get(this.selectedId);
     void this.loadUpdateInfo(this.selectedId).then(() => this.requestUpdate());
+    // Le résultat de la dernière écriture est attaché au package sur lequel elle a eu lieu : sans
+    // ce reset, changer de sélection laisserait le bandeau 'skipped'/'error' d'un autre package
+    // fuiter sur celui-ci (restoreStatus, lui, reste solution-wide et cohérent quelle que soit la
+    // sélection — volontairement pas touché ici).
+    if (changed) {
+      this.lastWriteResult = undefined;
+    }
+  }
+
+  /** Point d'entrée unique pour les 3 actions d'écriture, envoyées par ProjectInstallations
+   *  (par projet) ou par la toolbar de PackageDetail (globale, projectPath absent). Les
+   *  confirmations pour les actions globales sont gérées côté Host (modale) : ce composant se
+   *  contente d'envoyer la commande et de rafraîchir l'état local une fois la réponse reçue. */
+  private async onWriteCommand(
+    kind: "install" | "upgrade" | "uninstall",
+    detail: { projectPath?: string; version?: string },
+  ): Promise<void> {
+    if (!this.selectedId || !this.solutionPath) {
+      return;
+    }
+    const { projectPath, version } = detail;
+    const packageId = this.selectedId;
+    const solutionPath = this.solutionPath;
+
+    if (projectPath) {
+      this.busyProjects = new Set(this.busyProjects).add(projectPath);
+    } else {
+      this.globalBusy = true;
+    }
+
+    try {
+      const command =
+        kind === "install"
+          ? new InstallPackageCommand(packageId, version ?? "", solutionPath, projectPath)
+          : kind === "upgrade"
+            ? new UpgradePackageCommand(packageId, version ?? "", solutionPath, projectPath)
+            : new UninstallPackageCommand(packageId, solutionPath, projectPath);
+      this.lastWriteResult = (await this.dispatcher.Send(command)) as PackageWriteResultDto;
+    } catch (error) {
+      this.logger.Error(`Échec de l'action '${kind}' sur le package ${packageId}`, error as Error);
+      this.lastWriteResult = {
+        status: "Error",
+        filesChanged: [],
+        affectedProjects: [],
+        skipped: [],
+        error: error instanceof Error ? error.message : String(error),
+      };
+    } finally {
+      if (projectPath) {
+        const next = new Set(this.busyProjects);
+        next.delete(projectPath);
+        this.busyProjects = next;
+      } else {
+        this.globalBusy = false;
+      }
+    }
+
+    // Recharge l'état solution-wide et le détail du package sélectionné : une écriture peut avoir
+    // changé les installations, les versions effectives et les verdicts de compatibilité affichés.
+    try {
+      await this.loadPackages();
+      this.updateInfoCache.delete(packageId);
+      await this.loadUpdateInfo(packageId);
+      // Nouvelle Map : déclenche le re-render du badge dans package-list (cf. fillBadges).
+      this.verdictBadges = new Map(this.verdictBadges);
+    } catch (error) {
+      this.logger.Error("Échec du rechargement des packages après une écriture", error as Error);
+    }
+
+    this.startRestorePolling();
+  }
+
+  /** (Re)démarre le polling de `GetRestoreStatusQuery` après une commande d'écriture. La génération
+   *  incrémentée invalide toute boucle précédente encore en vol : une nouvelle écriture pendant un
+   *  polling en cours le réarme au lieu d'empiler un second intervalle, et un poll tardif d'une
+   *  génération périmée devient un no-op silencieux. Le premier poll fixe le `runId` de référence :
+   *  on ne s'arrête sur un état terminal (Succeeded/Failed) que si son `runId` est au moins celui-là
+   *  — sans cette garde, un statut terminal laissé par un restore précédent (avant même que le
+   *  nouveau restore programmé par cette écriture n'incrémente son runId) arrêterait le polling à
+   *  tort. Filet de sécurité : arrêt forcé après RESTORE_POLL_TIMEOUT_MS (> timeout restore Host)
+   *  quel que soit l'état — le bandeau bascule alors sur un état Failed dédié (Finding 4) plutôt que
+   *  de rester figé sur un `Running` qui ne progressera plus jamais. Sur `Succeeded`, le statut est
+   *  masqué après 4 s (sauf si entre-temps une écriture plus récente ou un nouveau statut a déjà pris
+   *  sa place). */
+  private startRestorePolling(): void {
+    const generation = ++this.restorePollGeneration;
+    if (this.restorePollTimer) {
+      clearTimeout(this.restorePollTimer);
+      this.restorePollTimer = undefined;
+    }
+    if (this.restoreHideTimer) {
+      clearTimeout(this.restoreHideTimer);
+      this.restoreHideTimer = undefined;
+    }
+
+    const deadline = Date.now() + PackagesView.RESTORE_POLL_TIMEOUT_MS;
+    let baselineRunId: number | undefined;
+
+    const poll = async (): Promise<void> => {
+      if (generation !== this.restorePollGeneration) {
+        return;
+      }
+      let status: RestoreStatusDto;
+      try {
+        status = (await this.dispatcher.Send(new GetRestoreStatusQuery())) as RestoreStatusDto;
+      } catch (error) {
+        this.logger.Error("Échec du polling du statut de restore", error as Error);
+        return;
+      }
+      if (generation !== this.restorePollGeneration) {
+        return;
+      }
+      this.restoreStatus = status;
+      baselineRunId ??= status.runId;
+      const terminal = status.status === "Succeeded" || status.status === "Failed";
+      if (terminal && status.runId >= baselineRunId) {
+        if (status.status === "Succeeded") {
+          this.restoreHideTimer = setTimeout(() => {
+            if (generation === this.restorePollGeneration && this.restoreStatus === status) {
+              this.restoreStatus = undefined;
+            }
+          }, PackagesView.RESTORE_SUCCESS_HIDE_MS);
+        }
+        return;
+      }
+      if (Date.now() >= deadline) {
+        // Le cap est atteint sans état terminal connu : ne jamais laisser le bandeau figé
+        // sur 'Running' indéfiniment (Finding 4) — bascule vers un état Failed dédié.
+        this.restoreStatus = {
+          status: "Failed",
+          messages: [this.i18n.t("packages.restore.timedOut")],
+          runId: status.runId,
+          finishedAtUtc: new Date().toISOString(),
+        };
+        return;
+      }
+      this.restorePollTimer = setTimeout(() => void poll(), PackagesView.RESTORE_POLL_INTERVAL_MS);
+    };
+
+    void poll();
   }
 
   render() {
@@ -242,11 +420,24 @@ export class PackagesView extends LitElement {
         class="splitter ${this.isResizing ? "dragging" : ""}"
         @pointerdown=${this.onSplitterPointerDown}
       ></div>
-      ${selected
-        ? html`<package-detail .package=${selected} .info=${this.selectedInfo}></package-detail>`
-        : html`<div class="detail-placeholder">
-            ${this.i18n.t("packages.noPackageSelected")}
-          </div>`}`;
+      ${
+        selected
+          ? html`<package-detail
+              .package=${selected}
+              .info=${this.selectedInfo}
+              .busyProjects=${this.busyProjects}
+              .globalBusy=${this.globalBusy}
+              .restore=${this.restoreStatus}
+              .writeResult=${this.lastWriteResult}
+              @install-package=${(e: CustomEvent<{ projectPath?: string; version?: string }>) =>
+                void this.onWriteCommand("install", e.detail)}
+              @upgrade-package=${(e: CustomEvent<{ projectPath?: string; version?: string }>) =>
+                void this.onWriteCommand("upgrade", e.detail)}
+              @uninstall-package=${(e: CustomEvent<{ projectPath?: string }>) =>
+                void this.onWriteCommand("uninstall", e.detail)}
+            ></package-detail>`
+          : html`<div class="detail-placeholder">${this.i18n.t("packages.noPackageSelected")}</div>`
+      }`;
   }
 }
 

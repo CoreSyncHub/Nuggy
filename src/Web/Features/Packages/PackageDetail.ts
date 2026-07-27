@@ -6,17 +6,36 @@ import {
   type PackageVersionInfoDto,
 } from "@Shared/Features/Dtos/PackageUpdateInfoDto";
 import { type SolutionPackageDto } from "@Shared/Features/Dtos/SolutionPackagesDto";
+import { type RestoreStatusDto } from "@Shared/Features/Dtos/RestoreStatusDto";
+import { type PackageWriteResultDto } from "@Shared/Features/Dtos/PackageWriteResultDto";
 import { TranslationService } from "../../Core/Services/TranslationService";
 import { defaultPackageIcon } from "./DefaultPackageIcon";
 import { verifiedBadgeIcon, VERIFIED_BLUE, MICROSOFT_PURPLE } from "./VerifiedBadgeIcon";
-import { arrowUpIcon, downloadIcon, globeIcon, licenseIcon, plusIcon, trashIcon } from "./Icons";
+import {
+  arrowUpIcon,
+  downloadIcon,
+  ellipsisIcon,
+  globeIcon,
+  licenseIcon,
+  plusIcon,
+  trashIcon,
+} from "./Icons";
 import "./DependencyGroups";
 import "./ProjectInstallations";
+import "./WriteStatusBanner";
 
 @customElement("package-detail")
 export class PackageDetail extends LitElement {
   @property({ attribute: false }) package!: SolutionPackageDto;
   @property({ attribute: false }) info?: PackageUpdateInfoDto;
+  /** Chemins de projet occupés (relayé tel quel à project-installations). */
+  @property({ attribute: false }) busyProjects: Set<string> = new Set();
+  /** Une action globale (toolbar, sans projectPath) est en cours : désactive les 3 boutons globaux. */
+  @property({ attribute: false }) globalBusy = false;
+  /** Statut du dernier `dotnet restore` (polling géré par PackagesView), relayé tel quel au bandeau. */
+  @property({ attribute: false }) restore?: RestoreStatusDto;
+  /** Dernier résultat d'écriture (succès ou échec), relayé tel quel au bandeau. */
+  @property({ attribute: false }) writeResult?: PackageWriteResultDto;
 
   @state() private selectedVersion = "";
   @state() private showPrereleases = false;
@@ -187,6 +206,18 @@ export class PackageDetail extends LitElement {
     return n === undefined ? "" : n.toLocaleString("fr-FR");
   }
 
+  /** Émet un événement d'écriture global (bubbles+composed, comme package-selected) : la
+   *  confirmation pour une action "partout" se fait côté Host — ce composant se contente d'envoyer.
+   *  Sans projectPath, PackagesView.onWriteCommand sait qu'il s'agit d'une action globale. */
+  private dispatchWrite(
+    type: "install-package" | "upgrade-package" | "uninstall-package",
+    version?: string,
+  ): void {
+    this.dispatchEvent(
+      new CustomEvent(type, { detail: { version }, bubbles: true, composed: true }),
+    );
+  }
+
   render() {
     if (!this.info) {
       return html`<div class="status">${this.i18n.t("packages.detail.loading")}</div>`;
@@ -207,48 +238,56 @@ export class PackageDetail extends LitElement {
     const downloads = this.formatDownloads(this.info.totalDownloads) || undefined;
 
     return html` <div class="header">
-        ${this.iconFailed
-          ? defaultPackageIcon(64)
-          : html`<img
-              class="big-icon"
-              src=${this.package.iconUrl}
-              @error=${() => (this.iconFailed = true)}
-            />`}
+        ${
+          this.iconFailed
+            ? defaultPackageIcon(64)
+            : html`<img
+                class="big-icon"
+                src=${this.package.iconUrl}
+                @error=${() => (this.iconFailed = true)}
+              />`
+        }
         <div class="identity">
           <div class="name-row">
             <span class="name">${this.info.id}</span>
-            ${this.info.isMicrosoft
-              ? verifiedBadgeIcon(
-                  MICROSOFT_PURPLE,
-                  18,
-                  this.i18n.t("packages.detail.microsoftTooltip"),
-                )
-              : this.info.verified
+            ${
+              this.info.isMicrosoft
                 ? verifiedBadgeIcon(
-                    VERIFIED_BLUE,
+                    MICROSOFT_PURPLE,
                     18,
-                    this.i18n.t("packages.detail.verifiedTooltip"),
+                    this.i18n.t("packages.detail.microsoftTooltip"),
                   )
-                : nothing}
+                : this.info.verified
+                  ? verifiedBadgeIcon(
+                      VERIFIED_BLUE,
+                      18,
+                      this.i18n.t("packages.detail.verifiedTooltip"),
+                    )
+                  : nothing
+            }
           </div>
           <div class="meta">
-            ${this.i18n.t("packages.detail.byAuthor", { author: this.info.authors })}${published
-              ? html` · ${published}`
-              : nothing}${downloads ? html` · ${downloadIcon(11)} ${downloads}` : nothing}
+            ${this.i18n.t("packages.detail.byAuthor", { author: this.info.authors })}${
+              published ? html` · ${published}` : nothing
+            }${downloads ? html` · ${downloadIcon(11)} ${downloads}` : nothing}
           </div>
           <div class="links-tags">
             <a href=${this.info.links.nugetPage}>${defaultPackageIcon(11)} nuget.org</a>
-            ${this.info.links.projectSite
-              ? html`<a href=${this.info.links.projectSite}
-                  >${globeIcon(11)} ${this.i18n.t("packages.detail.projectSiteLink")}</a
-                >`
-              : nothing}
-            ${this.info.links.license?.url
-              ? html`<a href=${this.info.links.license.url}
-                  >${licenseIcon(11)}
-                  ${this.info.links.license.expression ?? this.i18n.t("packages.detail.license")}</a
-                >`
-              : nothing}
+            ${
+              this.info.links.projectSite
+                ? html`<a href=${this.info.links.projectSite}
+                    >${globeIcon(11)} ${this.i18n.t("packages.detail.projectSiteLink")}</a
+                  >`
+                : nothing
+            }
+            ${
+              this.info.links.license?.url
+                ? html`<a href=${this.info.links.license.url}
+                    >${licenseIcon(11)}
+                    ${this.info.links.license.expression ?? this.i18n.t("packages.detail.license")}</a
+                  >`
+                : nothing
+            }
             ${this.info.tags.map((t) => html`<span class="tag">${t}</span>`)}
           </div>
         </div>
@@ -279,43 +318,47 @@ export class PackageDetail extends LitElement {
         <span class="spacer"></span>
         <button
           class="global"
-          disabled
-          title=${this.i18n.t("packages.detail.globalActionTooltip", {
-            action: this.i18n.t("packages.detail.installEverywhere"),
-          })}
+          ?disabled=${this.globalBusy || !current}
+          title=${this.i18n.t("packages.detail.installEverywhere")}
+          @click=${() => this.dispatchWrite("install-package", current?.version)}
         >
-          ${plusIcon(14)}
+          ${this.globalBusy ? ellipsisIcon(14) : plusIcon(14)}
         </button>
         <button
           class="global"
-          disabled
-          title=${this.i18n.t("packages.detail.globalActionTooltip", {
-            action: this.i18n.t("packages.detail.updateAllEverywhere"),
-          })}
+          ?disabled=${this.globalBusy || !current}
+          title=${this.i18n.t("packages.detail.updateAllEverywhere")}
+          @click=${() => this.dispatchWrite("upgrade-package", current?.version)}
         >
-          ${arrowUpIcon(14)}
+          ${this.globalBusy ? ellipsisIcon(14) : arrowUpIcon(14)}
         </button>
         <button
           class="global"
-          disabled
-          title=${this.i18n.t("packages.detail.globalActionTooltip", {
-            action: this.i18n.t("packages.detail.uninstallEverywhere"),
-          })}
+          ?disabled=${this.globalBusy}
+          title=${this.i18n.t("packages.detail.uninstallEverywhere")}
+          @click=${() => this.dispatchWrite("uninstall-package")}
         >
-          ${trashIcon(14)}
+          ${this.globalBusy ? ellipsisIcon(14) : trashIcon(14)}
         </button>
       </div>
+      <write-status-banner
+        .restore=${this.restore}
+        .writeResult=${this.writeResult}
+      ></write-status-banner>
       <div class="body">
-        ${current
-          ? html`<project-installations
-                .installations=${this.package.installations}
-                .selectedVersion=${current}
-              ></project-installations>
-              <dependency-groups
-                .groups=${current.dependencyGroups}
-                .version=${current.version}
-              ></dependency-groups>`
-          : nothing}
+        ${
+          current
+            ? html`<project-installations
+                  .installations=${this.package.installations}
+                  .selectedVersion=${current}
+                  .busyProjects=${this.busyProjects}
+                ></project-installations>
+                <dependency-groups
+                  .groups=${current.dependencyGroups}
+                  .version=${current.version}
+                ></dependency-groups>`
+            : nothing
+        }
       </div>`;
   }
 }
