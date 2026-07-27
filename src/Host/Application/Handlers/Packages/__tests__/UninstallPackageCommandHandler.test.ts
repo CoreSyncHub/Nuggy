@@ -19,6 +19,8 @@ import { UninstallPackageCommandHandler } from "../UninstallPackageCommandHandle
 import { UninstallPackageCommand } from "@Shared/Features/Commands/UninstallPackageCommand";
 import { MsBuildTextEditor } from "@Infrastructure/MsBuild/MsBuildTextEditor";
 import { type RestoreScheduler } from "@Infrastructure/MsBuild/RestoreScheduler";
+import { OperationLogStore } from "@Infrastructure/MsBuild/OperationLogStore";
+import { type WriteOperationEntryDto } from "@Shared/Features/Dtos/OperationLogDto";
 import { PackageMetadataCache } from "@Infrastructure/NuGet/PackageMetadataCache";
 import { ProjectTfmCache } from "@Infrastructure/Projects/ProjectTfmCache";
 import { type IUserPrompt } from "../../../Abstractions/Prompt/IUserPrompt";
@@ -38,6 +40,7 @@ type Fakes = {
   prompt: { confirm: jest.Mock };
   metadataCache: PackageMetadataCache;
   tfmCache: ProjectTfmCache;
+  operationLog: OperationLogStore;
 };
 
 function createHandler(overrides?: {
@@ -47,8 +50,10 @@ function createHandler(overrides?: {
   const prompt = overrides?.prompt ?? { confirm: jest.fn().mockResolvedValue(true) };
   const metadataCache = new PackageMetadataCache();
   const tfmCache = new ProjectTfmCache();
+  const operationLog = new OperationLogStore();
 
   const handler = new UninstallPackageCommandHandler(
+    operationLog,
     createPackageWriteTargetResolver(),
     new MsBuildTextEditor(),
     restoreScheduler as unknown as RestoreScheduler,
@@ -58,7 +63,7 @@ function createHandler(overrides?: {
     noOpLogger,
   );
 
-  return { handler, restoreScheduler, prompt, metadataCache, tfmCache };
+  return { handler, restoreScheduler, prompt, metadataCache, tfmCache, operationLog };
 }
 
 /**
@@ -145,11 +150,7 @@ EndProject
     const { handler, restoreScheduler } = createHandler();
 
     const result = await handler.Handle(
-      new UninstallPackageCommand(
-        'Evil" Foo="bar',
-        "/Solution/My.sln",
-        "/Solution/Api/Api.csproj",
-      ),
+      new UninstallPackageCommand('Evil" Foo="bar', "/Solution/My.sln", "/Solution/Api/Api.csproj"),
     );
 
     expect(mockFs.writeFileSync).not.toHaveBeenCalled();
@@ -159,6 +160,37 @@ EndProject
     expect(result.affectedProjects).toEqual([]);
     expect(result.skipped).toEqual([]);
     expect(result.error).toBeDefined();
+  });
+
+  it("journalise l'opération dans OperationLogStore avec les données du DTO", async () => {
+    const { handler, operationLog } = createHandler();
+
+    const result = await handler.Handle(
+      new UninstallPackageCommand("Serilog", "/Solution/My.sln", "/Solution/Api/Api.csproj"),
+    );
+
+    const [entry] = operationLog.getEntries() as WriteOperationEntryDto[];
+    expect(entry).toMatchObject({
+      kind: "write",
+      operation: "uninstall",
+      packageId: "Serilog",
+      status: result.status,
+      affectedProjects: result.affectedProjects,
+      filesChanged: result.filesChanged,
+    });
+    expect(entry.version).toBeUndefined();
+  });
+
+  it("journalise aussi les erreurs de validation", async () => {
+    const { handler, operationLog } = createHandler();
+
+    await handler.Handle(
+      new UninstallPackageCommand('Evil" Foo="bar', "/Solution/My.sln", "/Solution/Api/Api.csproj"),
+    );
+
+    const [entry] = operationLog.getEntries() as WriteOperationEntryDto[];
+    expect(entry.status).toBe("Error");
+    expect(entry.error).toContain("identifiant de package invalide");
   });
 
   it("package non installé sur la cible → skipped", async () => {

@@ -15,6 +15,7 @@ import {
   type WriteTarget,
 } from "@Infrastructure/MsBuild/PackageWriteTargetResolver";
 import { RestoreScheduler } from "@Infrastructure/MsBuild/RestoreScheduler";
+import { OperationLogStore } from "@Infrastructure/MsBuild/OperationLogStore";
 import { PackageMetadataCache } from "@Infrastructure/NuGet/PackageMetadataCache";
 import { ProjectTfmCache } from "@Infrastructure/Projects/ProjectTfmCache";
 import { USER_PROMPT, type IUserPrompt } from "../../Abstractions/Prompt/IUserPrompt";
@@ -41,6 +42,7 @@ export class UninstallPackageCommandHandler implements ICommandHandler<
   PackageWriteResultDto
 > {
   constructor(
+    private readonly operationLog: OperationLogStore,
     private readonly targetResolver: PackageWriteTargetResolver,
     private readonly editor: MsBuildTextEditor,
     private readonly restoreScheduler: RestoreScheduler,
@@ -51,6 +53,20 @@ export class UninstallPackageCommandHandler implements ICommandHandler<
   ) {}
 
   async Handle(command: UninstallPackageCommand): Promise<PackageWriteResultDto> {
+    const result = await this.handleCore(command);
+    this.operationLog.recordWrite({
+      operation: "uninstall",
+      packageId: command.packageId,
+      status: result.status,
+      affectedProjects: result.affectedProjects,
+      filesChanged: result.filesChanged,
+      skipped: result.skipped,
+      error: result.error,
+    });
+    return result;
+  }
+
+  private async handleCore(command: UninstallPackageCommand): Promise<PackageWriteResultDto> {
     if (!isValidPackageId(command.packageId)) {
       return {
         status: "Error",

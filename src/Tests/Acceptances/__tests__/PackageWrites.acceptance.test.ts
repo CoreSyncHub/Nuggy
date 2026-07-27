@@ -126,6 +126,7 @@ describe("Acceptance: écritures de packages (Epic 5)", () => {
 
     // ---- Install ----
     const installHandler = new InstallPackageCommandHandler(
+      operationLog,
       createPackageWriteTargetResolver(),
       new MsBuildTextEditor(),
       restoreScheduler,
@@ -165,6 +166,7 @@ describe("Acceptance: écritures de packages (Epic 5)", () => {
 
     // ---- Upgrade ----
     const upgradeHandler = new UpgradePackageCommandHandler(
+      operationLog,
       createPackageWriteTargetResolver(),
       new MsBuildTextEditor(),
       restoreScheduler,
@@ -197,6 +199,7 @@ describe("Acceptance: écritures de packages (Epic 5)", () => {
 
     // ---- Uninstall ----
     const uninstallHandler = new UninstallPackageCommandHandler(
+      operationLog,
       createPackageWriteTargetResolver(),
       new MsBuildTextEditor(),
       restoreScheduler,

@@ -16,6 +16,7 @@ import {
   type WriteTarget,
 } from "@Infrastructure/MsBuild/PackageWriteTargetResolver";
 import { RestoreScheduler } from "@Infrastructure/MsBuild/RestoreScheduler";
+import { OperationLogStore } from "@Infrastructure/MsBuild/OperationLogStore";
 import { PackageMetadataCache } from "@Infrastructure/NuGet/PackageMetadataCache";
 import { ProjectTfmCache } from "@Infrastructure/Projects/ProjectTfmCache";
 import { NuGetV3ApiClient } from "@Infrastructure/NuGet/NuGetV3ApiClient";
@@ -49,6 +50,7 @@ export class InstallPackageCommandHandler implements ICommandHandler<
   PackageWriteResultDto
 > {
   constructor(
+    private readonly operationLog: OperationLogStore,
     private readonly targetResolver: PackageWriteTargetResolver,
     private readonly editor: MsBuildTextEditor,
     private readonly restoreScheduler: RestoreScheduler,
@@ -66,6 +68,21 @@ export class InstallPackageCommandHandler implements ICommandHandler<
   ) {}
 
   async Handle(command: InstallPackageCommand): Promise<PackageWriteResultDto> {
+    const result = await this.handleCore(command);
+    this.operationLog.recordWrite({
+      operation: "install",
+      packageId: command.packageId,
+      version: command.version,
+      status: result.status,
+      affectedProjects: result.affectedProjects,
+      filesChanged: result.filesChanged,
+      skipped: result.skipped,
+      error: result.error,
+    });
+    return result;
+  }
+
+  private async handleCore(command: InstallPackageCommand): Promise<PackageWriteResultDto> {
     if (!isValidPackageId(command.packageId) || !isValidVersion(command.version)) {
       return {
         status: "Error",
