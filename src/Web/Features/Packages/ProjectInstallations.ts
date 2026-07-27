@@ -18,6 +18,9 @@ import {
 export class ProjectInstallations extends LitElement {
   @property({ attribute: false }) installations: PackageInstallationDto[] = [];
   @property({ attribute: false }) selectedVersion?: PackageVersionInfoDto;
+  /** Chemins de projet dont une action d'écriture est en cours (Host non encore répondu) : la carte
+   *  correspondante affiche un spinner et désactive ses boutons. */
+  @property({ attribute: false }) busyProjects: Set<string> = new Set();
 
   private i18n!: TranslationService;
   private unsubscribeI18n?: () => void;
@@ -113,6 +116,65 @@ export class ProjectInstallations extends LitElement {
     }
   `;
 
+  /** Émet un événement d'écriture (bubbles+composed, comme package-selected) : seule PackagesView
+   *  écoute et parle au dispatcher — ce composant reste présentation-pure. */
+  private dispatchWrite(
+    type: "install-package" | "upgrade-package" | "uninstall-package",
+    detail: { projectPath: string; version?: string },
+  ): void {
+    this.dispatchEvent(new CustomEvent(type, { detail, bubbles: true, composed: true }));
+  }
+
+  private renderActions(inst: PackageInstallationDto): TemplateResult {
+    const busy = this.busyProjects.has(inst.projectPath);
+    const notInstalled = inst.installedVersion === "unknown";
+    const version = this.selectedVersion?.version ?? "";
+
+    // Package non installé sur ce projet : seul ＋ a un sens. PackagesConfig reste entièrement
+    // désactivé (écritures legacy hors périmètre) ; PackageReference et CpmManaged sont actifs.
+    if (notInstalled && inst.referenceStyle !== "PackagesConfig") {
+      return html`<button
+        ?disabled=${busy}
+        title=${this.i18n.t("packages.installations.installTooltip")}
+        @click=${() =>
+          this.dispatchWrite("install-package", { projectPath: inst.projectPath, version })}
+      >
+        ${busy ? ellipsisIcon(14) : plusIcon(14)}
+      </button>`;
+    }
+
+    if (inst.referenceStyle === "PackagesConfig") {
+      const title = this.i18n.t("packages.installations.legacyTooltip");
+      return notInstalled
+        ? html`<button disabled title=${title}>${plusIcon(14)}</button>`
+        : html`<button disabled title=${title}>${arrowUpIcon(14)}</button>
+            <button disabled title=${title}>${trashIcon(14)}</button>`;
+    }
+
+    // Installé, PackageReference ou CpmManaged : 🗑 est toujours actif. ⇧ est désactivé sous
+    // CpmManaged (le PackageVersion est géré solution-wide — cf. mise à jour globale du toolbar).
+    const cpm = inst.referenceStyle === "CpmManaged";
+    return html`<button
+        ?disabled=${busy || cpm}
+        title=${
+          cpm
+            ? this.i18n.t("packages.installations.cpmManagedTooltip")
+            : this.i18n.t("packages.installations.updateTooltip")
+        }
+        @click=${() =>
+          this.dispatchWrite("upgrade-package", { projectPath: inst.projectPath, version })}
+      >
+        ${busy ? ellipsisIcon(14) : arrowUpIcon(14)}
+      </button>
+      <button
+        ?disabled=${busy}
+        title=${this.i18n.t("packages.installations.uninstallTooltip")}
+        @click=${() => this.dispatchWrite("uninstall-package", { projectPath: inst.projectPath })}
+      >
+        ${busy ? ellipsisIcon(14) : trashIcon(14)}
+      </button>`;
+  }
+
   private verdictBadge(projectPath: string): TemplateResult {
     const v = this.selectedVersion?.verdictsByProject.find((p) => p.projectPath === projectPath);
     if (!v) {
@@ -143,26 +205,13 @@ export class ProjectInstallations extends LitElement {
               <span class="name">${inst.projectName}</span>
               ${this.verdictBadge(inst.projectPath)}
               ${inst.effectiveTfms.map((tfm) => html`<span class="chip">${tfm}</span>`)}
-              ${inst.installedVersion !== "unknown"
-                ? html`<span class="chip">v ${inst.installedVersion}</span>`
-                : nothing}
+              ${
+                inst.installedVersion !== "unknown"
+                  ? html`<span class="chip">v ${inst.installedVersion}</span>`
+                  : nothing
+              }
               <span class="spacer"></span>
-              ${inst.referenceStyle === "PackagesConfig" || inst.installedVersion !== "unknown"
-                ? html`<button
-                      disabled
-                      title=${this.i18n.t("packages.installations.comingSoonEpic5")}
-                    >
-                      ${arrowUpIcon(14)}
-                    </button>
-                    <button disabled title=${this.i18n.t("packages.installations.comingSoonEpic5")}>
-                      ${trashIcon(14)}
-                    </button>`
-                : html`<button
-                    disabled
-                    title=${this.i18n.t("packages.installations.comingSoonEpic5")}
-                  >
-                    ${plusIcon(14)}
-                  </button>`}
+              ${this.renderActions(inst)}
             </div>`,
         )}
       </div>`;

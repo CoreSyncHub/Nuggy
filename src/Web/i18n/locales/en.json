@@ -50,8 +50,7 @@
       "prereleaseLabel": "prereleases",
       "installEverywhere": "Install everywhere",
       "updateAllEverywhere": "Update all",
-      "uninstallEverywhere": "Uninstall everywhere",
-      "globalActionTooltip": "{{action}} — Coming soon (Epic 5)"
+      "uninstallEverywhere": "Uninstall everywhere"
     },
     "dependencies": {
       "title": "Dependencies by framework (v {{version}})",
@@ -60,7 +59,11 @@
     },
     "installations": {
       "title": "Projects",
-      "comingSoonEpic5": "Coming soon — Epic 5"
+      "legacyTooltip": "Legacy project — migrate to PackageReference",
+      "installTooltip": "Install on this project",
+      "updateTooltip": "Update to the selected version",
+      "uninstallTooltip": "Uninstall from this project",
+      "cpmManagedTooltip": "Centrally managed — use the global update"
     },
     "list": {
       "filterPlaceholder": "Filter packages…",
@@ -69,6 +72,16 @@
       "verdictPartial": "Partial",
       "verdictIncompatible": "Incompatible",
       "verdictUnknown": "Unknown"
+    },
+    "restore": {
+      "running": "Restore running…",
+      "succeeded": "Restore completed",
+      "failed": "Restore failed",
+      "timedOut": "Restore status unknown (timed out)"
+    },
+    "write": {
+      "skipped": "{{count}} project(s) skipped: ",
+      "error": "Write failed: {{message}}"
     }
   },
   "search": {
