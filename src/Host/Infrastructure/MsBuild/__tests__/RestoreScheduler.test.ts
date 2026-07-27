@@ -1,6 +1,8 @@
 import { RestoreScheduler } from "../RestoreScheduler";
+import { OperationLogStore } from "../OperationLogStore";
 import { type IProcessRunner } from "../ProcessRunner";
 import { type ILogger } from "@/Host/Application/Abstractions/Log/ILogger";
+import { type RestoreRunEntryDto } from "@Shared/Features/Dtos/OperationLogDto";
 
 const noOpLogger: ILogger = {
   Info: jest.fn(),
@@ -19,7 +21,8 @@ describe("RestoreScheduler", () => {
 
   it("débounce : trois schedule rapprochés → un seul run", async () => {
     const runner = runnerReturning({ exitCode: 0, output: "", timedOut: false });
-    const scheduler = new RestoreScheduler(runner, noOpLogger);
+    const store = new OperationLogStore();
+    const scheduler = new RestoreScheduler(store, runner, noOpLogger);
     scheduler.schedule("/Solution/My.sln");
     scheduler.schedule("/Solution/My.sln");
     scheduler.schedule("/Solution/My.sln");
@@ -48,7 +51,8 @@ describe("RestoreScheduler", () => {
         )
         .mockResolvedValueOnce({ exitCode: 0, output: "", timedOut: false }),
     };
-    const scheduler = new RestoreScheduler(runner, noOpLogger);
+    const store = new OperationLogStore();
+    const scheduler = new RestoreScheduler(store, runner, noOpLogger);
     scheduler.schedule("/Solution/My.sln");
     await jest.advanceTimersByTimeAsync(300); // run 1 démarre et reste pendu
     scheduler.schedule("/Solution/My.sln"); // pendant le run
@@ -68,7 +72,8 @@ describe("RestoreScheduler", () => {
       "/x/B.csproj : error MSB4025: The project file could not be loaded.",
     ].join("\n");
     const runner = runnerReturning({ exitCode: 1, output, timedOut: false });
-    const scheduler = new RestoreScheduler(runner, noOpLogger);
+    const store = new OperationLogStore();
+    const scheduler = new RestoreScheduler(store, runner, noOpLogger);
     scheduler.schedule("/Solution/My.sln");
     await jest.advanceTimersByTimeAsync(300);
     const status = scheduler.getStatus();
@@ -82,7 +87,8 @@ describe("RestoreScheduler", () => {
 
   it("timeout → Failed avec message dédié", async () => {
     const runner = runnerReturning({ exitCode: null, output: "", timedOut: true });
-    const scheduler = new RestoreScheduler(runner, noOpLogger);
+    const store = new OperationLogStore();
+    const scheduler = new RestoreScheduler(store, runner, noOpLogger);
     scheduler.schedule("/Solution/My.sln");
     await jest.advanceTimersByTimeAsync(300);
     expect(scheduler.getStatus().status).toBe("Failed");
@@ -91,7 +97,8 @@ describe("RestoreScheduler", () => {
 
   it("dotnet introuvable → Failed avec message SDK", async () => {
     const runner = runnerReturning({ exitCode: null, output: "", timedOut: false });
-    const scheduler = new RestoreScheduler(runner, noOpLogger);
+    const store = new OperationLogStore();
+    const scheduler = new RestoreScheduler(store, runner, noOpLogger);
     scheduler.schedule("/Solution/My.sln");
     await jest.advanceTimersByTimeAsync(300);
     expect(scheduler.getStatus().messages[0]).toContain("SDK .NET introuvable");
@@ -99,7 +106,8 @@ describe("RestoreScheduler", () => {
 
   it("l'état terminal reste consultable puis repasse Running au schedule suivant", async () => {
     const runner = runnerReturning({ exitCode: 0, output: "", timedOut: false });
-    const scheduler = new RestoreScheduler(runner, noOpLogger);
+    const store = new OperationLogStore();
+    const scheduler = new RestoreScheduler(store, runner, noOpLogger);
     scheduler.schedule("/Solution/My.sln");
     await jest.advanceTimersByTimeAsync(300);
     expect(scheduler.getStatus().status).toBe("Succeeded");
@@ -122,7 +130,8 @@ describe("RestoreScheduler", () => {
         )
         .mockResolvedValueOnce({ exitCode: 0, output: "", timedOut: false }),
     };
-    const scheduler = new RestoreScheduler(runner, noOpLogger);
+    const store = new OperationLogStore();
+    const scheduler = new RestoreScheduler(store, runner, noOpLogger);
     scheduler.schedule("/Solution/My.sln");
     await jest.advanceTimersByTimeAsync(300); // run 1 (runId 1) démarre et reste pendu
     scheduler.schedule("/Solution/My.sln"); // write B arrive pendant le run 1
@@ -140,7 +149,8 @@ describe("RestoreScheduler", () => {
     const runner: IProcessRunner = {
       run: jest.fn().mockRejectedValue(new Error("Simulated runner error")),
     };
-    const scheduler = new RestoreScheduler(runner, noOpLogger);
+    const store = new OperationLogStore();
+    const scheduler = new RestoreScheduler(store, runner, noOpLogger);
     scheduler.schedule("/Solution/My.sln");
     expect(scheduler.getStatus().status).toBe("Running");
     await jest.advanceTimersByTimeAsync(300);
@@ -169,7 +179,8 @@ describe("RestoreScheduler", () => {
         return Promise.resolve({ exitCode: 0, output: whyOutput, timedOut: false });
       });
       const runner: IProcessRunner = { run };
-      const scheduler = new RestoreScheduler(runner, noOpLogger);
+      const store = new OperationLogStore();
+      const scheduler = new RestoreScheduler(store, runner, noOpLogger);
       scheduler.schedule("/Solution/My.sln");
       await jest.advanceTimersByTimeAsync(300);
 
@@ -204,7 +215,8 @@ describe("RestoreScheduler", () => {
         return Promise.resolve({ exitCode: 1, output: "", timedOut: false });
       });
       const runner: IProcessRunner = { run };
-      const scheduler = new RestoreScheduler(runner, noOpLogger);
+      const store = new OperationLogStore();
+      const scheduler = new RestoreScheduler(store, runner, noOpLogger);
       scheduler.schedule("/Solution/My.sln");
       await jest.advanceTimersByTimeAsync(300);
 
@@ -217,7 +229,8 @@ describe("RestoreScheduler", () => {
     it("restore réussi : aucun appel dotnet nuget why", async () => {
       const run = jest.fn().mockResolvedValue({ exitCode: 0, output: "", timedOut: false });
       const runner: IProcessRunner = { run };
-      const scheduler = new RestoreScheduler(runner, noOpLogger);
+      const store = new OperationLogStore();
+      const scheduler = new RestoreScheduler(store, runner, noOpLogger);
       scheduler.schedule("/Solution/My.sln");
       await jest.advanceTimersByTimeAsync(300);
 
@@ -232,7 +245,8 @@ describe("RestoreScheduler", () => {
         .fn()
         .mockResolvedValue({ exitCode: 1, output: restoreOutput, timedOut: false });
       const runner: IProcessRunner = { run };
-      const scheduler = new RestoreScheduler(runner, noOpLogger);
+      const store = new OperationLogStore();
+      const scheduler = new RestoreScheduler(store, runner, noOpLogger);
       scheduler.schedule("/Solution/My.sln");
       await jest.advanceTimersByTimeAsync(300);
 
@@ -256,7 +270,8 @@ describe("RestoreScheduler", () => {
         )
         .mockResolvedValue({ exitCode: 0, output: "", timedOut: false });
       const runner: IProcessRunner = { run };
-      const scheduler = new RestoreScheduler(runner, noOpLogger);
+      const store = new OperationLogStore();
+      const scheduler = new RestoreScheduler(store, runner, noOpLogger);
       scheduler.schedule("/Solution/My.sln");
       await jest.advanceTimersByTimeAsync(300); // run 1 démarre et reste pendu
       scheduler.schedule("/Solution/My.sln"); // un second run est mis en attente pendant le run 1
@@ -268,6 +283,91 @@ describe("RestoreScheduler", () => {
       expect(scheduler.getStatus().status).toBe("Running");
       const whyCalls = run.mock.calls.filter((call) => call[1][0] === "nuget");
       expect(whyCalls).toHaveLength(0);
+    });
+  });
+
+  describe("journalisation dans OperationLogStore", () => {
+    it("journalise un run réussi : start Running puis complete Succeeded avec la sortie", async () => {
+      const store = new OperationLogStore();
+      const runner = runnerReturning({
+        exitCode: 0,
+        output: "Restauration effectuée.\n",
+        timedOut: false,
+      });
+      const scheduler = new RestoreScheduler(store, runner, noOpLogger);
+      scheduler.schedule("/repo/Solution.sln");
+      await jest.advanceTimersByTimeAsync(300);
+      const [entry] = store.getEntries() as RestoreRunEntryDto[];
+      expect(entry).toMatchObject({
+        kind: "restore",
+        runId: 1,
+        solutionPath: "/repo/Solution.sln",
+        status: "Succeeded",
+        exitCode: 0,
+      });
+      expect(entry.output).toContain("Restauration effectuée.");
+    });
+
+    it("journalise un échec avec les blocs nuget why dans whyInsights (pas dans output)", async () => {
+      const store = new OperationLogStore();
+      const restoreOutput =
+        "/x/A.csproj : error NU1902: Le package 'OpenTelemetry.Api' 1.14.0 présente une vulnérabilité connue de gravité modérée";
+      const whyOutput = "App -> OpenTelemetry.Api";
+      const run = jest.fn().mockImplementation((_command: string, args: string[]) => {
+        if (args[0] === "restore") {
+          return Promise.resolve({ exitCode: 1, output: restoreOutput, timedOut: false });
+        }
+        return Promise.resolve({ exitCode: 0, output: whyOutput, timedOut: false });
+      });
+      const runner: IProcessRunner = { run };
+      const scheduler = new RestoreScheduler(store, runner, noOpLogger);
+      scheduler.schedule("/Solution/My.sln");
+      await jest.advanceTimersByTimeAsync(300);
+
+      const [entry] = store.getEntries() as RestoreRunEntryDto[];
+      expect(entry.status).toBe("Failed");
+      expect(entry.whyInsights.join("\n")).toContain("OpenTelemetry.Api");
+      expect(entry.output.join("\n")).not.toContain("— dépendances de");
+    });
+
+    it("journalise Failed quand le runner rejette", async () => {
+      const store = new OperationLogStore();
+      const runner: IProcessRunner = {
+        run: jest.fn().mockRejectedValue(new Error("boom")),
+      };
+      const scheduler = new RestoreScheduler(store, runner, noOpLogger);
+      scheduler.schedule("/Solution/My.sln");
+      await jest.advanceTimersByTimeAsync(300);
+
+      const [entry] = store.getEntries() as RestoreRunEntryDto[];
+      expect(entry.status).toBe("Failed");
+      expect(entry.output.join(" ")).toContain("boom");
+    });
+
+    it("journalise le terminal du run même quand sa publication est supprimée (écriture pendant le run)", async () => {
+      const store = new OperationLogStore();
+      let release!: (v: { exitCode: number; output: string; timedOut: boolean }) => void;
+      const runner: IProcessRunner = {
+        run: jest
+          .fn()
+          .mockImplementationOnce(
+            () =>
+              new Promise((r) => {
+                release = r;
+              }),
+          )
+          .mockResolvedValueOnce({ exitCode: 0, output: "", timedOut: false }),
+      };
+      const scheduler = new RestoreScheduler(store, runner, noOpLogger);
+      scheduler.schedule("/Solution/My.sln");
+      await jest.advanceTimersByTimeAsync(300); // run 1 (runId 1) démarre et reste pendu
+      scheduler.schedule("/Solution/My.sln"); // write pendant le run 1
+      release({ exitCode: 0, output: "", timedOut: false }); // run 1 se termine (succès)
+      await jest.advanceTimersByTimeAsync(0); // laisse la continuation de run 1 s'exécuter
+      // Le terminal du run 1 ne doit jamais être publié : un second run est en attente.
+      expect(scheduler.getStatus().status).toBe("Running");
+      const entries = store.getEntries() as RestoreRunEntryDto[];
+      expect(entries.find((e) => e.runId === 1)?.status).toBe("Succeeded");
     });
   });
 });
