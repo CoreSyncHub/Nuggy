@@ -12,7 +12,9 @@
   },
   "tabs": {
     "installed": "Installés",
-    "search": "Parcourir"
+    "search": "Parcourir",
+    "packages": "Packages",
+    "logs": "Logs"
   },
   "packages": {
     "noPackages": "Aucun package trouvé",
@@ -63,21 +65,30 @@
       "installTooltip": "Installer sur ce projet",
       "updateTooltip": "Mettre à jour vers la version sélectionnée",
       "uninstallTooltip": "Désinstaller de ce projet",
-      "cpmManagedTooltip": "Géré centralement — utilisez la mise à jour globale"
+      "cpmManagedTooltip": "Géré centralement — utilisez la mise à jour globale",
+      "count": "{{installed}} installé(s) / {{total}}"
     },
     "list": {
       "filterPlaceholder": "Filtrer les packages…",
-      "verdictAll": "Tous",
       "verdictOk": "Compatibles",
-      "verdictPartial": "Partiels",
-      "verdictIncompatible": "Incompatibles",
-      "verdictUnknown": "Inconnus"
+      "filterAll": "Tous",
+      "filterOutOfTfm": "Hors TFM",
+      "badge": {
+        "update": "Mise à jour disponible",
+        "updatePartial": "Mise à jour disponible sur une partie des projets",
+        "outOfTfm": "Des versions supérieures existent, mais pas pour vos TFM",
+        "upToDate": "À jour",
+        "unknown": "Information indisponible",
+        "loading": "Chargement…"
+      }
     },
     "restore": {
       "running": "Restore en cours…",
       "succeeded": "Restore terminé",
       "failed": "Échec du restore",
-      "timedOut": "Statut du restore inconnu (délai dépassé)"
+      "timedOut": "Statut du restore inconnu (délai dépassé)",
+      "viewLogs": "Voir les logs →",
+      "moreLines": "+{{count}} autres lignes"
     },
     "write": {
       "skipped": "{{count}} projet(s) ignoré(s) : ",
@@ -109,5 +120,21 @@
     "allProjects": "Tous les projets",
     "project": "Projet",
     "projects": "Projets"
+  },
+  "logs": {
+    "empty": "Aucune activité pour le moment",
+    "restoreTitle": "Restore — {{solution}}",
+    "running": "en cours…",
+    "durationSeconds": "{{seconds}} s",
+    "exitCode": "code {{code}}",
+    "whyTitle": "Chaînes de dépendances (dotnet nuget why)",
+    "operation": {
+      "install": "Installation",
+      "upgrade": "Mise à jour",
+      "uninstall": "Désinstallation"
+    },
+    "filesChanged": "Fichiers modifiés",
+    "skipped": "Ignorés",
+    "affectedProjects": "{{count}} projet(s)"
   }
 }

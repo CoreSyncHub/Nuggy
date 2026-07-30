@@ -19,6 +19,8 @@ import { InstallPackageCommandHandler } from "../InstallPackageCommandHandler";
 import { InstallPackageCommand } from "@Shared/Features/Commands/InstallPackageCommand";
 import { MsBuildTextEditor } from "@Infrastructure/MsBuild/MsBuildTextEditor";
 import { type RestoreScheduler } from "@Infrastructure/MsBuild/RestoreScheduler";
+import { OperationLogStore } from "@Infrastructure/MsBuild/OperationLogStore";
+import { type WriteOperationEntryDto } from "@Shared/Features/Dtos/OperationLogDto";
 import { PackageMetadataCache } from "@Infrastructure/NuGet/PackageMetadataCache";
 import { ProjectTfmCache } from "@Infrastructure/Projects/ProjectTfmCache";
 import {
@@ -61,6 +63,7 @@ type Fakes = {
   apiClient: { getRegistrationLeaves: jest.Mock };
   metadataCache: PackageMetadataCache;
   tfmCache: ProjectTfmCache;
+  operationLog: OperationLogStore;
 };
 
 function createHandler(overrides?: {
@@ -74,8 +77,10 @@ function createHandler(overrides?: {
   };
   const metadataCache = new PackageMetadataCache();
   const tfmCache = new ProjectTfmCache();
+  const operationLog = new OperationLogStore();
 
   const handler = new InstallPackageCommandHandler(
+    operationLog,
     createPackageWriteTargetResolver(),
     new MsBuildTextEditor(),
     restoreScheduler as unknown as RestoreScheduler,
@@ -92,7 +97,7 @@ function createHandler(overrides?: {
     noOpLogger,
   );
 
-  return { handler, restoreScheduler, prompt, apiClient, metadataCache, tfmCache };
+  return { handler, restoreScheduler, prompt, apiClient, metadataCache, tfmCache, operationLog };
 }
 
 function setFiles(files: Record<string, string>): void {
@@ -243,6 +248,51 @@ EndProject
     expect(result.affectedProjects).toEqual([]);
     expect(result.skipped).toEqual([]);
     expect(result.error).toBeDefined();
+  });
+
+  it("journalise l'opération dans OperationLogStore avec les données du DTO", async () => {
+    const { handler, operationLog } = createHandler({
+      apiClient: {
+        getRegistrationLeaves: jest.fn().mockResolvedValue(leavesFor("13.0.3", ["netstandard2.0"])),
+      },
+    });
+
+    const result = await handler.Handle(
+      new InstallPackageCommand(
+        "Newtonsoft.Json",
+        "13.0.3",
+        "/Solution/My.sln",
+        "/Solution/Api/Api.csproj",
+      ),
+    );
+
+    const [entry] = operationLog.getEntries() as WriteOperationEntryDto[];
+    expect(entry).toMatchObject({
+      kind: "write",
+      operation: "install",
+      packageId: "Newtonsoft.Json",
+      status: result.status,
+      affectedProjects: result.affectedProjects,
+      filesChanged: result.filesChanged,
+    });
+    expect(entry.version).toBe("13.0.3");
+  });
+
+  it("journalise aussi les erreurs de validation", async () => {
+    const { handler, operationLog } = createHandler();
+
+    await handler.Handle(
+      new InstallPackageCommand(
+        'Evil" Foo="bar',
+        "13.0.3",
+        "/Solution/My.sln",
+        "/Solution/Api/Api.csproj",
+      ),
+    );
+
+    const [entry] = operationLog.getEntries() as WriteOperationEntryDto[];
+    expect(entry.status).toBe("Error");
+    expect(entry.error).toContain("identifiant ou version de package invalide");
   });
 
   it("registration inaccessible → Unknown → installation autorisée", async () => {
@@ -566,8 +616,12 @@ EndProject
 
     // Un seul csproj écrit (ApiA, avant que l'échec CPM ne soit connu) : jamais un
     // second csproj écrit après que l'écriture centrale a échoué (Finding 5).
-    const apiAWrite = mockFs.writeFileSync.mock.calls.find(([p]) => p === "/Solution/ApiA/ApiA.csproj");
-    const apiBWrite = mockFs.writeFileSync.mock.calls.find(([p]) => p === "/Solution/ApiB/ApiB.csproj");
+    const apiAWrite = mockFs.writeFileSync.mock.calls.find(
+      ([p]) => p === "/Solution/ApiA/ApiA.csproj",
+    );
+    const apiBWrite = mockFs.writeFileSync.mock.calls.find(
+      ([p]) => p === "/Solution/ApiB/ApiB.csproj",
+    );
     expect(apiAWrite).toBeDefined();
     expect(apiBWrite).toBeUndefined();
 

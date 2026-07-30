@@ -14,10 +14,8 @@ jest.mock(
 );
 
 import { GetPackageUpdateInfoQuery } from "@Shared/Features/Queries/GetPackageUpdateInfoQuery";
-import {
-  GetPackageUpdateInfoQueryHandler,
-  compareVersionsDesc,
-} from "../GetPackageUpdateInfoQueryHandler";
+import { GetPackageUpdateInfoQueryHandler } from "../GetPackageUpdateInfoQueryHandler";
+import { compareVersionsDesc } from "@Shared/Features/Versions/CompareVersions";
 import { PackageMetadataCache } from "@Infrastructure/NuGet/PackageMetadataCache";
 import {
   NuGetApiError,

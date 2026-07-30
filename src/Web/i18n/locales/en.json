@@ -12,7 +12,9 @@
   },
   "tabs": {
     "installed": "Installed",
-    "search": "Browse"
+    "search": "Browse",
+    "packages": "Packages",
+    "logs": "Logs"
   },
   "packages": {
     "noPackages": "No packages found",
@@ -63,21 +65,30 @@
       "installTooltip": "Install on this project",
       "updateTooltip": "Update to the selected version",
       "uninstallTooltip": "Uninstall from this project",
-      "cpmManagedTooltip": "Centrally managed — use the global update"
+      "cpmManagedTooltip": "Centrally managed — use the global update",
+      "count": "{{installed}} installed / {{total}}"
     },
     "list": {
       "filterPlaceholder": "Filter packages…",
-      "verdictAll": "All",
       "verdictOk": "Compatible",
-      "verdictPartial": "Partial",
-      "verdictIncompatible": "Incompatible",
-      "verdictUnknown": "Unknown"
+      "filterAll": "All",
+      "filterOutOfTfm": "Outside TFM",
+      "badge": {
+        "update": "Update available",
+        "updatePartial": "Update available for some projects",
+        "outOfTfm": "Newer versions exist, but not for your TFMs",
+        "upToDate": "Up to date",
+        "unknown": "Information unavailable",
+        "loading": "Loading…"
+      }
     },
     "restore": {
       "running": "Restore running…",
       "succeeded": "Restore completed",
       "failed": "Restore failed",
-      "timedOut": "Restore status unknown (timed out)"
+      "timedOut": "Restore status unknown (timed out)",
+      "viewLogs": "View logs →",
+      "moreLines": "+{{count}} more lines"
     },
     "write": {
       "skipped": "{{count}} project(s) skipped: ",
@@ -109,5 +120,21 @@
     "allProjects": "All projects",
     "project": "Project",
     "projects": "Projects"
+  },
+  "logs": {
+    "empty": "No activity yet",
+    "restoreTitle": "Restore — {{solution}}",
+    "running": "running…",
+    "durationSeconds": "{{seconds}} s",
+    "exitCode": "code {{code}}",
+    "whyTitle": "Dependency chains (dotnet nuget why)",
+    "operation": {
+      "install": "Install",
+      "upgrade": "Upgrade",
+      "uninstall": "Uninstall"
+    },
+    "filesChanged": "Files changed",
+    "skipped": "Skipped",
+    "affectedProjects": "{{count}} project(s)"
   }
 }

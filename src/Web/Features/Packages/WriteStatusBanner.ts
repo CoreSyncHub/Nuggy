@@ -65,23 +65,38 @@ export class WriteStatusBanner extends LitElement {
     .skipped {
       color: var(--vscode-charts-yellow);
     }
-    details.failed {
-      cursor: default;
-    }
-    details.failed summary {
+    .clickable {
       cursor: pointer;
-      list-style: none;
     }
-    details.failed summary::-webkit-details-marker {
-      display: none;
+    .first-message {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
+      flex: 0 1 auto;
     }
-    .messages {
-      margin: 4px 0 0 20px;
-      font-family: var(--vscode-editor-font-family, monospace);
-      font-size: 11px;
-      color: var(--vscode-foreground);
+    .more {
+      color: var(--vscode-descriptionForeground);
+      flex: none;
+    }
+    .view-logs {
+      margin-left: auto;
+      flex: none;
+      text-decoration: underline;
+      color: var(--vscode-textLink-foreground);
     }
   `;
+
+  /** Le détail des erreurs vit dans l'onglet Logs : le bandeau en échec navigue vers le run. */
+  private onShowLogs(): void {
+    this.dispatchEvent(
+      new CustomEvent("show-logs", {
+        detail: { runId: this.restore?.runId ?? 0 },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
 
   private renderRestore() {
     if (!this.restore) {
@@ -97,16 +112,22 @@ export class WriteStatusBanner extends LitElement {
           ${checkIcon(14)} ${this.i18n.t("packages.restore.succeeded")}
         </div>`;
       case "Failed": {
-        const messages = this.restore.messages;
-        if (messages.length === 0) {
-          return html`<div class="row failed">
-            ${crossIcon(14)} ${this.i18n.t("packages.restore.failed")}
-          </div>`;
-        }
-        return html`<details class="row failed">
-          <summary>${crossIcon(14)} ${this.i18n.t("packages.restore.failed")}</summary>
-          <div class="messages">${messages.map((m) => html`<div>${m}</div>`)}</div>
-        </details>`;
+        const first = this.restore.messages[0];
+        const more = this.restore.messages.length - 1;
+        return html`<div class="row failed clickable" @click=${this.onShowLogs}>
+          ${crossIcon(14)}
+          ${this.i18n.t("packages.restore.failed")}${
+            first !== undefined ? html`<span class="first-message"> — ${first}</span>` : nothing
+          }
+          ${
+            more > 0
+              ? html`<span class="more"
+                  >${this.i18n.t("packages.restore.moreLines", { count: more })}</span
+                >`
+              : nothing
+          }
+          <span class="view-logs">${this.i18n.t("packages.restore.viewLogs")}</span>
+        </div>`;
       }
       default:
         return nothing;

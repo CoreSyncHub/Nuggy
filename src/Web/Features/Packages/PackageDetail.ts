@@ -5,7 +5,11 @@ import {
   type PackageUpdateInfoDto,
   type PackageVersionInfoDto,
 } from "@Shared/Features/Dtos/PackageUpdateInfoDto";
-import { type SolutionPackageDto } from "@Shared/Features/Dtos/SolutionPackagesDto";
+import {
+  type PackageInstallationDto,
+  type SolutionPackageDto,
+  type SolutionProjectDto,
+} from "@Shared/Features/Dtos/SolutionPackagesDto";
 import { type RestoreStatusDto } from "@Shared/Features/Dtos/RestoreStatusDto";
 import { type PackageWriteResultDto } from "@Shared/Features/Dtos/PackageWriteResultDto";
 import { TranslationService } from "../../Core/Services/TranslationService";
@@ -20,6 +24,7 @@ import {
   plusIcon,
   trashIcon,
 } from "./Icons";
+import { writeActionStyles } from "./WriteActionStyles";
 import "./DependencyGroups";
 import "./ProjectInstallations";
 import "./WriteStatusBanner";
@@ -27,6 +32,9 @@ import "./WriteStatusBanner";
 @customElement("package-detail")
 export class PackageDetail extends LitElement {
   @property({ attribute: false }) package!: SolutionPackageDto;
+  /** Tous les projets de la solution : fusionnés aux installations pour rendre les
+   *  projets non équipés (et donc leur bouton d'installation) — cf. `allInstallations`. */
+  @property({ attribute: false }) projects: SolutionProjectDto[] = [];
   @property({ attribute: false }) info?: PackageUpdateInfoDto;
   /** Chemins de projet occupés (relayé tel quel à project-installations). */
   @property({ attribute: false }) busyProjects: Set<string> = new Set();
@@ -72,121 +80,145 @@ export class PackageDetail extends LitElement {
     }
   }
 
-  static styles = css`
-    :host {
-      flex: 1;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
-    /* L'icône (64 px) est l'étalon de hauteur du header : l'identité se
+  static styles = [
+    writeActionStyles,
+    css`
+      :host {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+      /* L'icône (64 px) est l'étalon de hauteur du header : l'identité se
        distribue verticalement dessus, les contrôles vivent dans un bandeau
        dédié pleine largeur en dessous (motif toolbar VS Code). */
-    .header {
-      display: flex;
-      gap: 14px;
-      height: 64px;
-      padding: 14px 14px 10px;
-    }
-    img.big-icon,
-    .header svg.default-icon {
-      width: 64px;
-      height: 64px;
-      border-radius: 10px;
-      flex: none;
-    }
-    .identity {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 2px 0;
-    }
-    .name-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .name {
-      font-size: 16px;
-      font-weight: 600;
-    }
-    .name-row svg {
-      flex: none;
-    }
-    .meta {
-      font-size: 11px;
-      color: var(--vscode-descriptionForeground);
-    }
-    .links-tags {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 11px;
-      color: var(--vscode-descriptionForeground);
-      white-space: nowrap;
-      overflow: hidden;
-    }
-    .links-tags a {
-      color: var(--vscode-textLink-foreground);
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      flex: none;
-    }
-    .tag {
-      flex: none;
-      border: 1px solid var(--vscode-panel-border);
-      border-radius: 9px;
-      padding: 0 8px;
-      font-size: 10px;
-      line-height: 14px;
-    }
-    .toolbar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 6px 14px;
-      margin-top: 6px;
-      background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
-      border-top: 1px solid var(--vscode-panel-border);
-      border-bottom: 1px solid var(--vscode-panel-border);
-    }
-    select,
-    button {
-      background: var(--vscode-input-background);
-      color: var(--vscode-input-foreground);
-      border: 1px solid var(--vscode-input-border);
-      border-radius: 4px;
-      padding: 2px 10px;
-    }
-    .spacer {
-      flex: 1;
-    }
-    button.global {
-      font-size: 14px;
-    }
-    button:disabled {
-      opacity: 0.45;
-    }
-    label.prerelease {
-      font-size: 11px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .body {
-      padding: 0 14px 14px;
-    }
-    .status {
-      color: var(--vscode-descriptionForeground);
-      padding: 14px;
-    }
-  `;
+      .header {
+        display: flex;
+        gap: 14px;
+        height: 64px;
+        padding: 14px 14px 10px;
+      }
+      img.big-icon,
+      .header svg.default-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 10px;
+        flex: none;
+      }
+      .identity {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 2px 0;
+      }
+      .name-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .name {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .name-row svg {
+        flex: none;
+      }
+      .meta {
+        font-size: 11px;
+        color: var(--vscode-descriptionForeground);
+      }
+      .links-tags {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 11px;
+        color: var(--vscode-descriptionForeground);
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .links-tags a {
+        color: var(--vscode-textLink-foreground);
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        flex: none;
+      }
+      .tag {
+        flex: none;
+        border: 1px solid var(--vscode-panel-border);
+        border-radius: 9px;
+        padding: 0 8px;
+        font-size: 10px;
+        line-height: 14px;
+      }
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 14px;
+        margin-top: 6px;
+        background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
+        border-top: 1px solid var(--vscode-panel-border);
+        border-bottom: 1px solid var(--vscode-panel-border);
+      }
+      select,
+      button {
+        background: var(--vscode-input-background);
+        color: var(--vscode-input-foreground);
+        border: 1px solid var(--vscode-input-border);
+        border-radius: 4px;
+        padding: 2px 10px;
+      }
+      .spacer {
+        flex: 1;
+      }
+      button.global {
+        font-size: 14px;
+      }
+      button:disabled {
+        opacity: 0.45;
+      }
+      label.prerelease {
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .body {
+        padding: 0 14px 14px;
+      }
+      .status {
+        color: var(--vscode-descriptionForeground);
+        padding: 14px;
+      }
+    `,
+  ];
 
   private get installedIsPrerelease(): boolean {
     return this.package.installations.some((i) => i.installedVersion.includes("-"));
+  }
+
+  /**
+   * Installations réelles, suivies des projets de la solution qui n'ont pas le
+   * package (marqués `installedVersion: "unknown"`, ce que `project-installations`
+   * rend déjà comme « installable »). Chaque groupe reste trié par nom de projet ;
+   * les projets équipés d'abord, pour que l'information utile reste en tête.
+   */
+  private get allInstallations(): PackageInstallationDto[] {
+    const installed = this.package.installations;
+    const installedPaths = new Set(installed.map((i) => i.projectPath));
+    const candidates: PackageInstallationDto[] = this.projects
+      .filter((p) => !installedPaths.has(p.projectPath))
+      .map((p) => ({
+        projectPath: p.projectPath,
+        projectName: p.projectName,
+        effectiveTfms: p.effectiveTfms,
+        installedVersion: "unknown",
+        referenceStyle: p.referenceStyle,
+      }));
+    return [...installed, ...candidates];
   }
 
   private get visibleVersions(): PackageVersionInfoDto[] {
@@ -317,7 +349,7 @@ export class PackageDetail extends LitElement {
         </label>
         <span class="spacer"></span>
         <button
-          class="global"
+          class="global install"
           ?disabled=${this.globalBusy || !current}
           title=${this.i18n.t("packages.detail.installEverywhere")}
           @click=${() => this.dispatchWrite("install-package", current?.version)}
@@ -325,7 +357,7 @@ export class PackageDetail extends LitElement {
           ${this.globalBusy ? ellipsisIcon(14) : plusIcon(14)}
         </button>
         <button
-          class="global"
+          class="global upgrade"
           ?disabled=${this.globalBusy || !current}
           title=${this.i18n.t("packages.detail.updateAllEverywhere")}
           @click=${() => this.dispatchWrite("upgrade-package", current?.version)}
@@ -333,7 +365,7 @@ export class PackageDetail extends LitElement {
           ${this.globalBusy ? ellipsisIcon(14) : arrowUpIcon(14)}
         </button>
         <button
-          class="global"
+          class="global uninstall"
           ?disabled=${this.globalBusy}
           title=${this.i18n.t("packages.detail.uninstallEverywhere")}
           @click=${() => this.dispatchWrite("uninstall-package")}
@@ -349,7 +381,7 @@ export class PackageDetail extends LitElement {
         ${
           current
             ? html`<project-installations
-                  .installations=${this.package.installations}
+                  .installations=${this.allInstallations}
                   .selectedVersion=${current}
                   .busyProjects=${this.busyProjects}
                 ></project-installations>

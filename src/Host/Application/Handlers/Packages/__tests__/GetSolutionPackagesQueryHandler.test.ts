@@ -18,6 +18,12 @@ import { createSolutionPackagesHandler } from "../../../../../Tests/Helpers/crea
 
 const mockFs = fs as jest.Mocked<typeof fs>;
 
+/** `BuildConfigDetector.findAllConfigFiles` rend [] tant qu'aucun workspace n'est ouvert :
+ *  les scénarios qui ont besoin d'un Directory.Packages.props doivent donc peupler les deux. */
+const mockVscode = jest.requireMock("vscode") as {
+  workspace: { findFiles: jest.Mock; workspaceFolders?: Array<{ uri: { fsPath: string } }> };
+};
+
 const SLN = `Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api", "Api\\Api.csproj", "{11111111-1111-1111-1111-111111111111}"
 EndProject
@@ -43,6 +49,8 @@ const CORE_CSPROJ = `<Project Sdk="Microsoft.NET.Sdk">
 describe("GetSolutionPackagesQueryHandler", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockVscode.workspace.workspaceFolders = undefined;
+    mockVscode.workspace.findFiles.mockResolvedValue([]);
     const files: Record<string, string> = {
       "/Solution/MySolution.sln": SLN,
       "/Solution/Api/Api.csproj": API_CSPROJ,
@@ -83,6 +91,68 @@ describe("GetSolutionPackagesQueryHandler", () => {
     expect(bson.iconUrl).toBe(
       "https://api.nuget.org/v3-flatcontainer/newtonsoft.json.bson/1.0.2/icon",
     );
+  });
+
+  it("expose tous les projets de la solution, y compris ceux sans le package", async () => {
+    const handler = createSolutionPackagesHandler();
+    const dto = await handler.Handle(new GetSolutionPackagesQuery("/Solution/MySolution.sln"));
+
+    // Serilog n'est référencé que par Api : sans cette liste, l'UI ne pourrait jamais
+    // proposer de l'installer sur Core (bouton ＋ par projet inatteignable).
+    expect(dto.packages.find((p) => p.id === "Serilog")!.installations).toHaveLength(1);
+    expect(dto.projects).toEqual([
+      {
+        projectPath: "/Solution/Api/Api.csproj",
+        projectName: "Api",
+        effectiveTfms: ["net8.0"],
+        referenceStyle: "PackageReference",
+      },
+      {
+        projectPath: "/Solution/Core/Core.csproj",
+        projectName: "Core",
+        effectiveTfms: ["net6.0"],
+        referenceStyle: "PackageReference",
+      },
+    ]);
+  });
+
+  it("annonce le style CpmManaged quand la solution porte un Directory.Packages.props", async () => {
+    const CPM_PROPS = `<Project>
+  <PropertyGroup><ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally></PropertyGroup>
+  <ItemGroup><PackageVersion Include="Serilog" Version="3.1.0" /></ItemGroup>
+</Project>`;
+    const files: Record<string, string> = {
+      "/Solution/MySolution.sln": SLN,
+      "/Solution/Api/Api.csproj": API_CSPROJ,
+      "/Solution/Core/Core.csproj": CORE_CSPROJ,
+      "/Solution/Directory.Packages.props": CPM_PROPS,
+    };
+    mockFs.existsSync.mockImplementation((p) => (p as string) in files);
+    mockFs.readFileSync.mockImplementation((p) => {
+      const content = files[p as string];
+      if (content === undefined) {
+        throw new Error(`ENOENT: ${p}`);
+      }
+      return content;
+    });
+    mockFs.statSync.mockImplementation(
+      (p) => ({ isFile: () => (p as string) in files }) as fs.Stats,
+    );
+    mockVscode.workspace.workspaceFolders = [{ uri: { fsPath: "/Solution" } }];
+    mockVscode.workspace.findFiles.mockImplementation((pattern: string) =>
+      Promise.resolve(
+        pattern.includes("Directory.Packages.props")
+          ? [{ fsPath: "/Solution/Directory.Packages.props" }]
+          : [],
+      ),
+    );
+
+    const handler = createSolutionPackagesHandler();
+    const dto = await handler.Handle(new GetSolutionPackagesQuery("/Solution/MySolution.sln"));
+
+    // Installer ici créera une <PackageReference> sans Version + un <PackageVersion> :
+    // même sémantique que PackageWriteTargetResolver, dont dépendent les boutons de l'UI.
+    expect(dto.projects.map((p) => p.referenceStyle)).toEqual(["CpmManaged", "CpmManaged"]);
   });
 
   it("sans NuGet.Config, aucun feed non interrogé", async () => {

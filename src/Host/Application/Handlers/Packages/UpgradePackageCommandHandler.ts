@@ -15,6 +15,7 @@ import {
   type WriteTarget,
 } from "@Infrastructure/MsBuild/PackageWriteTargetResolver";
 import { RestoreScheduler } from "@Infrastructure/MsBuild/RestoreScheduler";
+import { OperationLogStore } from "@Infrastructure/MsBuild/OperationLogStore";
 import { PackageMetadataCache } from "@Infrastructure/NuGet/PackageMetadataCache";
 import { ProjectTfmCache } from "@Infrastructure/Projects/ProjectTfmCache";
 import { USER_PROMPT, type IUserPrompt } from "../../Abstractions/Prompt/IUserPrompt";
@@ -36,6 +37,7 @@ export class UpgradePackageCommandHandler implements ICommandHandler<
   PackageWriteResultDto
 > {
   constructor(
+    private readonly operationLog: OperationLogStore,
     private readonly targetResolver: PackageWriteTargetResolver,
     private readonly editor: MsBuildTextEditor,
     private readonly restoreScheduler: RestoreScheduler,
@@ -46,6 +48,21 @@ export class UpgradePackageCommandHandler implements ICommandHandler<
   ) {}
 
   async Handle(command: UpgradePackageCommand): Promise<PackageWriteResultDto> {
+    const result = await this.handleCore(command);
+    this.operationLog.recordWrite({
+      operation: "upgrade",
+      packageId: command.packageId,
+      version: command.version,
+      status: result.status,
+      affectedProjects: result.affectedProjects,
+      filesChanged: result.filesChanged,
+      skipped: result.skipped,
+      error: result.error,
+    });
+    return result;
+  }
+
+  private async handleCore(command: UpgradePackageCommand): Promise<PackageWriteResultDto> {
     if (!isValidPackageId(command.packageId) || !isValidVersion(command.version)) {
       return {
         status: "Error",

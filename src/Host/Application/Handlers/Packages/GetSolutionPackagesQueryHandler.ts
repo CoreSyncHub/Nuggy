@@ -5,9 +5,12 @@ import { HandlerFor } from "@Shared/Infrastructure/Messaging/HandlerFor";
 import { GetSolutionPackagesQuery } from "@Shared/Features/Queries/GetSolutionPackagesQuery";
 import {
   type PackageInstallationDto,
+  type PackageReferenceStyle,
   type SolutionPackageDto,
   type SolutionPackagesDto,
+  type SolutionProjectDto,
 } from "@Shared/Features/Dtos/SolutionPackagesDto";
+import { BuildConfigFileType } from "@Domain/Build/Enums/BuildConfigFileType";
 import { SlnParser } from "@Infrastructure/Solution/SlnParser";
 import { SlnxParser } from "@Infrastructure/Solution/SlnxParser";
 import { BuildConfigDetector } from "@Infrastructure/Build/BuildConfigDetector";
@@ -111,12 +114,35 @@ export class GetSolutionPackagesQueryHandler implements IQueryHandler<
         };
       });
 
+    // Style qu'aurait une installation dans un projet qui n'a pas encore le package.
+    // Même sémantique que PackageWriteTargetResolver (la présence d'un
+    // Directory.Packages.props suffit : l'install créera une référence sans Version
+    // plus le PackageVersion manquant), sinon l'UI promettrait un bouton que
+    // l'écriture Host refuserait.
+    const solutionHasCpmFile = buildConfigFiles.some(
+      (f) => f.type === BuildConfigFileType.DirectoryPackagesProps,
+    );
+    const styleOf = (projectPath: string): PackageReferenceStyle => {
+      if (this.packagesConfigParser.isLegacyProject(projectPath)) {
+        return "PackagesConfig";
+      }
+      return solutionHasCpmFile ? "CpmManaged" : "PackageReference";
+    };
+    const projects: SolutionProjectDto[] = projectPaths
+      .map((projectPath) => ({
+        projectPath,
+        projectName: path.basename(projectPath, ".csproj"),
+        effectiveTfms: tfmsOf(projectPath),
+        referenceStyle: styleOf(projectPath),
+      }))
+      .sort((a, b) => a.projectName.localeCompare(b.projectName));
+
     const resolution = this.nuGetConfigResolver.resolve(query.solutionPath);
     const uninterrogatedFeeds = this.nuGetConfigResolver
       .getPrivateFeeds(resolution)
       .map((source) => source.name);
 
-    return { packages, uninterrogatedFeeds };
+    return { packages, projects, uninterrogatedFeeds };
   }
 
   private parseProjects(solutionPath: string): string[] {

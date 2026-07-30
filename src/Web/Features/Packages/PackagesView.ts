@@ -13,6 +13,10 @@ import { UninstallPackageCommand } from "@Shared/Features/Commands/UninstallPack
 import { type SolutionDto } from "@Shared/Features/Dtos/SolutionDto";
 import { type SolutionPackagesDto } from "@Shared/Features/Dtos/SolutionPackagesDto";
 import { type PackageUpdateInfoDto } from "@Shared/Features/Dtos/PackageUpdateInfoDto";
+import {
+  resolvePackageUpdateState,
+  type PackageUpdateState,
+} from "@Shared/Features/Packages/PackageUpdateState";
 import { type PackageWriteResultDto } from "@Shared/Features/Dtos/PackageWriteResultDto";
 import { type RestoreStatusDto } from "@Shared/Features/Dtos/RestoreStatusDto";
 import { TranslationService } from "../../Core/Services/TranslationService";
@@ -32,7 +36,7 @@ export class PackagesView extends LitElement {
 
   @state() private data?: SolutionPackagesDto;
   @state() private selectedId = "";
-  @state() private verdictBadges = new Map<string, string>();
+  @state() private verdictBadges = new Map<string, PackageUpdateState>();
   /** Résultats en échec (fetchStatus !== 'Ok') volontairement absents de ce cache : les conserver
    *  figerait un DTO synthétique 'Offline' pour toujours, empêchant toute nouvelle tentative. */
   protected readonly updateInfoCache = new Map<string, PackageUpdateInfoDto>();
@@ -236,25 +240,15 @@ export class PackagesView extends LitElement {
     }
   }
 
-  private aggregateBadge(info: PackageUpdateInfoDto): string {
-    if (info.fetchStatus !== "Ok" || !info.latestStable) {
+  /** Marge de progression du package installé (cf. `resolvePackageUpdateState`) :
+   *  sans le DTO du package — donc sans ses versions installées — la question
+   *  « reste-t-il quelque chose à gagner ? » n'a pas de réponse. */
+  private aggregateBadge(info: PackageUpdateInfoDto): PackageUpdateState {
+    const pkg = this.data?.packages.find((p) => p.id === info.id);
+    if (!pkg) {
       return "unknown";
     }
-    const latest = info.versions.find((v) => v.version === info.latestStable);
-    if (!latest) {
-      return "unknown";
-    }
-    const verdicts = latest.verdictsByProject.map((p) => p.verdict);
-    if (verdicts.some((v) => v === "Unknown")) {
-      return "unknown";
-    }
-    if (verdicts.every((v) => v === "Compatible")) {
-      return "ok";
-    }
-    if (verdicts.every((v) => v === "Incompatible")) {
-      return "incompatible";
-    }
-    return "partial";
+    return resolvePackageUpdateState(pkg, info);
   }
 
   private onPackageSelected(e: CustomEvent<{ packageId: string }>): void {
@@ -380,6 +374,8 @@ export class PackagesView extends LitElement {
       baselineRunId ??= status.runId;
       const terminal = status.status === "Succeeded" || status.status === "Failed";
       if (terminal && status.runId >= baselineRunId) {
+        // L'onglet Logs (nuget-tabs) rafraîchit sa liste quand un restore se termine.
+        this.dispatchEvent(new CustomEvent("restore-finished", { bubbles: true, composed: true }));
         if (status.status === "Succeeded") {
           this.restoreHideTimer = setTimeout(() => {
             if (generation === this.restorePollGeneration && this.restoreStatus === status) {
@@ -392,10 +388,15 @@ export class PackagesView extends LitElement {
       if (Date.now() >= deadline) {
         // Le cap est atteint sans état terminal connu : ne jamais laisser le bandeau figé
         // sur 'Running' indéfiniment (Finding 4) — bascule vers un état Failed dédié.
+        // runId à 0 (neutre) et non status.runId : en cours de run, ce dernier désigne
+        // encore le run PRÉCÉDENT (le scheduler ne publie le nouveau qu'à la fin), donc
+        // un clic « Voir les logs → » surlignerait le mauvais run. Les runId de journal
+        // commencent à 1, donc revealRun(0) est un no-op garanti : on retombe sur le
+        // comportement spec « runId absent → simple activation de l'onglet ».
         this.restoreStatus = {
           status: "Failed",
           messages: [this.i18n.t("packages.restore.timedOut")],
-          runId: status.runId,
+          runId: 0,
           finishedAtUtc: new Date().toISOString(),
         };
         return;
@@ -424,6 +425,7 @@ export class PackagesView extends LitElement {
         selected
           ? html`<package-detail
               .package=${selected}
+              .projects=${this.data?.projects ?? []}
               .info=${this.selectedInfo}
               .busyProjects=${this.busyProjects}
               .globalBusy=${this.globalBusy}

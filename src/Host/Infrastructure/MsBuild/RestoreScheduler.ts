@@ -4,6 +4,7 @@ import { injectToken } from "@Shared/DependencyInjection/inject";
 import { type ILogger, LOGGER } from "@/Host/Application/Abstractions/Log/ILogger";
 import { type RestoreStatusDto } from "@/Shared/Features/Dtos/RestoreStatusDto";
 import { PROCESS_RUNNER, type IProcessRunner } from "./ProcessRunner";
+import { OperationLogStore } from "./OperationLogStore";
 
 const DEBOUNCE_MS = 300;
 const RESTORE_TIMEOUT_MS = 300_000;
@@ -26,6 +27,7 @@ export class RestoreScheduler {
   private pendingSolution?: string;
 
   constructor(
+    private readonly operationLog: OperationLogStore,
     @injectToken(PROCESS_RUNNER) private readonly processRunner: IProcessRunner,
     @injectToken(LOGGER) private readonly logger: ILogger,
   ) {}
@@ -51,6 +53,7 @@ export class RestoreScheduler {
     this.pendingSolution = undefined;
     this.running = true;
     const runId = this.status.runId + 1;
+    this.operationLog.recordRestoreStart(runId, solutionPath);
     try {
       const result = await this.processRunner.run(
         "dotnet",
@@ -61,11 +64,18 @@ export class RestoreScheduler {
       this.logger.Info("dotnet restore terminé", { solutionPath, exitCode: result.exitCode });
       this.logger.Debug(result.output);
       const terminal = this.toStatus(result, runId);
+      const messagesBeforeWhy = terminal.messages.length;
       // Un run est déjà en attente : on va republier "Running" ci-dessous, l'enrichissement
       // serait du travail jeté — on le saute pour ne pas retarder la publication.
       if (!this.pendingSolution && terminal.status === "Failed") {
         await this.attributeTransitiveDependencies(terminal, solutionPath);
       }
+      this.operationLog.completeRestore(runId, {
+        status: terminal.status === "Succeeded" ? "Succeeded" : "Failed",
+        exitCode: result.exitCode ?? undefined,
+        output: result.output.split(/\r?\n/),
+        whyInsights: terminal.messages.slice(messagesBeforeWhy),
+      });
       // Une écriture est arrivée pendant ce run (pendingSolution déjà réarmé) : ne jamais
       // publier le terminal du run qui se termine, sous peine de faire croire au polling
       // UI que TOUT est fini alors qu'un second run va démarrer et écraser ce résultat.
@@ -81,6 +91,11 @@ export class RestoreScheduler {
         runId,
         finishedAtUtc: new Date().toISOString(),
       };
+      this.operationLog.completeRestore(runId, {
+        status: "Failed",
+        output: [`erreur d'exécution du processus: ${errorMessage}`],
+        whyInsights: [],
+      });
       this.status = this.pendingSolution ? { status: "Running", messages: [], runId } : terminal;
     } finally {
       this.running = false;
