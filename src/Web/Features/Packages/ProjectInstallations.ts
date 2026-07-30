@@ -4,6 +4,7 @@ import { container } from "tsyringe";
 import { type PackageInstallationDto } from "@Shared/Features/Dtos/SolutionPackagesDto";
 import { type PackageVersionInfoDto } from "@Shared/Features/Dtos/PackageUpdateInfoDto";
 import { TranslationService } from "../../Core/Services/TranslationService";
+import { writeActionStyles } from "./WriteActionStyles";
 import {
   arrowUpIcon,
   checkIcon,
@@ -36,95 +37,98 @@ export class ProjectInstallations extends LitElement {
     this.unsubscribeI18n?.();
   }
 
-  static styles = css`
-    .title {
-      text-transform: uppercase;
-      font-size: 11px;
-      color: var(--vscode-descriptionForeground);
-      margin: 12px 0 8px;
-    }
-    .cards {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .card {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
-      background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
-      border: 1px solid var(--vscode-panel-border);
-      border-radius: 6px;
-      padding: 9px 12px;
-    }
-    /* Projet sans le package : présent pour rendre l'installation par projet
+  static styles = [
+    writeActionStyles,
+    css`
+      .title {
+        text-transform: uppercase;
+        font-size: 11px;
+        color: var(--vscode-descriptionForeground);
+        margin: 12px 0 8px;
+      }
+      .cards {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
+        border: 1px solid var(--vscode-panel-border);
+        border-radius: 6px;
+        padding: 9px 12px;
+      }
+      /* Projet sans le package : présent pour rendre l'installation par projet
        accessible, mais visuellement secondaire par rapport aux projets équipés. */
-    .card.candidate {
-      background: transparent;
-      border-style: dashed;
-    }
-    .card.candidate .name {
-      color: var(--vscode-descriptionForeground);
-      font-weight: 500;
-    }
-    .name {
-      font-weight: 600;
-      font-size: 13px;
-      flex: none;
-    }
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      border-radius: 10px;
-      padding: 2px 8px;
-      font-size: 11px;
-      line-height: 14px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      min-width: 0;
-    }
-    .badge.Compatible {
-      color: var(--vscode-charts-green);
-      background: color-mix(in srgb, var(--vscode-charts-green) 16%, transparent);
-    }
-    .badge.Incompatible {
-      color: var(--vscode-charts-red);
-      background: color-mix(in srgb, var(--vscode-charts-red) 14%, transparent);
-    }
-    .badge.Unknown {
-      color: var(--vscode-descriptionForeground);
-      background: color-mix(in srgb, var(--vscode-descriptionForeground) 12%, transparent);
-    }
-    .chip {
-      flex: none;
-      border: 1px solid var(--vscode-panel-border);
-      border-radius: 8px;
-      padding: 0 8px;
-      font-size: 10.5px;
-      line-height: 15px;
-      color: var(--vscode-descriptionForeground);
-    }
-    .spacer {
-      flex: 1;
-    }
-    button {
-      flex: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 5px 13px;
-      border-radius: 5px;
-      border: 1px solid var(--vscode-button-border, transparent);
-      background: var(--vscode-button-secondaryBackground);
-      color: var(--vscode-button-secondaryForeground);
-    }
-    button:disabled {
-      opacity: 0.45;
-    }
-  `;
+      .card.candidate {
+        background: transparent;
+        border-style: dashed;
+      }
+      .card.candidate .name {
+        color: var(--vscode-descriptionForeground);
+        font-weight: 500;
+      }
+      .name {
+        font-weight: 600;
+        font-size: 13px;
+        flex: none;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border-radius: 10px;
+        padding: 2px 8px;
+        font-size: 11px;
+        line-height: 14px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+      .badge.Compatible {
+        color: var(--vscode-charts-green);
+        background: color-mix(in srgb, var(--vscode-charts-green) 16%, transparent);
+      }
+      .badge.Incompatible {
+        color: var(--vscode-charts-red);
+        background: color-mix(in srgb, var(--vscode-charts-red) 14%, transparent);
+      }
+      .badge.Unknown {
+        color: var(--vscode-descriptionForeground);
+        background: color-mix(in srgb, var(--vscode-descriptionForeground) 12%, transparent);
+      }
+      .chip {
+        flex: none;
+        border: 1px solid var(--vscode-panel-border);
+        border-radius: 8px;
+        padding: 0 8px;
+        font-size: 10.5px;
+        line-height: 15px;
+        color: var(--vscode-descriptionForeground);
+      }
+      .spacer {
+        flex: 1;
+      }
+      button {
+        flex: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px 13px;
+        border-radius: 5px;
+        border: 1px solid var(--vscode-button-border, transparent);
+        background: var(--vscode-button-secondaryBackground);
+        color: var(--vscode-button-secondaryForeground);
+      }
+      button:disabled {
+        opacity: 0.45;
+      }
+    `,
+  ];
 
   /** Émet un événement d'écriture (bubbles+composed, comme package-selected) : seule PackagesView
    *  écoute et parle au dispatcher — ce composant reste présentation-pure. */
@@ -144,6 +148,7 @@ export class ProjectInstallations extends LitElement {
     // désactivé (écritures legacy hors périmètre) ; PackageReference et CpmManaged sont actifs.
     if (notInstalled && inst.referenceStyle !== "PackagesConfig") {
       return html`<button
+        class="install"
         ?disabled=${busy}
         title=${this.i18n.t("packages.installations.installTooltip")}
         @click=${() =>
@@ -156,15 +161,16 @@ export class ProjectInstallations extends LitElement {
     if (inst.referenceStyle === "PackagesConfig") {
       const title = this.i18n.t("packages.installations.legacyTooltip");
       return notInstalled
-        ? html`<button disabled title=${title}>${plusIcon(14)}</button>`
-        : html`<button disabled title=${title}>${arrowUpIcon(14)}</button>
-            <button disabled title=${title}>${trashIcon(14)}</button>`;
+        ? html`<button class="install" disabled title=${title}>${plusIcon(14)}</button>`
+        : html`<button class="upgrade" disabled title=${title}>${arrowUpIcon(14)}</button>
+            <button class="uninstall" disabled title=${title}>${trashIcon(14)}</button>`;
     }
 
     // Installé, PackageReference ou CpmManaged : 🗑 est toujours actif. ⇧ est désactivé sous
     // CpmManaged (le PackageVersion est géré solution-wide — cf. mise à jour globale du toolbar).
     const cpm = inst.referenceStyle === "CpmManaged";
     return html`<button
+        class="upgrade"
         ?disabled=${busy || cpm}
         title=${
           cpm
@@ -177,6 +183,7 @@ export class ProjectInstallations extends LitElement {
         ${busy ? ellipsisIcon(14) : arrowUpIcon(14)}
       </button>
       <button
+        class="uninstall"
         ?disabled=${busy}
         title=${this.i18n.t("packages.installations.uninstallTooltip")}
         @click=${() => this.dispatchWrite("uninstall-package", { projectPath: inst.projectPath })}
