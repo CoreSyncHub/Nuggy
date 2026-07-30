@@ -5,7 +5,11 @@ import {
   type PackageUpdateInfoDto,
   type PackageVersionInfoDto,
 } from "@Shared/Features/Dtos/PackageUpdateInfoDto";
-import { type SolutionPackageDto } from "@Shared/Features/Dtos/SolutionPackagesDto";
+import {
+  type PackageInstallationDto,
+  type SolutionPackageDto,
+  type SolutionProjectDto,
+} from "@Shared/Features/Dtos/SolutionPackagesDto";
 import { type RestoreStatusDto } from "@Shared/Features/Dtos/RestoreStatusDto";
 import { type PackageWriteResultDto } from "@Shared/Features/Dtos/PackageWriteResultDto";
 import { TranslationService } from "../../Core/Services/TranslationService";
@@ -27,6 +31,9 @@ import "./WriteStatusBanner";
 @customElement("package-detail")
 export class PackageDetail extends LitElement {
   @property({ attribute: false }) package!: SolutionPackageDto;
+  /** Tous les projets de la solution : fusionnés aux installations pour rendre les
+   *  projets non équipés (et donc leur bouton d'installation) — cf. `allInstallations`. */
+  @property({ attribute: false }) projects: SolutionProjectDto[] = [];
   @property({ attribute: false }) info?: PackageUpdateInfoDto;
   /** Chemins de projet occupés (relayé tel quel à project-installations). */
   @property({ attribute: false }) busyProjects: Set<string> = new Set();
@@ -189,6 +196,27 @@ export class PackageDetail extends LitElement {
     return this.package.installations.some((i) => i.installedVersion.includes("-"));
   }
 
+  /**
+   * Installations réelles, suivies des projets de la solution qui n'ont pas le
+   * package (marqués `installedVersion: "unknown"`, ce que `project-installations`
+   * rend déjà comme « installable »). Chaque groupe reste trié par nom de projet ;
+   * les projets équipés d'abord, pour que l'information utile reste en tête.
+   */
+  private get allInstallations(): PackageInstallationDto[] {
+    const installed = this.package.installations;
+    const installedPaths = new Set(installed.map((i) => i.projectPath));
+    const candidates: PackageInstallationDto[] = this.projects
+      .filter((p) => !installedPaths.has(p.projectPath))
+      .map((p) => ({
+        projectPath: p.projectPath,
+        projectName: p.projectName,
+        effectiveTfms: p.effectiveTfms,
+        installedVersion: "unknown",
+        referenceStyle: p.referenceStyle,
+      }));
+    return [...installed, ...candidates];
+  }
+
   private get visibleVersions(): PackageVersionInfoDto[] {
     const all = this.info?.versions ?? [];
     if (this.showPrereleases || this.installedIsPrerelease) {
@@ -349,7 +377,7 @@ export class PackageDetail extends LitElement {
         ${
           current
             ? html`<project-installations
-                  .installations=${this.package.installations}
+                  .installations=${this.allInstallations}
                   .selectedVersion=${current}
                   .busyProjects=${this.busyProjects}
                 ></project-installations>

@@ -431,6 +431,7 @@ export class PackagesView extends LitElement {
         selected
           ? html`<package-detail
               .package=${selected}
+              .projects=${this.data?.projects ?? []}
               .info=${this.selectedInfo}
               .busyProjects=${this.busyProjects}
               .globalBusy=${this.globalBusy}
