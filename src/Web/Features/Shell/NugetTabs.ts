@@ -3,6 +3,7 @@ import { customElement, state } from "lit/decorators.js";
 import { container } from "tsyringe";
 import { TranslationService } from "../../Core/Services/TranslationService";
 import "../Packages/PackagesView";
+import "../Logs/LogsView";
 
 type TabId = "packages" | "logs";
 
@@ -196,8 +197,11 @@ export class NugetTabs extends LitElement {
           aria-labelledby="tab-logs"
           ?hidden=${this.activeId !== "logs"}
         >
-          <!-- Remplacé par <logs-view> à l'arrivée de la vue Logs. -->
-          <div style="padding: 12px;">Logs</div>
+          <logs-view
+            .active=${this.activeId === "logs"}
+            .refreshToken=${this.refreshToken}
+            .targetRunId=${this.targetRunId}
+          ></logs-view>
         </div>
       </div>
     `;

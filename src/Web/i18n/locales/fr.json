@@ -111,5 +111,21 @@
     "allProjects": "Tous les projets",
     "project": "Projet",
     "projects": "Projets"
+  },
+  "logs": {
+    "empty": "Aucune activité pour le moment",
+    "restoreTitle": "Restore — {{solution}}",
+    "running": "en cours…",
+    "durationSeconds": "{{seconds}} s",
+    "exitCode": "code {{code}}",
+    "whyTitle": "Chaînes de dépendances (dotnet nuget why)",
+    "operation": {
+      "install": "Installation",
+      "upgrade": "Mise à jour",
+      "uninstall": "Désinstallation"
+    },
+    "filesChanged": "Fichiers modifiés",
+    "skipped": "Ignorés",
+    "affectedProjects": "{{count}} projet(s)"
   }
 }
