@@ -70,11 +70,17 @@
     },
     "list": {
       "filterPlaceholder": "Filtrer les packages…",
-      "verdictAll": "Tous",
       "verdictOk": "Compatibles",
-      "verdictPartial": "Partiels",
-      "verdictIncompatible": "Incompatibles",
-      "verdictUnknown": "Inconnus"
+      "filterAll": "Tous",
+      "filterOutOfTfm": "Hors TFM",
+      "badge": {
+        "update": "Mise à jour disponible",
+        "updatePartial": "Mise à jour disponible sur une partie des projets",
+        "outOfTfm": "Des versions supérieures existent, mais pas pour vos TFM",
+        "upToDate": "À jour",
+        "unknown": "Information indisponible",
+        "loading": "Chargement…"
+      }
     },
     "restore": {
       "running": "Restore en cours…",
