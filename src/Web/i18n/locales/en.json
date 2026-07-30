@@ -12,7 +12,9 @@
   },
   "tabs": {
     "installed": "Installed",
-    "search": "Browse"
+    "search": "Browse",
+    "packages": "Packages",
+    "logs": "Logs"
   },
   "packages": {
     "noPackages": "No packages found",

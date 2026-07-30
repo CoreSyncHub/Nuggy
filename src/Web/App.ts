@@ -5,7 +5,7 @@ import { TranslationService } from "./Core/Services/TranslationService";
 import { DISPATCHER, type IDispatcher } from "@Shared/Abstractions/Messaging/IDispatcher";
 import { type ILogger, LOGGER } from "@/Host/Application/Abstractions/Log/ILogger";
 import { container } from "tsyringe";
-import "./Features/Packages/PackagesView";
+import "./Features/Shell/NugetTabs";
 
 /**
  * Main App Component
@@ -46,99 +46,18 @@ export class App extends BaseComponent {
       background-color: var(--vscode-editor-background);
     }
 
-    .header {
-      display: flex;
-      flex-direction: column;
-      padding: 12px;
-      border-bottom: 1px solid var(--vscode-panel-border);
-      background-color: var(--vscode-sideBar-background);
-    }
-
-    .tabs {
-      display: flex;
-      gap: 4px;
-      margin-bottom: 12px;
-    }
-
-    .tab {
-      flex: 1;
-      padding: 8px 16px;
-      background: transparent;
-      border: none;
-      color: var(--vscode-foreground);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.2s;
-    }
-
-    .tab:hover {
-      background-color: var(--vscode-list-hoverBackground);
-    }
-
-    .tab.active {
-      border-bottom-color: var(--vscode-focusBorder);
-      font-weight: 600;
-    }
-
-    .search-box {
-      position: static;
-    }
-
-    .search-box input {
-      width: 100%;
-      padding: 8px 12px;
-      background-color: var(--vscode-input-background);
-      color: var(--vscode-input-foreground);
-      border: 1px solid var(--vscode-input-border);
-      border-radius: 3px;
-      outline: none;
-    }
-
-    .search-box input:focus {
-      border-color: var(--vscode-focusBorder);
-    }
-
+    /* min-height: 0 est indispensable ici : sans lui, un enfant flex refuse de
+       descendre sous la taille de son contenu et aucune vue interne ne peut défiler. */
     .content {
       display: flex;
-      flex: 1;
+      flex: 1 1 auto;
+      min-height: 0;
       overflow: hidden;
-    }
-
-    .list-content {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      width: 40%;
-      border-right: 1px solid var(--vscode-panel-border);
-    }
-
-    .list-panel {
-      width: 100%;
-      border-right: 1px solid var(--vscode-panel-border);
-      overflow: hidden;
-    }
-
-    .details-panel {
-      flex: 1;
-      overflow: hidden;
-    }
-
-    .loading-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
     }
   `;
 
   render() {
-    return html` <div class="content"><packages-view></packages-view></div> `;
+    return html`<div class="content"><nuget-tabs></nuget-tabs></div>`;
   }
 }
 
