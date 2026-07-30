@@ -65,7 +65,8 @@
       "installTooltip": "Install on this project",
       "updateTooltip": "Update to the selected version",
       "uninstallTooltip": "Uninstall from this project",
-      "cpmManagedTooltip": "Centrally managed — use the global update"
+      "cpmManagedTooltip": "Centrally managed — use the global update",
+      "count": "{{installed}} installed / {{total}}"
     },
     "list": {
       "filterPlaceholder": "Filter packages…",

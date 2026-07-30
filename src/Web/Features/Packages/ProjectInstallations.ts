@@ -58,6 +58,16 @@ export class ProjectInstallations extends LitElement {
       border-radius: 6px;
       padding: 9px 12px;
     }
+    /* Projet sans le package : présent pour rendre l'installation par projet
+       accessible, mais visuellement secondaire par rapport aux projets équipés. */
+    .card.candidate {
+      background: transparent;
+      border-style: dashed;
+    }
+    .card.candidate .name {
+      color: var(--vscode-descriptionForeground);
+      font-weight: 500;
+    }
     .name {
       font-weight: 600;
       font-size: 13px;
@@ -195,13 +205,20 @@ export class ProjectInstallations extends LitElement {
   }
 
   render() {
+    const installedCount = this.installations.filter(
+      (i) => i.installedVersion !== "unknown",
+    ).length;
     return html` <div class="title">
-        ${this.i18n.t("packages.installations.title")} · ${this.installations.length}
+        ${this.i18n.t("packages.installations.title")} ·
+        ${this.i18n.t("packages.installations.count", {
+          installed: installedCount,
+          total: this.installations.length,
+        })}
       </div>
       <div class="cards">
         ${this.installations.map(
           (inst) =>
-            html`<div class="card">
+            html`<div class="card ${inst.installedVersion === "unknown" ? "candidate" : ""}">
               <span class="name">${inst.projectName}</span>
               ${this.verdictBadge(inst.projectPath)}
               ${inst.effectiveTfms.map((tfm) => html`<span class="chip">${tfm}</span>`)}

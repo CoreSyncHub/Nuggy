@@ -15,8 +15,29 @@ export interface SolutionPackageDto {
   installations: PackageInstallationDto[];
 }
 
+/**
+ * Projet de la solution, indépendamment de tout package. Permet à l'UI de
+ * proposer l'installation par projet là où le package est absent : sans cette
+ * liste, seuls les projets déjà équipés seraient affichés et le bouton ＋ des
+ * cartes projet resterait inatteignable.
+ */
+export interface SolutionProjectDto {
+  projectPath: string;
+  projectName: string;
+  effectiveTfms: string[];
+  /**
+   * Style qu'aurait une installation dans ce projet, aligné sur
+   * `PackageWriteTargetResolver` : `PackagesConfig` pour un projet legacy
+   * (écritures hors périmètre), `CpmManaged` si la solution porte un
+   * Directory.Packages.props, sinon `PackageReference`.
+   */
+  referenceStyle: PackageReferenceStyle;
+}
+
 export interface SolutionPackagesDto {
   packages: SolutionPackageDto[];
+  /** Tous les projets de la solution, triés par nom (cf. SolutionProjectDto). */
+  projects: SolutionProjectDto[];
   /** Noms des feeds privés détectés mais non interrogés (bandeau UI) */
   uninterrogatedFeeds: string[];
 }
