@@ -7,9 +7,6 @@ import {
   fluentOption,
   fluentProgressRing,
   fluentBadge,
-  fluentTabs,
-  fluentTab,
-  fluentTabPanel,
 } from "@fluentui/web-components";
 
 import { WebDependencyInjection } from "./Core/DI/WebDependencyInjection";
@@ -37,9 +34,6 @@ fluentDesignSystem.register(
   fluentOption(),
   fluentProgressRing(),
   fluentBadge(),
-  fluentTabs(),
-  fluentTab(),
-  fluentTabPanel(),
 );
 
 // Debug: Verify components are registered
