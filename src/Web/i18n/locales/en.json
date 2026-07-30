@@ -70,11 +70,17 @@
     },
     "list": {
       "filterPlaceholder": "Filter packages…",
-      "verdictAll": "All",
       "verdictOk": "Compatible",
-      "verdictPartial": "Partial",
-      "verdictIncompatible": "Incompatible",
-      "verdictUnknown": "Unknown"
+      "filterAll": "All",
+      "filterOutOfTfm": "Outside TFM",
+      "badge": {
+        "update": "Update available",
+        "updatePartial": "Update available for some projects",
+        "outOfTfm": "Newer versions exist, but not for your TFMs",
+        "upToDate": "Up to date",
+        "unknown": "Information unavailable",
+        "loading": "Loading…"
+      }
     },
     "restore": {
       "running": "Restore running…",

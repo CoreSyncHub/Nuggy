@@ -1,7 +1,15 @@
 import { html, css, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+// Le tri se réordonne à mesure que les badges arrivent : sans rendu keyé, Lit
+// réutiliserait les lignes par position et attribuerait icône et sélection au
+// mauvais package.
+import { repeat } from "lit/directives/repeat.js";
 import { container } from "tsyringe";
 import { type SolutionPackageDto } from "@Shared/Features/Dtos/SolutionPackagesDto";
+import {
+  UPDATE_STATE_RANK,
+  type PackageUpdateState,
+} from "@Shared/Features/Packages/PackageUpdateState";
 import { TranslationService } from "../../Core/Services/TranslationService";
 import { searchIcon, warningIcon } from "./Icons";
 import "./PackageListItem";
@@ -9,12 +17,12 @@ import "./PackageListItem";
 @customElement("package-list")
 export class PackageList extends LitElement {
   @property({ attribute: false }) packages: SolutionPackageDto[] = [];
-  @property({ attribute: false }) verdictBadges = new Map<string, string>();
+  @property({ attribute: false }) verdictBadges = new Map<string, PackageUpdateState>();
   @property() selectedId = "";
   @property({ attribute: false }) uninterrogatedFeeds: string[] = [];
 
   @state() private filterText = "";
-  @state() private filterVerdict = "all";
+  @state() private filterState = "all";
 
   private i18n!: TranslationService;
   private unsubscribeI18n?: () => void;
@@ -94,20 +102,30 @@ export class PackageList extends LitElement {
     }
   `;
 
+  /** Les badges arrivent par lots : un package encore en cours reste en fin de
+   *  liste plutôt que de prendre la place d'un résultat déjà connu. */
+  private static readonly LOADING_RANK = Number.MAX_SAFE_INTEGER;
+
+  private rankOf(packageId: string): number {
+    const badge = this.verdictBadges.get(packageId);
+    return badge === undefined ? PackageList.LOADING_RANK : UPDATE_STATE_RANK[badge];
+  }
+
+  /** Packages montables d'abord, puis alphabétique — ce qui est actionnable
+   *  doit se voir sans défiler. Le tri se réajuste au fil des badges reçus. */
   private get visiblePackages(): SolutionPackageDto[] {
     const text = this.filterText.toLowerCase();
-    return this.packages.filter((p) => {
-      if (text && !p.id.toLowerCase().includes(text)) {
-        return false;
-      }
-      if (
-        this.filterVerdict !== "all" &&
-        (this.verdictBadges.get(p.id) ?? "loading") !== this.filterVerdict
-      ) {
-        return false;
-      }
-      return true;
-    });
+    return this.packages
+      .filter((p) => {
+        if (text && !p.id.toLowerCase().includes(text)) {
+          return false;
+        }
+        if (this.filterState !== "all" && this.verdictBadges.get(p.id) !== this.filterState) {
+          return false;
+        }
+        return true;
+      })
+      .sort((a, b) => this.rankOf(a.id) - this.rankOf(b.id) || a.id.localeCompare(b.id));
   }
 
   render() {
@@ -120,27 +138,30 @@ export class PackageList extends LitElement {
             @input=${(e: InputEvent) => (this.filterText = (e.target as HTMLInputElement).value)}
           />
         </div>
-        <select
-          @change=${(e: Event) => (this.filterVerdict = (e.target as HTMLSelectElement).value)}
-        >
-          <option value="all">${this.i18n.t("packages.list.verdictAll")}</option>
-          <option value="ok">${this.i18n.t("packages.list.verdictOk")}</option>
-          <option value="partial">${this.i18n.t("packages.list.verdictPartial")}</option>
-          <option value="incompatible">${this.i18n.t("packages.list.verdictIncompatible")}</option>
-          <option value="unknown">${this.i18n.t("packages.list.verdictUnknown")}</option>
+        <select @change=${(e: Event) => (this.filterState = (e.target as HTMLSelectElement).value)}>
+          <option value="all">${this.i18n.t("packages.list.filterAll")}</option>
+          <option value="update">${this.i18n.t("packages.list.badge.update")}</option>
+          <option value="updatePartial">${this.i18n.t("packages.list.badge.updatePartial")}</option>
+          <option value="outOfTfm">${this.i18n.t("packages.list.filterOutOfTfm")}</option>
+          <option value="upToDate">${this.i18n.t("packages.list.badge.upToDate")}</option>
+          <option value="unknown">${this.i18n.t("packages.list.badge.unknown")}</option>
         </select>
       </div>
-      ${this.uninterrogatedFeeds.length > 0
-        ? html`<div class="feeds-banner">
-            ${warningIcon(12)} ${this.uninterrogatedFeeds.join(", ")}
-          </div>`
-        : ""}
+      ${
+        this.uninterrogatedFeeds.length > 0
+          ? html`<div class="feeds-banner">
+              ${warningIcon(12)} ${this.uninterrogatedFeeds.join(", ")}
+            </div>`
+          : ""
+      }
       <div class="list">
-        ${this.visiblePackages.map(
+        ${repeat(
+          this.visiblePackages,
+          (p) => p.id,
           (p) =>
             html`<package-list-item
               .package=${p}
-              .badge=${(this.verdictBadges.get(p.id) ?? "loading") as never}
+              .badge=${this.verdictBadges.get(p.id) ?? "loading"}
               .selected=${p.id === this.selectedId}
             ></package-list-item>`,
         )}
