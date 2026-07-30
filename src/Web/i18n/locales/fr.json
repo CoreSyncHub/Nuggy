@@ -79,7 +79,9 @@
       "running": "Restore en cours…",
       "succeeded": "Restore terminé",
       "failed": "Échec du restore",
-      "timedOut": "Statut du restore inconnu (délai dépassé)"
+      "timedOut": "Statut du restore inconnu (délai dépassé)",
+      "viewLogs": "Voir les logs →",
+      "moreLines": "+{{count}} autres lignes"
     },
     "write": {
       "skipped": "{{count}} projet(s) ignoré(s) : ",

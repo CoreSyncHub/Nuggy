@@ -380,6 +380,8 @@ export class PackagesView extends LitElement {
       baselineRunId ??= status.runId;
       const terminal = status.status === "Succeeded" || status.status === "Failed";
       if (terminal && status.runId >= baselineRunId) {
+        // L'onglet Logs (nuget-tabs) rafraîchit sa liste quand un restore se termine.
+        this.dispatchEvent(new CustomEvent("restore-finished", { bubbles: true, composed: true }));
         if (status.status === "Succeeded") {
           this.restoreHideTimer = setTimeout(() => {
             if (generation === this.restorePollGeneration && this.restoreStatus === status) {
@@ -392,10 +394,15 @@ export class PackagesView extends LitElement {
       if (Date.now() >= deadline) {
         // Le cap est atteint sans état terminal connu : ne jamais laisser le bandeau figé
         // sur 'Running' indéfiniment (Finding 4) — bascule vers un état Failed dédié.
+        // runId à 0 (neutre) et non status.runId : en cours de run, ce dernier désigne
+        // encore le run PRÉCÉDENT (le scheduler ne publie le nouveau qu'à la fin), donc
+        // un clic « Voir les logs → » surlignerait le mauvais run. Les runId de journal
+        // commencent à 1, donc revealRun(0) est un no-op garanti : on retombe sur le
+        // comportement spec « runId absent → simple activation de l'onglet ».
         this.restoreStatus = {
           status: "Failed",
           messages: [this.i18n.t("packages.restore.timedOut")],
-          runId: status.runId,
+          runId: 0,
           finishedAtUtc: new Date().toISOString(),
         };
         return;

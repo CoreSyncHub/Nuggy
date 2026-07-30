@@ -79,7 +79,9 @@
       "running": "Restore running…",
       "succeeded": "Restore completed",
       "failed": "Restore failed",
-      "timedOut": "Restore status unknown (timed out)"
+      "timedOut": "Restore status unknown (timed out)",
+      "viewLogs": "View logs →",
+      "moreLines": "+{{count}} more lines"
     },
     "write": {
       "skipped": "{{count}} project(s) skipped: ",
