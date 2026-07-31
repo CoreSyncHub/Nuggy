@@ -1,19 +1,10 @@
 import { singleton } from "tsyringe";
+import { translate, type TranslationDictionary, type TranslationParams } from "./TranslationLookup";
 
 /**
  * Type for translation keys using dot notation
  */
 type TranslationKey = string;
-
-/**
- * Type for translation parameters
- */
-type TranslationParams = Record<string, string | number>;
-
-/**
- * Type for translation dictionary
- */
-type TranslationDictionary = Record<string, any>;
 
 /**
  * Type for language change callback
@@ -28,6 +19,9 @@ type LanguageChangeCallback = (language: string) => void;
 export class TranslationService {
   private currentLanguage: string = "en";
   private translations: TranslationDictionary = {};
+  /** Dictionnaire anglais, chargé une seule fois : filet par clé pour les langues
+   *  incomplètes, qui affichaient sinon le chemin brut de la clé dans l'interface. */
+  private fallbackTranslations: TranslationDictionary = {};
   private listeners: Set<LanguageChangeCallback> = new Set();
 
   /**
@@ -51,6 +45,7 @@ export class TranslationService {
 
       this.translations = await response.json();
       this.currentLanguage = lang;
+      await this.ensureFallbackLoaded();
 
       // Notify all listeners about the language change
       this.notifyListeners();
@@ -70,48 +65,34 @@ export class TranslationService {
    * @returns Translated string
    */
   t(key: TranslationKey, params?: TranslationParams): string {
-    // Navigate through the translation object using dot notation
-    const keys = key.split(".");
-    let value: any = this.translations;
-
-    for (const k of keys) {
-      if (value && typeof value === "object" && k in value) {
-        value = value[k];
-      } else {
-        // Key not found, return the key itself as fallback
-        console.warn(`Translation key not found: ${key}`);
-        return key;
-      }
+    const value = translate(this.translations, this.fallbackTranslations, key, params);
+    if (value === key) {
+      console.warn(`Translation key not found: ${key}`);
     }
-
-    // If the final value is not a string, return the key
-    if (typeof value !== "string") {
-      console.warn(`Translation value is not a string for key: ${key}`);
-      return key;
-    }
-
-    // Apply parameter interpolation if params are provided
-    if (params) {
-      return this.interpolate(value, params);
-    }
-
     return value;
   }
 
   /**
-   * Interpolate parameters in a translation string
-   * Supports {{paramName}} syntax
-   * @param text Translation string with placeholders
-   * @param params Parameters to interpolate
-   * @returns Interpolated string
+   * Charge l'anglais comme dictionnaire de repli. En anglais, les deux pointent
+   * le même objet : aucune requête supplémentaire. Un échec de chargement laisse
+   * le repli vide — `t()` rend alors la clé, comme avant ce correctif.
    */
-  private interpolate(text: string, params: TranslationParams): string {
-    return text.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-      if (key in params) {
-        return String(params[key]);
+  private async ensureFallbackLoaded(): Promise<void> {
+    if (this.currentLanguage === "en") {
+      this.fallbackTranslations = this.translations;
+      return;
+    }
+    if (Object.keys(this.fallbackTranslations).length > 0) {
+      return;
+    }
+    try {
+      const response = await fetch(`${window.__I18N_URI__}/en.json`);
+      if (response.ok) {
+        this.fallbackTranslations = await response.json();
       }
-      return match;
-    });
+    } catch (error) {
+      console.error("Error loading fallback language en:", error);
+    }
   }
 
   /**
