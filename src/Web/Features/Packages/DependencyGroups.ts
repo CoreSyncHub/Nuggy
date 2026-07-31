@@ -48,17 +48,19 @@ export class DependencyGroups extends LitElement {
   render() {
     return html` <details>
       <summary>${this.i18n.t("packages.dependencies.title", { version: this.version })}</summary>
-      ${this.groups.length === 0
-        ? html`<div class="dep">${this.i18n.t("packages.dependencies.empty")}</div>`
-        : this.groups.map(
-            (g) =>
-              html`<div class="group">
-                <div class="tfm">
-                  ${g.targetFramework || this.i18n.t("packages.dependencies.allFrameworks")}
-                </div>
-                ${g.dependencies.map((d) => html`<div class="dep">${d.id} ${d.versionRange}</div>`)}
-              </div>`,
-          )}
+      ${
+        this.groups.length === 0
+          ? html`<div class="dep">${this.i18n.t("packages.dependencies.empty")}</div>`
+          : this.groups.map(
+              (g) =>
+                html`<div class="group">
+                  <div class="tfm">
+                    ${g.targetFramework || this.i18n.t("packages.dependencies.allFrameworks")}
+                  </div>
+                  ${g.dependencies.map((d) => html`<div class="dep">${d.id} ${d.versionRange}</div>`)}
+                </div>`,
+            )
+      }
     </details>`;
   }
 }

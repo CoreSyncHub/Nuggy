@@ -1,9 +1,5 @@
 export type FrameworkFamily =
-  | "netframework"
-  | "netstandard"
-  | "netcoreapp"
-  | "net5plus"
-  | "unknown";
+  "netframework" | "netstandard" | "netcoreapp" | "net5plus" | "unknown";
 
 /**
  * Objet-valeur représentant un Target Framework Moniker parsé.

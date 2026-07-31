@@ -4,7 +4,7 @@
 export class PackageIdentity {
   constructor(
     public readonly name: string,
-    public readonly version?: string
+    public readonly version?: string,
   ) {}
 
   /**

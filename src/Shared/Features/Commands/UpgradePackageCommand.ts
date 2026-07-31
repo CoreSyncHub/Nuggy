@@ -11,6 +11,6 @@ export class UpgradePackageCommand implements ICommand<PackageWriteResultDto> {
     public readonly packageId: string,
     public readonly version: string,
     public readonly solutionPath: string,
-    public readonly projectPath?: string
+    public readonly projectPath?: string,
   ) {}
 }

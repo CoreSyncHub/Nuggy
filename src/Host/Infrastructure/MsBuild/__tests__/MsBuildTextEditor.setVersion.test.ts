@@ -44,7 +44,12 @@ describe("MsBuildTextEditor - findItemElement / setVersionAttribute", () => {
   });
 
   it("remplace uniquement la valeur de Version, reste byte-identique", () => {
-    const result = editor.setVersionAttribute(CSPROJ, "PackageReference", "Newtonsoft.Json", "13.0.4");
+    const result = editor.setVersionAttribute(
+      CSPROJ,
+      "PackageReference",
+      "Newtonsoft.Json",
+      "13.0.4",
+    );
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.content).toBe(CSPROJ.replace('Version="12.0.1"', 'Version="13.0.4"'));
@@ -66,7 +71,7 @@ describe("MsBuildTextEditor - findItemElement / setVersionAttribute", () => {
   it("gère un élément multi-lignes", () => {
     const multi = CSPROJ.replace(
       '<PackageReference Include="Serilog" Version="3.1.0" />',
-      '<PackageReference Include="Serilog"\n                      Version="3.1.0" />'
+      '<PackageReference Include="Serilog"\n                      Version="3.1.0" />',
     );
     const result = editor.setVersionAttribute(multi, "PackageReference", "Serilog", "4.0.0");
     expect(result.ok).toBe(true);
@@ -76,9 +81,13 @@ describe("MsBuildTextEditor - findItemElement / setVersionAttribute", () => {
   });
 
   it("échoue proprement : élément introuvable, Version absente, wildcard accepté tel quel", () => {
-    expect(editor.setVersionAttribute(CSPROJ, "PackageReference", "Inconnu", "1.0.0").ok).toBe(false);
+    expect(editor.setVersionAttribute(CSPROJ, "PackageReference", "Inconnu", "1.0.0").ok).toBe(
+      false,
+    );
     const noVersion = CSPROJ.replace(' Version="3.1.0"', "");
-    expect(editor.setVersionAttribute(noVersion, "PackageReference", "Serilog", "4.0.0").ok).toBe(false);
+    expect(editor.setVersionAttribute(noVersion, "PackageReference", "Serilog", "4.0.0").ok).toBe(
+      false,
+    );
   });
 
   it("fonctionne pour PackageVersion (fichier CPM)", () => {
@@ -100,7 +109,12 @@ describe("MsBuildTextEditor - findItemElement / setVersionAttribute", () => {
   </ItemGroup>
 </Project>
 `;
-    const result = editor.setVersionAttribute(withCondition, "PackageReference", "Serilog", "4.0.0");
+    const result = editor.setVersionAttribute(
+      withCondition,
+      "PackageReference",
+      "Serilog",
+      "4.0.0",
+    );
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.content).toContain('Version="4.0.0"');

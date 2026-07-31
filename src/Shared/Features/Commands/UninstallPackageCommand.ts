@@ -10,6 +10,6 @@ export class UninstallPackageCommand implements ICommand<PackageWriteResultDto> 
   constructor(
     public readonly packageId: string,
     public readonly solutionPath: string,
-    public readonly projectPath?: string
+    public readonly projectPath?: string,
   ) {}
 }

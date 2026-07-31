@@ -1,15 +1,15 @@
-import * as path from 'path';
-import * as vscode from 'vscode';
-import { GetPackageManagementDiagnosticQuery } from '@Shared/Features/Queries/GetPackageManagementDiagnosticQuery';
-import { type PackageManagementDiagnosticDto } from '@/Shared/Features/Dtos/PackageManagementDto';
-import { type ProjectsTfmDto } from '@/Shared/Features/Dtos/ProjectTfmDto';
-import { GetProjectsTfmQuery } from '@/Shared/Features/Queries/GetProjectsTfmQuery';
-import { findFilesRecursive } from '@/Tests/Helpers/findFilesRecursive';
-import { createDiagnosticHandler, createTfmHandler } from '@/Tests/Helpers/createHandlers';
+import * as path from "path";
+import * as vscode from "vscode";
+import { GetPackageManagementDiagnosticQuery } from "@Shared/Features/Queries/GetPackageManagementDiagnosticQuery";
+import { type PackageManagementDiagnosticDto } from "@/Shared/Features/Dtos/PackageManagementDto";
+import { type ProjectsTfmDto } from "@/Shared/Features/Dtos/ProjectTfmDto";
+import { GetProjectsTfmQuery } from "@/Shared/Features/Queries/GetProjectsTfmQuery";
+import { findFilesRecursive } from "@/Tests/Helpers/findFilesRecursive";
+import { createDiagnosticHandler, createTfmHandler } from "@/Tests/Helpers/createHandlers";
 
 // Mock vscode module
 jest.mock(
-  'vscode',
+  "vscode",
   () => ({
     workspace: {
       workspaceFolders: [],
@@ -19,7 +19,7 @@ jest.mock(
       file: (path: string) => ({ fsPath: path }),
     },
   }),
-  { virtual: true }
+  { virtual: true },
 );
 
 /**
@@ -44,8 +44,8 @@ jest.mock(
  * 4 Consistency Diagnosis :
  * - Should return warning for local defined package version of "Microsoft.Extensions.Logging" in "CoreLib.csproj" when using CPM. Expected: warning diagnostic about local version conflict.
  */
-describe('Acceptance: Enterprise Solution', () => {
-  const solutionPath = path.resolve(__dirname, '../../Fixtures/Enterprise/Enterprise.sln');
+describe("Acceptance: Enterprise Solution", () => {
+  const solutionPath = path.resolve(__dirname, "../../Fixtures/Enterprise/Enterprise.sln");
   const fixtureRoot = path.dirname(solutionPath);
 
   const diagnosticHandler = createDiagnosticHandler();
@@ -60,7 +60,7 @@ describe('Acceptance: Enterprise Solution', () => {
 
     // Mock vscode.workspace.findFiles to search in the fixture directory
     (vscode.workspace.findFiles as jest.Mock).mockImplementation(async (pattern: string) => {
-      const fileName = pattern.replace('**/', '');
+      const fileName = pattern.replace("**/", "");
       const files = findFilesRecursive(fixtureRoot, fileName);
       return files.map((filePath) => ({ fsPath: filePath }));
     });
@@ -76,35 +76,35 @@ describe('Acceptance: Enterprise Solution', () => {
     tfmResult = tfmRes;
   });
 
-  test('Centralization Detection', () => {
+  test("Centralization Detection", () => {
     // Should detect CPM enabled
     expect(diagnosticResult.isCpmEnabled).toBe(true);
 
     // Mode should be Central
-    expect(diagnosticResult.mode).toBe('Central');
+    expect(diagnosticResult.mode).toBe("Central");
 
     // CPM file path should be correct
-    expect(diagnosticResult.cpmFilePath).toContain('Directory.Packages.props');
+    expect(diagnosticResult.cpmFilePath).toContain("Directory.Packages.props");
   });
 
-  test('Central Package Version Resolution', () => {
+  test("Central Package Version Resolution", () => {
     const cpmVersions = diagnosticResult.packageVersions;
 
     // Check Microsoft.AspNetCore.Mvc.NewtonsoftJson version
     const newtonsoftPackage = cpmVersions.find(
-      (pkg) => pkg.name === 'Microsoft.AspNetCore.Mvc.NewtonsoftJson'
+      (pkg) => pkg.name === "Microsoft.AspNetCore.Mvc.NewtonsoftJson",
     );
     expect(newtonsoftPackage).toBeDefined();
-    expect(newtonsoftPackage?.version).toBe('8.0.12');
+    expect(newtonsoftPackage?.version).toBe("8.0.12");
 
     // Check Serilog version
-    const serilogPackage = cpmVersions.find((pkg) => pkg.name === 'Serilog');
+    const serilogPackage = cpmVersions.find((pkg) => pkg.name === "Serilog");
     expect(serilogPackage).toBeDefined();
-    expect(serilogPackage?.version).toBe('4.0.0');
+    expect(serilogPackage?.version).toBe("4.0.0");
 
     // Api.csproj should NOT have local versions (uses CPM correctly)
     const apiProjectPath = Object.keys(diagnosticResult.packageReferencesByProject).find((path) =>
-      path.includes('Api.csproj')
+      path.includes("Api.csproj"),
     );
     expect(apiProjectPath).toBeDefined();
     const apiPackages = diagnosticResult.packageReferencesByProject[apiProjectPath!];
@@ -114,47 +114,47 @@ describe('Acceptance: Enterprise Solution', () => {
 
     // CoreLib.csproj SHOULD have local version for Microsoft.Extensions.Logging (intentional misconfiguration)
     const coreLibProjectPath = Object.keys(diagnosticResult.packageReferencesByProject).find(
-      (path) => path.includes('CoreLib.csproj')
+      (path) => path.includes("CoreLib.csproj"),
     );
     expect(coreLibProjectPath).toBeDefined();
     const coreLibPackages = diagnosticResult.packageReferencesByProject[coreLibProjectPath!];
     const loggingPackage = coreLibPackages.find(
-      (pkg) => pkg.name === 'Microsoft.Extensions.Logging'
+      (pkg) => pkg.name === "Microsoft.Extensions.Logging",
     );
     expect(loggingPackage).toBeDefined();
     expect(loggingPackage?.hasLocalVersion).toBe(true);
-    expect(loggingPackage?.version).toBe('6.0.0');
+    expect(loggingPackage?.version).toBe("6.0.0");
   });
 
-  test('Evaluation of MSBuild Properties (TFM)', () => {
+  test("Evaluation of MSBuild Properties (TFM)", () => {
     // Check Api project TFM (inherited from Directory.Build.props)
-    const apiProject = tfmResult.projects.find((proj) => proj.projectPath.includes('Api.csproj'));
+    const apiProject = tfmResult.projects.find((proj) => proj.projectPath.includes("Api.csproj"));
     expect(apiProject).toBeDefined();
-    expect(apiProject?.targetFrameworks).toContain('net8.0');
-    expect(apiProject?.source).toBe('Directory.Build.props');
+    expect(apiProject?.targetFrameworks).toContain("net8.0");
+    expect(apiProject?.source).toBe("Directory.Build.props");
 
     // Check CoreLib project TFM (uses $(MySharedFramework))
     const coreLibProject = tfmResult.projects.find((proj) =>
-      proj.projectPath.includes('CoreLib.csproj')
+      proj.projectPath.includes("CoreLib.csproj"),
     );
     expect(coreLibProject).toBeDefined();
-    expect(coreLibProject?.targetFrameworks).toContain('net8.0');
+    expect(coreLibProject?.targetFrameworks).toContain("net8.0");
   });
 
-  test('Consistency Diagnosis', () => {
+  test("Consistency Diagnosis", () => {
     // Check for warning about local version when CPM is enabled
-    const warnings = diagnosticResult.diagnostics.filter((diag) => diag.severity === 'Warning');
+    const warnings = diagnosticResult.diagnostics.filter((diag) => diag.severity === "Warning");
 
     const localVersionWarning = warnings.find(
       (diag) =>
-        diag.message.includes('Microsoft.Extensions.Logging') &&
-        diag.message.includes('has a local version') &&
-        diag.message.includes('Central Package Management is enabled')
+        diag.message.includes("Microsoft.Extensions.Logging") &&
+        diag.message.includes("has a local version") &&
+        diag.message.includes("Central Package Management is enabled"),
     );
     expect(localVersionWarning).toBeDefined();
-    expect(localVersionWarning?.packageName).toBe('Microsoft.Extensions.Logging');
-    expect(localVersionWarning?.message).toContain('6.0.0'); // Local version
-    expect(localVersionWarning?.message).toContain('Add this package to');
-    expect(localVersionWarning?.projectPath).toContain('CoreLib.csproj');
+    expect(localVersionWarning?.packageName).toBe("Microsoft.Extensions.Logging");
+    expect(localVersionWarning?.message).toContain("6.0.0"); // Local version
+    expect(localVersionWarning?.message).toContain("Add this package to");
+    expect(localVersionWarning?.projectPath).toContain("CoreLib.csproj");
   });
 });

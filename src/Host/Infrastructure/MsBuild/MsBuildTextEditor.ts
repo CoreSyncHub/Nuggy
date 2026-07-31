@@ -21,9 +21,12 @@ export class MsBuildTextEditor {
   public findItemElement(
     content: string,
     elementName: ItemElementName,
-    packageId: string
+    packageId: string,
   ): FoundElement | undefined {
-    const elementPattern = new RegExp(`<${elementName}\\b(?:"[^"]*"|'[^']*'|[^>"'])*(?:/>|>)`, "gs");
+    const elementPattern = new RegExp(
+      `<${elementName}\\b(?:"[^"]*"|'[^']*'|[^>"'])*(?:/>|>)`,
+      "gs",
+    );
     for (const match of content.matchAll(elementPattern)) {
       const attributes = this.parseAttributes(match[0]);
       if (attributes["Include"]?.toLowerCase() === packageId.toLowerCase()) {
@@ -46,7 +49,7 @@ export class MsBuildTextEditor {
     text: string,
     elementName: string,
     openTagEnd: number,
-    openTagText: string
+    openTagText: string,
   ): number {
     if (openTagText.endsWith("/>")) {
       return openTagEnd;
@@ -74,14 +77,23 @@ export class MsBuildTextEditor {
     content: string,
     elementName: ItemElementName,
     packageId: string,
-    newVersion: string
+    newVersion: string,
   ): EditResult {
     const invalid = this.validateAttributeValues({ Version: newVersion });
     if (invalid) {
       return invalid;
     }
-    const elementPattern = new RegExp(`<${elementName}\\b(?:"[^"]*"|'[^']*'|[^>"'])*(?:/>|>)`, "gs");
-    const replacements: Array<{ elementStart: number; elementEnd: number; attrStart: number; attrEnd: number; newValue: string }> = [];
+    const elementPattern = new RegExp(
+      `<${elementName}\\b(?:"[^"]*"|'[^']*'|[^>"'])*(?:/>|>)`,
+      "gs",
+    );
+    const replacements: Array<{
+      elementStart: number;
+      elementEnd: number;
+      attrStart: number;
+      attrEnd: number;
+      newValue: string;
+    }> = [];
 
     for (const match of content.matchAll(elementPattern)) {
       const attributes = this.parseAttributes(match[0]);
@@ -125,7 +137,7 @@ export class MsBuildTextEditor {
   public addItemElement(
     content: string,
     elementName: ItemElementName,
-    attributes: Record<string, string>
+    attributes: Record<string, string>,
   ): EditResult {
     const include = attributes["Include"];
     if (!include) {
@@ -150,7 +162,10 @@ export class MsBuildTextEditor {
         continue;
       }
       const body = group[2];
-      const siblingPattern = new RegExp(`([ \\t]*)<${elementName}\\b(?:"[^"]*"|'[^']*'|[^>"'])*(?:/>|>)`, "g");
+      const siblingPattern = new RegExp(
+        `([ \\t]*)<${elementName}\\b(?:"[^"]*"|'[^']*'|[^>"'])*(?:/>|>)`,
+        "g",
+      );
       const siblings = [...body.matchAll(siblingPattern)];
       if (siblings.length === 0) {
         continue;
@@ -159,19 +174,24 @@ export class MsBuildTextEditor {
       const newLine = `${indent}<${elementName} ${attrText} />`;
       const includes = siblings.map((s) => this.parseAttributes(s[0])["Include"] ?? "");
       const isSorted = includes.every(
-        (id, i) => i === 0 || includes[i - 1].toLowerCase() <= id.toLowerCase()
+        (id, i) => i === 0 || includes[i - 1].toLowerCase() <= id.toLowerCase(),
       );
       // Position juste après le sibling précédent : la balise ouvrante pour une forme
       // auto-fermante, mais après la balise FERMANTE pour une forme bloc — sans quoi
       // l'insertion atterrirait à l'intérieur de l'élément précédent (Finding 1).
       const lastSibling = siblings[siblings.length - 1];
       const afterLastSibling =
-        this.elementSpanEnd(body, elementName, lastSibling.index + lastSibling[0].length, lastSibling[0]) +
-        eol.length;
+        this.elementSpanEnd(
+          body,
+          elementName,
+          lastSibling.index + lastSibling[0].length,
+          lastSibling[0],
+        ) + eol.length;
       let insertAt: number; // offset dans body
       if (isSorted) {
         const nextSibling = siblings.find(
-          (s) => (this.parseAttributes(s[0])["Include"] ?? "").toLowerCase() > include.toLowerCase()
+          (s) =>
+            (this.parseAttributes(s[0])["Include"] ?? "").toLowerCase() > include.toLowerCase(),
         );
         insertAt = nextSibling ? nextSibling.index : afterLastSibling;
       } else {
@@ -179,9 +199,7 @@ export class MsBuildTextEditor {
       }
       const bodyStart = group.index + group[0].indexOf(body);
       const absolute = bodyStart + insertAt;
-      const inserted = nextIsLineStart(content, absolute)
-        ? `${newLine}${eol}`
-        : `${eol}${newLine}`;
+      const inserted = nextIsLineStart(content, absolute) ? `${newLine}${eol}` : `${eol}${newLine}`;
       return { ok: true, content: content.slice(0, absolute) + inserted + content.slice(absolute) };
     }
 
@@ -203,9 +221,12 @@ export class MsBuildTextEditor {
   public removeItemElement(
     content: string,
     elementName: ItemElementName,
-    packageId: string
+    packageId: string,
   ): EditResult {
-    const elementPattern = new RegExp(`<${elementName}\\b(?:"[^"]*"|'[^']*'|[^>"'])*(?:/>|>)`, "gs");
+    const elementPattern = new RegExp(
+      `<${elementName}\\b(?:"[^"]*"|'[^']*'|[^>"'])*(?:/>|>)`,
+      "gs",
+    );
     const toRemove: Array<{ start: number; end: number }> = [];
 
     for (const match of content.matchAll(elementPattern)) {
@@ -236,7 +257,8 @@ export class MsBuildTextEditor {
 
       // Purger le ItemGroup ENCLOSANT s'il est devenu vide (et non conditionné)
       const groupPattern = /<ItemGroup(\s(?:"[^"]*"|'[^']*'|[^>"'])*)?>([\s\S]*?)<\/ItemGroup>/g;
-      let closestGroup: { start: number; end: number; isConditioned: boolean; body: string } | undefined;
+      let closestGroup:
+        { start: number; end: number; isConditioned: boolean; body: string } | undefined;
       for (const groupMatch of result.matchAll(groupPattern)) {
         const groupEnd = groupMatch.index + groupMatch[0].length;
         if (groupMatch.index <= lineStart && groupEnd >= lineStart) {
@@ -264,10 +286,18 @@ export class MsBuildTextEditor {
 
         // Étendre vers l'avant : inclure les espaces/tabs et la fin de ligne
         let afterTagPos = purgeEnd;
-        while (afterTagPos < result.length && (result[afterTagPos] === " " || result[afterTagPos] === "\t")) {
+        while (
+          afterTagPos < result.length &&
+          (result[afterTagPos] === " " || result[afterTagPos] === "\t")
+        ) {
           afterTagPos++;
         }
-        if (afterTagPos < result.length && result[afterTagPos] === "\r" && afterTagPos + 1 < result.length && result[afterTagPos + 1] === "\n") {
+        if (
+          afterTagPos < result.length &&
+          result[afterTagPos] === "\r" &&
+          afterTagPos + 1 < result.length &&
+          result[afterTagPos + 1] === "\n"
+        ) {
           purgeEnd = afterTagPos + 2;
         } else if (afterTagPos < result.length && result[afterTagPos] === "\n") {
           purgeEnd = afterTagPos + 1;
@@ -282,7 +312,7 @@ export class MsBuildTextEditor {
 
   private parseAttributes(elementText: string): Record<string, string> {
     const attributes: Record<string, string> = {};
-    for (const attr of elementText.matchAll(/([A-Za-z_][\w.-]*)\s*=\s*(["'])(.*?)\2/gs) ) {
+    for (const attr of elementText.matchAll(/([A-Za-z_][\w.-]*)\s*=\s*(["'])(.*?)\2/gs)) {
       attributes[attr[1]] = attr[3];
     }
     return attributes;

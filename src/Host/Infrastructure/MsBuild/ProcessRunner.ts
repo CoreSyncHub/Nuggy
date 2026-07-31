@@ -20,7 +20,12 @@ export const PROCESS_RUNNER = new InjectionToken<IProcessRunner>("IProcessRunner
  */
 @singleton()
 export class ChildProcessRunner implements IProcessRunner {
-  public run(command: string, args: string[], cwd: string, timeoutMs: number): Promise<ProcessResult> {
+  public run(
+    command: string,
+    args: string[],
+    cwd: string,
+    timeoutMs: number,
+  ): Promise<ProcessResult> {
     return new Promise((resolve) => {
       let output = "";
       let timedOut = false;

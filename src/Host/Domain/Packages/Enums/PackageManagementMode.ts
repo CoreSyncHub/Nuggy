@@ -1,4 +1,4 @@
-import { type ObjectEnumType } from '@/Shared/Types/ObjetEnumType';
+import { type ObjectEnumType } from "@/Shared/Types/ObjetEnumType";
 
 /**
  * Represents how package versions are managed in a project
@@ -7,23 +7,23 @@ export const PackageManagementMode = {
   /**
    * Central Package Management (CPM) - versions defined in Directory.Packages.props
    */
-  Central: 'Central',
+  Central: "Central",
 
   /**
    * Local management - each project defines its own versions
    */
-  Local: 'Local',
+  Local: "Local",
 
   /**
    * Mixed mode - some packages centrally managed, others locally
    * This can indicate a transition state or misconfiguration
    */
-  Mixed: 'Mixed',
+  Mixed: "Mixed",
 
   /**
    * Unknown - unable to determine the management mode
    */
-  Unknown: 'Unknown',
+  Unknown: "Unknown",
 } as const;
 
 export type PackageManagementMode = ObjectEnumType<typeof PackageManagementMode>;
