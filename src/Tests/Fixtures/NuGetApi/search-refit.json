@@ -1,0 +1,26 @@
+{
+  "totalHits": 412,
+  "data": [
+    {
+      "id": "Refit",
+      "version": "7.0.0",
+      "description": "The automatic type-safe REST library for .NET",
+      "totalDownloads": 120000000,
+      "verified": true,
+      "iconUrl": "https://api.nuget.org/v3-flatcontainer/refit/7.0.0/icon"
+    },
+    {
+      "id": "Refit.HttpClientFactory",
+      "version": "7.0.0",
+      "description": "HttpClientFactory support for Refit",
+      "totalDownloads": 80000000,
+      "verified": true
+    },
+    {
+      "id": "Refit.Newtonsoft.Json",
+      "description": "Newtonsoft.Json support for Refit",
+      "totalDownloads": 30000000,
+      "verified": false
+    }
+  ]
+}
