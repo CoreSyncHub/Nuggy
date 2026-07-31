@@ -44,7 +44,6 @@ export class PackageDetail extends LitElement {
   @property({ attribute: false }) restore?: RestoreStatusDto;
   /** Dernier résultat d'écriture (succès ou échec), relayé tel quel au bandeau. */
   @property({ attribute: false }) writeResult?: PackageWriteResultDto;
-
   @state() private selectedVersion = "";
   @state() private showPrereleases = false;
   @state() private iconFailed = false;
@@ -201,6 +200,17 @@ export class PackageDetail extends LitElement {
   }
 
   /**
+   * Les trois actions globales n'ont de sens que si le package est déjà quelque
+   * part dans la solution : rien à mettre à jour ni à retirer sinon, et ajouter
+   * une dépendance à TOUS les projets d'un coup est rarement l'intention — cela
+   * se défait projet par projet. Un package trouvé par recherche s'installe donc
+   * depuis les cartes projet, une cible à la fois.
+   */
+  private get isInstalledSomewhere(): boolean {
+    return this.package.installations.length > 0;
+  }
+
+  /**
    * Installations réelles, suivies des projets de la solution qui n'ont pas le
    * package (marqués `installedVersion: "unknown"`, ce que `project-installations`
    * rend déjà comme « installable »). Chaque groupe reste trié par nom de projet ;
@@ -348,30 +358,42 @@ export class PackageDetail extends LitElement {
           ${this.i18n.t("packages.detail.prereleaseLabel")}
         </label>
         <span class="spacer"></span>
-        <button
-          class="global install"
-          ?disabled=${this.globalBusy || !current}
-          title=${this.i18n.t("packages.detail.installEverywhere")}
-          @click=${() => this.dispatchWrite("install-package", current?.version)}
-        >
-          ${this.globalBusy ? ellipsisIcon(14) : plusIcon(14)}
-        </button>
-        <button
-          class="global upgrade"
-          ?disabled=${this.globalBusy || !current}
-          title=${this.i18n.t("packages.detail.updateAllEverywhere")}
-          @click=${() => this.dispatchWrite("upgrade-package", current?.version)}
-        >
-          ${this.globalBusy ? ellipsisIcon(14) : arrowUpIcon(14)}
-        </button>
-        <button
-          class="global uninstall"
-          ?disabled=${this.globalBusy}
-          title=${this.i18n.t("packages.detail.uninstallEverywhere")}
-          @click=${() => this.dispatchWrite("uninstall-package")}
-        >
-          ${this.globalBusy ? ellipsisIcon(14) : trashIcon(14)}
-        </button>
+        ${
+          !this.isInstalledSomewhere
+            ? nothing
+            : html`<button
+                class="global install"
+                ?disabled=${this.globalBusy || !current}
+                title=${this.i18n.t("packages.detail.installEverywhere")}
+                @click=${() => this.dispatchWrite("install-package", current?.version)}
+              >
+                ${this.globalBusy ? ellipsisIcon(14) : plusIcon(14)}
+              </button>`
+        }
+        ${
+          !this.isInstalledSomewhere
+            ? nothing
+            : html`<button
+                class="global upgrade"
+                ?disabled=${this.globalBusy || !current}
+                title=${this.i18n.t("packages.detail.updateAllEverywhere")}
+                @click=${() => this.dispatchWrite("upgrade-package", current?.version)}
+              >
+                ${this.globalBusy ? ellipsisIcon(14) : arrowUpIcon(14)}
+              </button>`
+        }
+        ${
+          !this.isInstalledSomewhere
+            ? nothing
+            : html`<button
+                class="global uninstall"
+                ?disabled=${this.globalBusy}
+                title=${this.i18n.t("packages.detail.uninstallEverywhere")}
+                @click=${() => this.dispatchWrite("uninstall-package")}
+              >
+                ${this.globalBusy ? ellipsisIcon(14) : trashIcon(14)}
+              </button>`
+        }
       </div>
       <write-status-banner
         .restore=${this.restore}
