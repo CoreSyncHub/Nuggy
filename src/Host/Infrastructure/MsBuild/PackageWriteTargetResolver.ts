@@ -1,9 +1,6 @@
 import * as path from "path";
 import { singleton } from "tsyringe";
-import { SlnParser } from "@Infrastructure/Solution/SlnParser";
-import { SlnxParser } from "@Infrastructure/Solution/SlnxParser";
-import { BuildConfigDetector } from "@Infrastructure/Build/BuildConfigDetector";
-import { BuildConfigParser } from "@Infrastructure/Build/BuildConfigParser";
+import { ProjectTfmResolutionService } from "../Projects/ProjectTfmResolutionService";
 import { PackageReferenceParser } from "@Infrastructure/Packages/PackageReferenceParser";
 import { PackagesConfigParser } from "@Infrastructure/Packages/PackagesConfigParser";
 import { CpmDiagnosticService } from "@Infrastructure/Packages/CpmDiagnosticService";
@@ -23,10 +20,7 @@ export interface WriteTarget {
 @singleton()
 export class PackageWriteTargetResolver {
   constructor(
-    private readonly slnParser: SlnParser,
-    private readonly slnxParser: SlnxParser,
-    private readonly buildConfigDetector: BuildConfigDetector,
-    private readonly buildConfigParser: BuildConfigParser,
+    private readonly tfmResolution: ProjectTfmResolutionService,
     private readonly packageReferenceParser: PackageReferenceParser,
     private readonly packagesConfigParser: PackagesConfigParser,
     private readonly cpmDiagnosticService: CpmDiagnosticService,
@@ -36,17 +30,8 @@ export class PackageWriteTargetResolver {
     solutionPath: string,
     packageId: string,
   ): Promise<{ targets: WriteTarget[]; cpmFilePath?: string }> {
-    const ext = path.extname(solutionPath).toLowerCase();
-    const projectPaths =
-      ext === ".slnx"
-        ? this.slnxParser.parse(solutionPath).projects.map((p) => p.path)
-        : this.slnParser.parse(solutionPath).projects.map((p) => p.path);
-
-    const buildConfigFiles = await this.buildConfigDetector.findAllConfigFiles();
-    this.buildConfigDetector.buildHierarchy(buildConfigFiles);
-    for (const file of buildConfigFiles) {
-      this.buildConfigParser.parse(file.path, file);
-    }
+    const projectPaths = this.tfmResolution.parseProjectPaths(solutionPath);
+    const buildConfigFiles = await this.tfmResolution.loadBuildConfigFiles();
     const cpmFiles = buildConfigFiles.filter(
       (f) => f.type === BuildConfigFileType.DirectoryPackagesProps,
     );

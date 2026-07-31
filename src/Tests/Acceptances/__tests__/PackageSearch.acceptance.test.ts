@@ -27,6 +27,7 @@ import { SlnxParser } from "@Infrastructure/Solution/SlnxParser";
 import { BuildConfigDetector } from "@Infrastructure/Build/BuildConfigDetector";
 import { BuildConfigParser } from "@Infrastructure/Build/BuildConfigParser";
 import { TfmResolver } from "@Infrastructure/Projects/TfmResolver";
+import { ProjectTfmResolutionService } from "@Infrastructure/Projects/ProjectTfmResolutionService";
 import { CsprojParser } from "@Infrastructure/Projects/CsprojParser";
 import { type IProcessRunner } from "@Infrastructure/MsBuild/ProcessRunner";
 import { type NuGetV3ApiClient } from "@Infrastructure/NuGet/NuGetV3ApiClient";
@@ -173,11 +174,13 @@ describe("Acceptance : recherche de packages", () => {
       tfmCache,
       apiClient as unknown as NuGetV3ApiClient,
       new TfmCompatibilityService(),
-      new SlnParser(),
-      new SlnxParser(),
-      new BuildConfigDetector(),
-      new BuildConfigParser(noOpLogger),
-      new TfmResolver(new CsprojParser(), noOpLogger),
+      new ProjectTfmResolutionService(
+        new SlnParser(),
+        new SlnxParser(),
+        new BuildConfigDetector(),
+        new BuildConfigParser(noOpLogger),
+        new TfmResolver(new CsprojParser(), noOpLogger),
+      ),
       prompt,
       noOpLogger,
     );
