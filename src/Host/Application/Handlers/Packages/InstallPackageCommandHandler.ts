@@ -7,7 +7,7 @@ import { HandlerFor } from "@Shared/Infrastructure/Messaging/HandlerFor";
 import { InstallPackageCommand } from "@Shared/Features/Commands/InstallPackageCommand";
 import {
   type PackageWriteResultDto,
-  type SkippedProjectDto,
+  type SkippedTargetDto,
 } from "@Shared/Features/Dtos/PackageWriteResultDto";
 import { MsBuildTextEditor, type EditResult } from "@Infrastructure/MsBuild/MsBuildTextEditor";
 import { isValidPackageId, isValidVersion } from "./PackageWriteInputValidator";
@@ -118,16 +118,16 @@ export class InstallPackageCommandHandler implements ICommandHandler<
         ? undefined
         : await this.resolveProjectTfmsSafely(command.solutionPath);
 
-    const skipped: SkippedProjectDto[] = [];
+    const skipped: SkippedTargetDto[] = [];
     const candidates: WriteTarget[] = [];
 
     for (const target of selected) {
       if (target.style === "PackagesConfig") {
-        skipped.push({ projectPath: target.projectPath, reason: "legacy project" });
+        skipped.push({ path: target.projectPath, reason: "legacy project" });
         continue;
       }
       if (target.installedVersion !== undefined) {
-        skipped.push({ projectPath: target.projectPath, reason: "already installed" });
+        skipped.push({ path: target.projectPath, reason: "already installed" });
         continue;
       }
       if (packageFrameworks !== undefined) {
@@ -135,7 +135,7 @@ export class InstallPackageCommandHandler implements ICommandHandler<
         const verdict = this.verdictFor(tfms, packageFrameworks);
         if (verdict.verdict === "Incompatible") {
           skipped.push({
-            projectPath: target.projectPath,
+            path: target.projectPath,
             reason: verdict.reason ?? "incompatible",
           });
           continue;
@@ -164,7 +164,7 @@ export class InstallPackageCommandHandler implements ICommandHandler<
 
     for (const target of candidates) {
       if (target.style === "CpmManaged" && cpmFailureReason !== undefined) {
-        skipped.push({ projectPath: target.projectPath, reason: cpmFailureReason });
+        skipped.push({ path: target.projectPath, reason: cpmFailureReason });
         continue;
       }
 
@@ -186,7 +186,7 @@ export class InstallPackageCommandHandler implements ICommandHandler<
             error: applied.reason,
           };
         }
-        skipped.push({ projectPath: target.projectPath, reason: applied.reason });
+        skipped.push({ path: target.projectPath, reason: applied.reason });
         continue;
       }
       filesChanged.add(target.projectPath);
@@ -215,7 +215,7 @@ export class InstallPackageCommandHandler implements ICommandHandler<
               error: reason,
             };
           }
-          skipped.push({ projectPath: cpmFilePath, reason });
+          skipped.push({ path: cpmFilePath, reason });
         }
       }
     }

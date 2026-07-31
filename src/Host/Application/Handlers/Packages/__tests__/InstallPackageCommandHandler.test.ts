@@ -205,7 +205,7 @@ EndProject
     expect(result.affectedProjects).toEqual([]);
     expect(result.skipped).toEqual([
       {
-        projectPath: "/Solution/Api/Api.csproj",
+        path: "/Solution/Api/Api.csproj",
         reason: expect.stringContaining("net9.0"),
       },
     ]);
@@ -389,9 +389,9 @@ EndProject
 
     expect(prompt.confirm).toHaveBeenCalledWith("Install Newtonsoft.Json 13.0.3 on 2 projects?");
     expect(result.skipped).toEqual([
-      { projectPath: "/Solution/Legacy/Legacy.csproj", reason: "legacy project" },
+      { path: "/Solution/Legacy/Legacy.csproj", reason: "legacy project" },
       {
-        projectPath: "/Solution/AlreadyInstalled/AlreadyInstalled.csproj",
+        path: "/Solution/AlreadyInstalled/AlreadyInstalled.csproj",
         reason: "already installed",
       },
     ]);
@@ -636,9 +636,9 @@ EndProject
     // car l'écriture centrale dont il dépend a déjà échoué pour ApiA).
     expect(result.skipped).toHaveLength(2);
     expect(result.skipped).toContainEqual(
-      expect.objectContaining({ projectPath: "/Solution/Directory.Packages.props" }),
+      expect.objectContaining({ path: "/Solution/Directory.Packages.props" }),
     );
-    const apiBSkipped = result.skipped.find((s) => s.projectPath === "/Solution/ApiB/ApiB.csproj");
+    const apiBSkipped = result.skipped.find((s) => s.path === "/Solution/ApiB/ApiB.csproj");
     expect(apiBSkipped).toBeDefined();
     expect(apiBSkipped!.reason).toContain("Serilog");
 

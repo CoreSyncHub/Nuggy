@@ -241,7 +241,7 @@ EndProject
       status: "Ok",
       filesChanged: [],
       affectedProjects: [],
-      skipped: [{ projectPath: "/Solution/Core/Core.csproj", reason: "not installed" }],
+      skipped: [{ path: "/Solution/Core/Core.csproj", reason: "not installed" }],
     });
   });
 });

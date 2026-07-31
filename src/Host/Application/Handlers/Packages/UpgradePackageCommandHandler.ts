@@ -6,7 +6,7 @@ import { HandlerFor } from "@Shared/Infrastructure/Messaging/HandlerFor";
 import { UpgradePackageCommand } from "@Shared/Features/Commands/UpgradePackageCommand";
 import {
   type PackageWriteResultDto,
-  type SkippedProjectDto,
+  type SkippedTargetDto,
 } from "@Shared/Features/Dtos/PackageWriteResultDto";
 import { MsBuildTextEditor, type EditResult } from "@Infrastructure/MsBuild/MsBuildTextEditor";
 import { isValidPackageId, isValidVersion } from "./PackageWriteInputValidator";
@@ -121,17 +121,17 @@ export class UpgradePackageCommandHandler implements ICommandHandler<
       }
     }
 
-    const skipped: SkippedProjectDto[] = [];
+    const skipped: SkippedTargetDto[] = [];
     const cpmCandidates: WriteTarget[] = [];
     const referenceCandidates: WriteTarget[] = [];
 
     for (const target of selected) {
       if (target.style === "PackagesConfig") {
-        skipped.push({ projectPath: target.projectPath, reason: "legacy project" });
+        skipped.push({ path: target.projectPath, reason: "legacy project" });
         continue;
       }
       if (target.installedVersion === undefined) {
-        skipped.push({ projectPath: target.projectPath, reason: "not installed" });
+        skipped.push({ path: target.projectPath, reason: "not installed" });
         continue;
       }
       if (target.style === "CpmManaged") {
@@ -139,7 +139,7 @@ export class UpgradePackageCommandHandler implements ICommandHandler<
         continue;
       }
       if (this.hasWildcardVersion(target.projectPath, command.packageId)) {
-        skipped.push({ projectPath: target.projectPath, reason: "wildcard version" });
+        skipped.push({ path: target.projectPath, reason: "wildcard version" });
         continue;
       }
       referenceCandidates.push(target);
@@ -171,7 +171,7 @@ export class UpgradePackageCommandHandler implements ICommandHandler<
       if (cpmFilePath === undefined) {
         for (const target of cpmCandidates) {
           skipped.push({
-            projectPath: target.projectPath,
+            path: target.projectPath,
             reason: "fichier de version centrale introuvable",
           });
         }
@@ -188,7 +188,7 @@ export class UpgradePackageCommandHandler implements ICommandHandler<
           filesChanged.add(cpmFilePath);
           affectedProjects.push(...cpmCandidates.map((t) => t.projectPath));
         } else {
-          skipped.push({ projectPath: cpmFilePath, reason: cpmResult.reason });
+          skipped.push({ path: cpmFilePath, reason: cpmResult.reason });
         }
       }
     }
@@ -212,7 +212,7 @@ export class UpgradePackageCommandHandler implements ICommandHandler<
             error: applied.reason,
           };
         }
-        skipped.push({ projectPath: target.projectPath, reason: applied.reason });
+        skipped.push({ path: target.projectPath, reason: applied.reason });
         continue;
       }
       filesChanged.add(target.projectPath);

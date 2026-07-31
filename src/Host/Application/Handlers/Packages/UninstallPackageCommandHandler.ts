@@ -6,7 +6,7 @@ import { HandlerFor } from "@Shared/Infrastructure/Messaging/HandlerFor";
 import { UninstallPackageCommand } from "@Shared/Features/Commands/UninstallPackageCommand";
 import {
   type PackageWriteResultDto,
-  type SkippedProjectDto,
+  type SkippedTargetDto,
 } from "@Shared/Features/Dtos/PackageWriteResultDto";
 import { MsBuildTextEditor, type EditResult } from "@Infrastructure/MsBuild/MsBuildTextEditor";
 import { isValidPackageId } from "./PackageWriteInputValidator";
@@ -103,16 +103,16 @@ export class UninstallPackageCommandHandler implements ICommandHandler<
         ? targets.filter((t) => t.installedVersion !== undefined)
         : targets.filter((t) => t.projectPath === command.projectPath);
 
-    const skipped: SkippedProjectDto[] = [];
+    const skipped: SkippedTargetDto[] = [];
     const candidates: WriteTarget[] = [];
 
     for (const target of selected) {
       if (target.style === "PackagesConfig") {
-        skipped.push({ projectPath: target.projectPath, reason: "legacy project" });
+        skipped.push({ path: target.projectPath, reason: "legacy project" });
         continue;
       }
       if (target.installedVersion === undefined) {
-        skipped.push({ projectPath: target.projectPath, reason: "not installed" });
+        skipped.push({ path: target.projectPath, reason: "not installed" });
         continue;
       }
       candidates.push(target);
@@ -145,7 +145,7 @@ export class UninstallPackageCommandHandler implements ICommandHandler<
             error: applied.reason,
           };
         }
-        skipped.push({ projectPath: target.projectPath, reason: applied.reason });
+        skipped.push({ path: target.projectPath, reason: applied.reason });
         continue;
       }
       filesChanged.add(target.projectPath);
@@ -178,7 +178,7 @@ export class UninstallPackageCommandHandler implements ICommandHandler<
               error: reason,
             };
           }
-          skipped.push({ projectPath: solutionCpmFilePath, reason });
+          skipped.push({ path: solutionCpmFilePath, reason });
         }
       }
     }
