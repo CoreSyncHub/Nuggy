@@ -3,13 +3,13 @@
  */
 export const NuGetConfigScope = {
   /** Machine-wide configuration (e.g., C:\ProgramData\NuGet\NuGet.Config on Windows) */
-  MachineWide: 'MachineWide',
+  MachineWide: "MachineWide",
 
   /** User-profile configuration (e.g., %APPDATA%\NuGet\NuGet.Config on Windows) */
-  UserProfile: 'UserProfile',
+  UserProfile: "UserProfile",
 
   /** Solution-local configuration (NuGet.Config in solution directory or parent directories) */
-  SolutionLocal: 'SolutionLocal',
+  SolutionLocal: "SolutionLocal",
 } as const;
 
 export type NuGetConfigScope = (typeof NuGetConfigScope)[keyof typeof NuGetConfigScope];

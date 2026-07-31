@@ -1,9 +1,9 @@
-import * as path from 'path';
-import { GetPackageManagementDiagnosticQuery } from '@Shared/Features/Queries/GetPackageManagementDiagnosticQuery';
-import { type PackageManagementDiagnosticDto } from '@/Shared/Features/Dtos/PackageManagementDto';
-import { GetProjectsTfmQuery } from '@/Shared/Features/Queries/GetProjectsTfmQuery';
-import { type ProjectsTfmDto } from '@/Shared/Features/Dtos/ProjectTfmDto';
-import { createDiagnosticHandler, createTfmHandler } from '@/Tests/Helpers/createHandlers';
+import * as path from "path";
+import { GetPackageManagementDiagnosticQuery } from "@Shared/Features/Queries/GetPackageManagementDiagnosticQuery";
+import { type PackageManagementDiagnosticDto } from "@/Shared/Features/Dtos/PackageManagementDto";
+import { GetProjectsTfmQuery } from "@/Shared/Features/Queries/GetProjectsTfmQuery";
+import { type ProjectsTfmDto } from "@/Shared/Features/Dtos/ProjectTfmDto";
+import { createDiagnosticHandler, createTfmHandler } from "@/Tests/Helpers/createHandlers";
 
 /**
  * Acceptance test for Modern solution (SLNX + Local PackageReference)
@@ -32,8 +32,8 @@ import { createDiagnosticHandler, createTfmHandler } from '@/Tests/Helpers/creat
  * - Should have NO diagnostics (everything is correct). Expected: diagnostics.length = 0
  * - Should NOT be transitional (only modern SDK-style projects). Expected: isTransitional = false
  */
-describe('Acceptance: Modern Solution (SLNX + Local PackageReference)', () => {
-  const solutionPath = path.resolve(__dirname, '../../Fixtures/Modern/Modern.slnx');
+describe("Acceptance: Modern Solution (SLNX + Local PackageReference)", () => {
+  const solutionPath = path.resolve(__dirname, "../../Fixtures/Modern/Modern.slnx");
   const diagnosticHandler = createDiagnosticHandler();
   const tfmHandler = createTfmHandler();
 
@@ -52,42 +52,42 @@ describe('Acceptance: Modern Solution (SLNX + Local PackageReference)', () => {
     tfmResult = tfmRes;
   });
 
-  test('Solution Integrity Check', () => {
+  test("Solution Integrity Check", () => {
     // Only 1 project found
     expect(diagnosticResult.summary.totalProjects).toBe(1);
     expect(Object.keys(diagnosticResult.packageReferencesByProject)[0]).toContain(
-      'ModernApp.csproj'
+      "ModernApp.csproj",
     );
 
     // Solution type is SLNX
-    expect(diagnosticResult.solutionType).toBe('SLNX');
+    expect(diagnosticResult.solutionType).toBe("SLNX");
 
     // Solution name extracted correctly
-    expect(diagnosticResult.solutionName).toBe('Modern');
+    expect(diagnosticResult.solutionName).toBe("Modern");
   });
 
-  test('Environment Analysis (TFM)', () => {
+  test("Environment Analysis (TFM)", () => {
     // Detect TargetFramework
     expect(tfmResult.projects.length).toBe(1);
     const projectTfm = tfmResult.projects[0];
-    expect(projectTfm.targetFrameworks).toContain('net10.0');
+    expect(projectTfm.targetFrameworks).toContain("net10.0");
 
     // Confirm SDK-style project
-    expect(projectTfm.sdkType).toBe('SDK-Style');
+    expect(projectTfm.sdkType).toBe("SDK-Style");
   });
 
-  test('Package Management Detection', () => {
+  test("Package Management Detection", () => {
     // CPM should NOT be enabled
     expect(diagnosticResult.isCpmEnabled).toBe(false);
 
     // Should be in Local mode
-    expect(diagnosticResult.mode).toBe('Local');
+    expect(diagnosticResult.mode).toBe("Local");
 
     // No central package versions
     expect(diagnosticResult.packageVersions.length).toBe(0);
   });
 
-  test('Package Reference Extraction', () => {
+  test("Package Reference Extraction", () => {
     const projectPath = Object.keys(diagnosticResult.packageReferencesByProject)[0];
     const packageRefs = diagnosticResult.packageReferencesByProject[projectPath];
 
@@ -96,9 +96,9 @@ describe('Acceptance: Modern Solution (SLNX + Local PackageReference)', () => {
 
     // Exact package names with correct casing and no extra spaces
     const expectedPackageNames = [
-      'Newtonsoft.Json',
-      'Serilog.Sinks.Console',
-      'Microsoft.CodeAnalysis',
+      "Newtonsoft.Json",
+      "Serilog.Sinks.Console",
+      "Microsoft.CodeAnalysis",
     ];
     const extractedPackageNames = packageRefs.map((pr) => pr.name);
     expect(extractedPackageNames).toEqual(expectedPackageNames);
@@ -109,7 +109,7 @@ describe('Acceptance: Modern Solution (SLNX + Local PackageReference)', () => {
     }
   });
 
-  test('Health Status (Diagnostics)', () => {
+  test("Health Status (Diagnostics)", () => {
     // No diagnostics
     expect(diagnosticResult.diagnostics.length).toBe(0);
 

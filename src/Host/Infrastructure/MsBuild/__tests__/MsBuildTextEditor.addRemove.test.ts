@@ -31,7 +31,10 @@ describe("MsBuildTextEditor - addItemElement", () => {
 
   it("insère après le dernier si l'existant n'est pas trié", () => {
     const unsorted = CSPROJ.replace('Include="Alpha"', 'Include="Zzz"');
-    const result = editor.addItemElement(unsorted, "PackageReference", { Include: "Beta", Version: "1.0.0" });
+    const result = editor.addItemElement(unsorted, "PackageReference", {
+      Include: "Beta",
+      Version: "1.0.0",
+    });
     expect(result.ok).toBe(true);
     if (result.ok) {
       const lines = result.content.split("\n");
@@ -42,24 +45,32 @@ describe("MsBuildTextEditor - addItemElement", () => {
 
   it("crée un ItemGroup neuf s'il n'existe aucun élément du type, avant </Project>", () => {
     const noRefs = `<Project Sdk="Microsoft.NET.Sdk">\n  <PropertyGroup>\n    <TargetFramework>net8.0</TargetFramework>\n  </PropertyGroup>\n</Project>\n`;
-    const result = editor.addItemElement(noRefs, "PackageReference", { Include: "X", Version: "1.0.0" });
+    const result = editor.addItemElement(noRefs, "PackageReference", {
+      Include: "X",
+      Version: "1.0.0",
+    });
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.content).toContain(
-        `  <ItemGroup>\n    <PackageReference Include="X" Version="1.0.0" />\n  </ItemGroup>\n</Project>`
+        `  <ItemGroup>\n    <PackageReference Include="X" Version="1.0.0" />\n  </ItemGroup>\n</Project>`,
       );
     }
   });
 
   it("n'insère jamais dans un ItemGroup conditionné", () => {
     const conditioned = `<Project>\n  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">\n    <PackageReference Include="Alpha" Version="1.0.0" />\n  </ItemGroup>\n</Project>\n`;
-    const result = editor.addItemElement(conditioned, "PackageReference", { Include: "Beta", Version: "1.0.0" });
+    const result = editor.addItemElement(conditioned, "PackageReference", {
+      Include: "Beta",
+      Version: "1.0.0",
+    });
     expect(result.ok).toBe(true);
     if (result.ok) {
       // Un nouvel ItemGroup non conditionné a été créé
       const groups = result.content.match(/<ItemGroup/g);
       expect(groups).toHaveLength(2);
-      expect(result.content.indexOf('Include="Beta"')).toBeGreaterThan(result.content.indexOf("</ItemGroup>"));
+      expect(result.content.indexOf('Include="Beta"')).toBeGreaterThan(
+        result.content.indexOf("</ItemGroup>"),
+      );
     }
   });
 
@@ -73,25 +84,45 @@ describe("MsBuildTextEditor - addItemElement", () => {
   });
 
   it("refuse un doublon (même Include, casse ignorée)", () => {
-    expect(editor.addItemElement(CSPROJ, "PackageReference", { Include: "alpha", Version: "9" }).ok).toBe(false);
+    expect(
+      editor.addItemElement(CSPROJ, "PackageReference", { Include: "alpha", Version: "9" }).ok,
+    ).toBe(false);
   });
 
   it("refuse toute valeur d'attribut contenant un caractère d'injection XML (Finding 3b)", () => {
-    expect(editor.addItemElement(CSPROJ, "PackageReference", { Include: 'Evil" Foo="bar', Version: "1.0.0" }).ok).toBe(false);
-    expect(editor.addItemElement(CSPROJ, "PackageReference", { Include: "Evil", Version: "1.0.0<x>" }).ok).toBe(false);
-    expect(editor.addItemElement(CSPROJ, "PackageReference", { Include: "Evil'", Version: "1.0.0" }).ok).toBe(false);
-    expect(editor.addItemElement(CSPROJ, "PackageReference", { Include: "Evil&Co", Version: "1.0.0" }).ok).toBe(false);
+    expect(
+      editor.addItemElement(CSPROJ, "PackageReference", {
+        Include: 'Evil" Foo="bar',
+        Version: "1.0.0",
+      }).ok,
+    ).toBe(false);
+    expect(
+      editor.addItemElement(CSPROJ, "PackageReference", { Include: "Evil", Version: "1.0.0<x>" })
+        .ok,
+    ).toBe(false);
+    expect(
+      editor.addItemElement(CSPROJ, "PackageReference", { Include: "Evil'", Version: "1.0.0" }).ok,
+    ).toBe(false);
+    expect(
+      editor.addItemElement(CSPROJ, "PackageReference", { Include: "Evil&Co", Version: "1.0.0" })
+        .ok,
+    ).toBe(false);
   });
 
   it("tolère une Condition avec > dans la valeur", () => {
     const conditionWithGt = `<Project>\n  <ItemGroup Condition="'$(X)' > '1'">\n    <PackageReference Include="Alpha" Version="1.0.0" />\n  </ItemGroup>\n</Project>\n`;
-    const result = editor.addItemElement(conditionWithGt, "PackageReference", { Include: "Beta", Version: "1.0.0" });
+    const result = editor.addItemElement(conditionWithGt, "PackageReference", {
+      Include: "Beta",
+      Version: "1.0.0",
+    });
     expect(result.ok).toBe(true);
     if (result.ok) {
       // Insertion dans un nouvel ItemGroup non conditionné, pas dans celui conditionné
       const groups = result.content.match(/<ItemGroup/g);
       expect(groups).toHaveLength(2);
-      expect(result.content.indexOf('Include="Beta"')).toBeGreaterThan(result.content.indexOf("</ItemGroup>"));
+      expect(result.content.indexOf('Include="Beta"')).toBeGreaterThan(
+        result.content.indexOf("</ItemGroup>"),
+      );
     }
   });
 });
@@ -173,7 +204,9 @@ describe("MsBuildTextEditor - forme bloc (Finding 1)", () => {
     if (result.ok) {
       expect(result.content).not.toContain("Alpha");
       expect(result.content).not.toContain("<PrivateAssets>");
-      expect(result.content).not.toContain("</PackageReference>\n    <PackageReference Include=\"Zulu\"");
+      expect(result.content).not.toContain(
+        '</PackageReference>\n    <PackageReference Include="Zulu"',
+      );
       const expected = `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -231,7 +264,9 @@ describe("MsBuildTextEditor - forme bloc (Finding 1)", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       // Jamais entre <PrivateAssets> et </PackageReference> : toujours après.
-      expect(result.content).not.toContain('<PrivateAssets>all</PrivateAssets>\n      <PackageReference Include="Zulu"');
+      expect(result.content).not.toContain(
+        '<PrivateAssets>all</PrivateAssets>\n      <PackageReference Include="Zulu"',
+      );
       const zuluIdx = result.content.indexOf('Include="Zulu"');
       const closingIdx = result.content.indexOf("</PackageReference>");
       expect(closingIdx).toBeGreaterThan(-1);

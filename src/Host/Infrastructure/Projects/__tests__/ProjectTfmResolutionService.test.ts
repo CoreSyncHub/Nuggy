@@ -149,9 +149,9 @@ describe("ProjectTfmResolutionService", () => {
     });
 
     it("propage l'erreur d'extension inconnue", async () => {
-      await expect(
-        createService().resolveProjectTfms("/Solution/MySolution.txt"),
-      ).rejects.toThrow("Unsupported solution format");
+      await expect(createService().resolveProjectTfms("/Solution/MySolution.txt")).rejects.toThrow(
+        "Unsupported solution format",
+      );
     });
   });
 });

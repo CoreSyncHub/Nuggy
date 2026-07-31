@@ -1,15 +1,15 @@
-import * as path from 'path';
-import * as vscode from 'vscode';
-import { GetPackageManagementDiagnosticQuery } from '@Shared/Features/Queries/GetPackageManagementDiagnosticQuery';
-import { type PackageManagementDiagnosticDto } from '@/Shared/Features/Dtos/PackageManagementDto';
-import { type ProjectsTfmDto } from '@/Shared/Features/Dtos/ProjectTfmDto';
-import { GetProjectsTfmQuery } from '@/Shared/Features/Queries/GetProjectsTfmQuery';
-import { findFilesRecursive } from '@/Tests/Helpers/findFilesRecursive';
-import { createDiagnosticHandler, createTfmHandler } from '@/Tests/Helpers/createHandlers';
+import * as path from "path";
+import * as vscode from "vscode";
+import { GetPackageManagementDiagnosticQuery } from "@Shared/Features/Queries/GetPackageManagementDiagnosticQuery";
+import { type PackageManagementDiagnosticDto } from "@/Shared/Features/Dtos/PackageManagementDto";
+import { type ProjectsTfmDto } from "@/Shared/Features/Dtos/ProjectTfmDto";
+import { GetProjectsTfmQuery } from "@/Shared/Features/Queries/GetProjectsTfmQuery";
+import { findFilesRecursive } from "@/Tests/Helpers/findFilesRecursive";
+import { createDiagnosticHandler, createTfmHandler } from "@/Tests/Helpers/createHandlers";
 
 // Mock vscode module
 jest.mock(
-  'vscode',
+  "vscode",
   () => ({
     workspace: {
       workspaceFolders: [],
@@ -19,7 +19,7 @@ jest.mock(
       file: (path: string) => ({ fsPath: path }),
     },
   }),
-  { virtual: true }
+  { virtual: true },
 );
 
 /**
@@ -50,8 +50,8 @@ jest.mock(
  * 5 Resilience of the Parser :
  * - Diagnostics should NOT report errors for XML parsing related to namespaces or casing. Expected: No XML parsing errors in diagnostics
  */
-describe('Acceptance: Legacy Solution (packages.config)', () => {
-  const solutionPath = path.resolve(__dirname, '../../Fixtures/Legacy/Legacy.sln');
+describe("Acceptance: Legacy Solution (packages.config)", () => {
+  const solutionPath = path.resolve(__dirname, "../../Fixtures/Legacy/Legacy.sln");
   const fixtureRoot = path.dirname(solutionPath);
 
   const diagnosticHandler = createDiagnosticHandler();
@@ -66,7 +66,7 @@ describe('Acceptance: Legacy Solution (packages.config)', () => {
 
     // Mock vscode.workspace.findFiles to search in the fixture directory
     (vscode.workspace.findFiles as jest.Mock).mockImplementation(async (pattern: string) => {
-      const fileName = pattern.replace('**/', '');
+      const fileName = pattern.replace("**/", "");
       const files = findFilesRecursive(fixtureRoot, fileName);
       return files.map((filePath) => ({ fsPath: filePath }));
     });
@@ -82,7 +82,7 @@ describe('Acceptance: Legacy Solution (packages.config)', () => {
     tfmResult = tfmRes;
   });
 
-  test('Identification of Project Type', () => {
+  test("Identification of Project Type", () => {
     // Should identify as legacy .NET Framework project
     expect(diagnosticResult.projectTypeSummary.legacyFrameworkProjects).toBe(1);
 
@@ -91,14 +91,14 @@ describe('Acceptance: Legacy Solution (packages.config)', () => {
 
     // Check TFM from the legacy project
     const legacyProject = tfmResult.projects.find((proj) =>
-      proj.projectPath.includes('Legacy.csproj')
+      proj.projectPath.includes("Legacy.csproj"),
     );
     expect(legacyProject).toBeDefined();
-    expect(legacyProject?.sdkType).toBe('Legacy');
-    expect(legacyProject?.targetFrameworks).toContain('net481');
+    expect(legacyProject?.sdkType).toBe("Legacy");
+    expect(legacyProject?.targetFrameworks).toContain("net481");
   });
 
-  test('Source of Truth (Packages)', () => {
+  test("Source of Truth (Packages)", () => {
     // Should detect packages.config usage
     expect(Object.keys(diagnosticResult.legacyPackagesByProject).length).toBe(1);
 
@@ -107,38 +107,38 @@ describe('Acceptance: Legacy Solution (packages.config)', () => {
     expect(diagnosticResult.cpmFilePath).toBeUndefined();
 
     // Mode should be Local
-    expect(diagnosticResult.mode).toBe('Local');
+    expect(diagnosticResult.mode).toBe("Local");
 
     // Should find EntityFramework package
     const legacyProjectPath = Object.keys(diagnosticResult.legacyPackagesByProject)[0];
     const packages = diagnosticResult.legacyPackagesByProject[legacyProjectPath];
     expect(packages.length).toBeGreaterThan(0);
 
-    const entityFrameworkPackage = packages.find((pkg) => pkg.name === 'EntityFramework');
+    const entityFrameworkPackage = packages.find((pkg) => pkg.name === "EntityFramework");
     expect(entityFrameworkPackage).toBeDefined();
   });
 
-  test('Version Extraction', () => {
+  test("Version Extraction", () => {
     // Get packages from the legacy project
     const legacyProjectPath = Object.keys(diagnosticResult.legacyPackagesByProject).find((path) =>
-      path.includes('Legacy.csproj')
+      path.includes("Legacy.csproj"),
     );
     expect(legacyProjectPath).toBeDefined();
 
     const packages = diagnosticResult.legacyPackagesByProject[legacyProjectPath!];
 
     // Check EntityFramework package details
-    const efPackage = packages.find((pkg) => pkg.name === 'EntityFramework');
+    const efPackage = packages.find((pkg) => pkg.name === "EntityFramework");
     expect(efPackage).toBeDefined();
-    expect(efPackage?.version).toBe('6.5.1');
-    expect(efPackage?.targetFramework).toBe('net481');
+    expect(efPackage?.version).toBe("6.5.1");
+    expect(efPackage?.targetFramework).toBe("net481");
 
     // Verify exact casing
-    expect(efPackage?.name).toBe('EntityFramework');
-    expect(efPackage?.name).not.toBe('entityframework'); // Wrong casing
+    expect(efPackage?.name).toBe("EntityFramework");
+    expect(efPackage?.name).not.toBe("entityframework"); // Wrong casing
   });
 
-  test('Overall Solution Assessment', () => {
+  test("Overall Solution Assessment", () => {
     // CPM should NOT be enabled for legacy solutions
     expect(diagnosticResult.isCpmEnabled).toBe(false);
 
@@ -146,26 +146,26 @@ describe('Acceptance: Legacy Solution (packages.config)', () => {
     expect(diagnosticResult.isTransitional).toBe(false);
 
     // Mode should be Local
-    expect(diagnosticResult.mode).toBe('Local');
+    expect(diagnosticResult.mode).toBe("Local");
 
     // Summary should reflect legacy project count
     expect(diagnosticResult.summary.totalLegacyProjects).toBe(1);
     expect(diagnosticResult.summary.totalProjects).toBe(1);
   });
 
-  test('Resilience of the Parser', () => {
+  test("Resilience of the Parser", () => {
     // No XML parsing errors should be reported
     const parsingErrors = diagnosticResult.diagnostics.filter(
       (diag) =>
-        diag.message.toLowerCase().includes('xml') ||
-        diag.message.toLowerCase().includes('parse') ||
-        diag.message.toLowerCase().includes('namespace')
+        diag.message.toLowerCase().includes("xml") ||
+        diag.message.toLowerCase().includes("parse") ||
+        diag.message.toLowerCase().includes("namespace"),
     );
 
     expect(parsingErrors.length).toBe(0);
 
     // Diagnostics should be empty or only contain informational messages
-    const errors = diagnosticResult.diagnostics.filter((diag) => diag.severity === 'Error');
+    const errors = diagnosticResult.diagnostics.filter((diag) => diag.severity === "Error");
     expect(errors.length).toBe(0);
   });
 });
