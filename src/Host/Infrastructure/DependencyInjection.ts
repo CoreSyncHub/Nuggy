@@ -11,6 +11,11 @@ import { VscLogger } from "./Log/VscLogger";
 import { USER_PROMPT, type IUserPrompt } from "@Application/Abstractions/Prompt/IUserPrompt";
 import { VscUserPrompt } from "./Prompt/VscUserPrompt";
 import { PROCESS_RUNNER, type IProcessRunner, ChildProcessRunner } from "./MsBuild/ProcessRunner";
+import {
+  PACKAGE_SEARCH_SOURCES,
+  type IPackageSearchSource,
+} from "@Application/Abstractions/Search/IPackageSearchSource";
+import { NuGetOrgSearchSource } from "./NuGet/NuGetOrgSearchSource";
 
 export class InfrastructureDependencyInjection extends DependencyInjectionProvider {
   public Provide(): void {
@@ -19,5 +24,6 @@ export class InfrastructureDependencyInjection extends DependencyInjectionProvid
     this.Register<IBus>(BUS, LocalBus);
     this.Register<IUserPrompt>(USER_PROMPT, VscUserPrompt);
     this.Register<IProcessRunner>(PROCESS_RUNNER, ChildProcessRunner);
+    this.Register<IPackageSearchSource>(PACKAGE_SEARCH_SOURCES, NuGetOrgSearchSource);
   }
 }

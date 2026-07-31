@@ -1,4 +1,4 @@
-import { inject as tsyringeInject } from "tsyringe";
+import { inject as tsyringeInject, injectAll as tsyringeInjectAll } from "tsyringe";
 import { type InjectionToken } from "../InjectionToken";
 
 /**
@@ -16,4 +16,13 @@ import { type InjectionToken } from "../InjectionToken";
  */
 export function injectToken<T>(token: InjectionToken<T>) {
   return tsyringeInject(token.token);
+}
+
+/**
+ * Injecte TOUTES les implémentations enregistrées sous un même token, sous
+ * forme de tableau. Utilisé là où plusieurs adaptateurs coexistent (sources de
+ * recherche), là où `injectToken` n'en résoudrait qu'une.
+ */
+export function injectAllTokens<T>(token: InjectionToken<T>) {
+  return tsyringeInjectAll(token.token);
 }

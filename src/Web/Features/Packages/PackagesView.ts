@@ -11,7 +11,10 @@ import { InstallPackageCommand } from "@Shared/Features/Commands/InstallPackageC
 import { UpgradePackageCommand } from "@Shared/Features/Commands/UpgradePackageCommand";
 import { UninstallPackageCommand } from "@Shared/Features/Commands/UninstallPackageCommand";
 import { type SolutionDto } from "@Shared/Features/Dtos/SolutionDto";
-import { type SolutionPackagesDto } from "@Shared/Features/Dtos/SolutionPackagesDto";
+import {
+  type SolutionPackageDto,
+  type SolutionPackagesDto,
+} from "@Shared/Features/Dtos/SolutionPackagesDto";
 import { type PackageUpdateInfoDto } from "@Shared/Features/Dtos/PackageUpdateInfoDto";
 import {
   resolvePackageUpdateState,
@@ -19,6 +22,11 @@ import {
 } from "@Shared/Features/Packages/PackageUpdateState";
 import { type PackageWriteResultDto } from "@Shared/Features/Dtos/PackageWriteResultDto";
 import { type RestoreStatusDto } from "@Shared/Features/Dtos/RestoreStatusDto";
+import { SearchPackagesQuery } from "@Shared/Features/Queries/SearchPackagesQuery";
+import {
+  type PackageSearchHitDto,
+  type SearchResultsDto,
+} from "@Shared/Features/Dtos/SearchResultsDto";
 import { TranslationService } from "../../Core/Services/TranslationService";
 import "./PackageList";
 import "./PackageDetail";
@@ -56,6 +64,28 @@ export class PackagesView extends LitElement {
    *  bandeau. `undefined` tant qu'aucune écriture n'a eu lieu dans la session, et de nouveau après
    *  l'auto-masquage 4 s suivant un `Succeeded` (cf. `startRestorePolling`). */
   @state() private restoreStatus?: RestoreStatusDto;
+
+  private static readonly SEARCH_PAGE_SIZE = 25;
+
+  @state() private searchHits: PackageSearchHitDto[] = [];
+  @state() private searchLoading = false;
+  @state() private searchHasMore = false;
+  @state() private searchFailedSources: string[] = [];
+  /** La requête elle-même n'a pas abouti (timeout du bus, postMessage indisponible…),
+   *  à distinguer d'une recherche qui a abouti sans résultat : sans cet état dédié,
+   *  `searchHits` vide et `searchFailedSources` vide feraient à tort conclure à
+   *  « aucun résultat » alors qu'aucune source n'a réellement pu être interrogée. */
+  @state() private searchRequestFailed = false;
+  private searchTerms = "";
+  private searchPrerelease = false;
+  /** Invalide les réponses d'une recherche périmée : seule la dernière frappe compte. */
+  private searchGeneration = 0;
+  /** Numéro de la page courante de résultats (0 = première page). Remis à zéro à
+   *  chaque nouvelle recherche ; incrémenté par `onLoadMore`. `skip` est TOUJOURS
+   *  dérivé de ce compteur, jamais de `searchHits.length` — ce dernier reflète le
+   *  flux après filtrage client et déduplication, décalé par rapport aux pages
+   *  brutes réellement servies par chaque source. */
+  private searchPage = 0;
 
   private dispatcher!: IDispatcher;
   private logger!: ILogger;
@@ -267,6 +297,94 @@ export class PackagesView extends LitElement {
     }
   }
 
+  /** Le champ est repassé sous le seuil : oublier les résultats précédents, sinon
+   *  ceux d'une recherche abandonnée réapparaîtraient à la frappe suivante. */
+  private onSearchCleared(): void {
+    this.searchGeneration++;
+    this.searchTerms = "";
+    this.searchPage = 0;
+    this.searchHits = [];
+    this.searchHasMore = false;
+    this.searchFailedSources = [];
+    this.searchRequestFailed = false;
+    this.searchLoading = false;
+  }
+
+  private onSearchTermsChanged(terms: string, includePrerelease: boolean): void {
+    this.searchTerms = terms;
+    this.searchPrerelease = includePrerelease;
+    this.searchHits = [];
+    void this.runSearch(0);
+  }
+
+  private onLoadMore(): void {
+    this.searchPage++;
+    void this.runSearch(this.searchPage * PackagesView.SEARCH_PAGE_SIZE);
+  }
+
+  /** Une génération périmée est ignorée à l'arrivée : pas de résultat en retard
+   *  qui écraserait ceux d'une frappe plus récente. */
+  private async runSearch(skip: number): Promise<void> {
+    const generation = ++this.searchGeneration;
+    // skip=0 signale toujours le début d'une recherche (nouveaux termes,
+    // bascule prerelease) : le compteur de page redémarre en phase avec lui,
+    // que l'appelant soit onSearchTermsChanged ou tout futur appelant.
+    if (skip === 0) {
+      this.searchPage = 0;
+    }
+    this.searchLoading = true;
+    this.searchRequestFailed = false;
+    try {
+      const dto = (await this.dispatcher.Send(
+        new SearchPackagesQuery(
+          this.searchTerms,
+          skip,
+          PackagesView.SEARCH_PAGE_SIZE,
+          this.searchPrerelease,
+        ),
+      )) as SearchResultsDto;
+      if (generation !== this.searchGeneration) {
+        return;
+      }
+      this.searchHits = skip === 0 ? dto.hits : [...this.searchHits, ...dto.hits];
+      this.searchHasMore = dto.hasMore;
+      this.searchFailedSources = dto.failedSources;
+    } catch (error) {
+      if (generation !== this.searchGeneration) {
+        return;
+      }
+      this.logger.Error("Échec de la recherche de packages", error as Error);
+      this.searchHasMore = false;
+      // Aucune source n'a pu être nommée (la requête entière a échoué avant de
+      // les interroger) : ne pas inventer un nom de source dans
+      // searchFailedSources, le bandeau afficherait à tort une source précise
+      // comme responsable. L'état dédié porte cette distinction jusqu'au rendu.
+      this.searchRequestFailed = true;
+    } finally {
+      if (generation === this.searchGeneration) {
+        this.searchLoading = false;
+      }
+    }
+  }
+
+  /**
+   * DTO synthétique pour un résultat de recherche : reprend les installations
+   * réelles si le package est déjà dans la solution, sinon aucune. Le détail et
+   * ses cartes projet fonctionnent alors sans modification.
+   */
+  private get selectedSearchPackage(): SolutionPackageDto | undefined {
+    const hit = this.searchHits.find((h) => h.id === this.selectedId);
+    if (!hit) {
+      return undefined;
+    }
+    const existing = this.data?.packages.find((p) => p.id.toLowerCase() === hit.id.toLowerCase());
+    return {
+      id: hit.id,
+      iconUrl: hit.iconUrl ?? existing?.iconUrl ?? "",
+      installations: existing?.installations ?? [],
+    };
+  }
+
   /** Point d'entrée unique pour les 3 actions d'écriture, envoyées par ProjectInstallations
    *  (par projet) ou par la toolbar de PackageDetail (globale, projectPath absent). Les
    *  confirmations pour les actions globales sont gérées côté Host (modale) : ce composant se
@@ -408,14 +526,37 @@ export class PackagesView extends LitElement {
   }
 
   render() {
-    const selected = this.data?.packages.find((p) => p.id === this.selectedId);
+    // Une seule liste, deux origines : un package de la solution l'emporte sur un
+    // résultat distant de même id — ses installations réelles sont la vérité.
+    const selected =
+      this.data?.packages.find((p) => p.id === this.selectedId) ?? this.selectedSearchPackage;
+    const feeds =
+      this.searchFailedSources.length > 0
+        ? [
+            ...(this.data?.uninterrogatedFeeds ?? []),
+            this.i18n.t("packages.list.failedSources", {
+              names: this.searchFailedSources.join(", "),
+            }),
+          ]
+        : (this.data?.uninterrogatedFeeds ?? []);
     return html` <package-list
         .packages=${this.data?.packages ?? []}
         .verdictBadges=${this.verdictBadges}
-        .uninterrogatedFeeds=${this.data?.uninterrogatedFeeds ?? []}
+        .uninterrogatedFeeds=${feeds}
         .selectedId=${this.selectedId}
+        .searchHits=${this.searchHits}
+        .searchLoading=${this.searchLoading}
+        .hasMore=${this.searchHasMore}
+        .allSourcesFailed=${
+          (this.searchRequestFailed || this.searchFailedSources.length > 0) &&
+          this.searchHits.length === 0
+        }
         style="width: ${this.listWidth}px"
         @package-selected=${this.onPackageSelected}
+        @search-cleared=${() => this.onSearchCleared()}
+        @search-terms-changed=${(e: CustomEvent<{ terms: string; includePrerelease: boolean }>) =>
+          this.onSearchTermsChanged(e.detail.terms, e.detail.includePrerelease)}
+        @load-more=${() => this.onLoadMore()}
       ></package-list>
       <div
         class="splitter ${this.isResizing ? "dragging" : ""}"
