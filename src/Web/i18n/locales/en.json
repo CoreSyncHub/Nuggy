@@ -69,10 +69,18 @@
       "count": "{{installed}} installed / {{total}}"
     },
     "list": {
-      "filterPlaceholder": "Filter packages…",
+      "filterPlaceholder": "Filter or search nuget.org…",
       "verdictOk": "Compatible",
       "filterAll": "All",
       "filterOutOfTfm": "Outside TFM",
+      "searchHint": "Type at least 2 characters",
+      "searching": "Searching…",
+      "noResults": "No results",
+      "allSourcesFailed": "No source could be queried",
+      "failedSources": "Unreachable sources: {{names}}",
+      "loadMore": "Load more",
+      "includePrerelease": "Prerelease",
+      "downloads": "{{count}} downloads",
       "badge": {
         "update": "Update available",
         "updatePartial": "Update available for some projects",
@@ -80,7 +88,10 @@
         "upToDate": "Up to date",
         "unknown": "Information unavailable",
         "loading": "Loading…"
-      }
+      },
+      "sectionInstalled": "Installed packages",
+      "sectionResults": "Search results",
+      "noInstalledMatch": "No installed package matches"
     },
     "restore": {
       "running": "Restore running…",
