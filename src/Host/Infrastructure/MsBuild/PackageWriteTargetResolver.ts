@@ -4,7 +4,7 @@ import { ProjectTfmResolutionService } from "../Projects/ProjectTfmResolutionSer
 import { PackageReferenceParser } from "@Infrastructure/Packages/PackageReferenceParser";
 import { PackagesConfigParser } from "@Infrastructure/Packages/PackagesConfigParser";
 import { CpmDiagnosticService } from "@Infrastructure/Packages/CpmDiagnosticService";
-import { BuildConfigFileType } from "@Domain/Build/Enums/BuildConfigFileType";
+import { findGoverningCpmFile } from "@Infrastructure/Packages/CpmFileLocator";
 
 export interface WriteTarget {
   projectPath: string;
@@ -32,10 +32,6 @@ export class PackageWriteTargetResolver {
   ): Promise<{ targets: WriteTarget[]; cpmFilePath?: string }> {
     const projectPaths = this.tfmResolution.parseProjectPaths(solutionPath);
     const buildConfigFiles = await this.tfmResolution.loadBuildConfigFiles();
-    const cpmFiles = buildConfigFiles.filter(
-      (f) => f.type === BuildConfigFileType.DirectoryPackagesProps,
-    );
-    const solutionCpmFile = cpmFiles.length > 0 ? cpmFiles[0].path : undefined;
 
     const sdkProjects = projectPaths.filter((p) => !this.packagesConfigParser.isLegacyProject(p));
     const references = this.packageReferenceParser.parseMultiple(sdkProjects);
@@ -51,13 +47,17 @@ export class PackageWriteTargetResolver {
       const ref = (references.get(projectPath) ?? []).find(
         (r) => r.name.toLowerCase() === packageId.toLowerCase(),
       );
-      const isCpm = solutionCpmFile !== undefined && (!ref || !ref.hasLocalVersion);
+      // Le fichier CPM applicable est celui que MSBuild retiendrait en remontant
+      // depuis ce projet — pas le premier de la solution. Un projet hors de toute
+      // portée CPM n'est pas géré centralement, même si la solution en contient.
+      const projectCpmFile = findGoverningCpmFile(projectPath, buildConfigFiles);
+      const isCpm = projectCpmFile !== undefined && (!ref || !ref.hasLocalVersion);
       if (isCpm) {
         return {
           projectPath,
           style: "CpmManaged",
           installedVersion: ref ? (ref.version ?? cpmVersion) : undefined,
-          cpmFilePath: solutionCpmFile,
+          cpmFilePath: projectCpmFile,
         };
       }
       return {
@@ -67,6 +67,9 @@ export class PackageWriteTargetResolver {
       };
     });
 
-    return { targets, cpmFilePath: solutionCpmFile };
+    // Repli solution-wide : le fichier CPM d'une cible effectivement gérée
+    // centralement. Les appelants s'en servent quand une cible n'en porte pas.
+    const cpmFilePath = targets.find((t) => t.cpmFilePath !== undefined)?.cpmFilePath;
+    return { targets, cpmFilePath };
   }
 }
