@@ -171,6 +171,9 @@ export class PackagesView extends LitElement {
     super.disconnectedCallback();
     this.unsubscribeI18n?.();
     this.restorePollGeneration++;
+    // Même discipline que le polling restore : une recherche en vol ne doit pas
+    // écrire sur l'état d'un élément déconnecté.
+    this.searchGeneration++;
     if (this.restorePollTimer) {
       clearTimeout(this.restorePollTimer);
     }
@@ -373,7 +376,7 @@ export class PackagesView extends LitElement {
    * ses cartes projet fonctionnent alors sans modification.
    */
   private get selectedSearchPackage(): SolutionPackageDto | undefined {
-    const hit = this.searchHits.find((h) => h.id === this.selectedId);
+    const hit = this.searchHits.find((h) => h.id.toLowerCase() === this.selectedId.toLowerCase());
     if (!hit) {
       return undefined;
     }

@@ -68,6 +68,11 @@ export class WriteStatusBanner extends LitElement {
     .clickable {
       cursor: pointer;
     }
+    /* Le bandeau est atteignable au clavier : il lui faut un focus visible. */
+    .clickable:focus-visible {
+      outline: 1px solid var(--vscode-focusBorder);
+      outline-offset: 2px;
+    }
     .first-message {
       overflow: hidden;
       text-overflow: ellipsis;
@@ -88,6 +93,14 @@ export class WriteStatusBanner extends LitElement {
   `;
 
   /** Le détail des erreurs vit dans l'onglet Logs : le bandeau en échec navigue vers le run. */
+  /** Entrée/Espace activent le bandeau, comme un vrai bouton. */
+  private onKeydown(e: KeyboardEvent): void {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      this.onShowLogs();
+    }
+  }
+
   private onShowLogs(): void {
     this.dispatchEvent(
       new CustomEvent("show-logs", {
@@ -114,7 +127,13 @@ export class WriteStatusBanner extends LitElement {
       case "Failed": {
         const first = this.restore.messages[0];
         const more = this.restore.messages.length - 1;
-        return html`<div class="row failed clickable" @click=${this.onShowLogs}>
+        return html`<div
+          class="row failed clickable"
+          role="button"
+          tabindex="0"
+          @click=${this.onShowLogs}
+          @keydown=${this.onKeydown}
+        >
           ${crossIcon(14)}
           ${this.i18n.t("packages.restore.failed")}${
             first !== undefined ? html`<span class="first-message"> — ${first}</span>` : nothing

@@ -53,7 +53,23 @@ export class UninstallPackageCommandHandler implements ICommandHandler<
   ) {}
 
   async Handle(command: UninstallPackageCommand): Promise<PackageWriteResultDto> {
-    const result = await this.handleCore(command);
+    let result: PackageWriteResultDto;
+    try {
+      result = await this.handleCore(command);
+    } catch (error) {
+      // handleCore est conçu pour ne jamais jeter : si cela arrive malgré tout,
+      // l'audit de session ne doit pas garder le silence sur l'opération tentée.
+      this.operationLog.recordWrite({
+        operation: "uninstall",
+        packageId: command.packageId,
+        status: "Error",
+        affectedProjects: [],
+        filesChanged: [],
+        skipped: [],
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
     this.operationLog.recordWrite({
       operation: "uninstall",
       packageId: command.packageId,
