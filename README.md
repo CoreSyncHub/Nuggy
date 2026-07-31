@@ -138,7 +138,7 @@ Nuggy will automatically:
 
 ## 🛣️ Roadmap
 
-### ✅ Completed (Current Version)
+### ✅ Completed
 
 - [x] **EPIC 1**: Semantic Diagnostic Engine & Solution Scanning
   - [x] Workspace mapping (`SLN` / `SLNX` / `Solution folders`)
@@ -150,25 +150,45 @@ Nuggy will automatically:
 
 - [x] **EPIC 2**: Decision Engine and Compatibility Analysis
   - [x] NuGet.org V3 API client with typed errors (`Offline` / `NotFound` / `RateLimited`) and TTL-based metadata cache
-  - [x] Solution-wide package aggregation and per-version, per-project compatibility verdicts (`GetSolutionPackagesQuery` / `GetPackageUpdateInfoQuery`)
-  - [x] DI wiring and WebMediator registration with end-to-end acceptance coverage
-  - [x] Packages view UI: consolidated list with lazy icon loading, progressive badge loading (batches of 5), and filters
+  - [x] Solution-wide package aggregation and per-version, per-project compatibility verdicts
+  - [x] Packages view UI: consolidated list, lazy icons, progressive badge loading, filters
   - [x] Package detail panel: metadata, collapsible dependencies, per-project verdicts, prerelease toggle
-  - [x] Internationalization (fr/en) of the packages view
 
-### 🚧 In Progress
+- [x] **EPIC 3**: Package Write Operations
+  - [x] Surgical MSBuild text editing — formatting, comments, CRLF and BOM preserved byte for byte
+  - [x] Install / update / uninstall, per project or solution-wide, with native CPM semantics
+  - [x] Debounced automatic `dotnet restore`, never concurrent, with its status surfaced in the UI
+  - [x] Transitive blame on failure via `dotnet nuget why`
+  - [x] `packages.config` projects kept read-only, with an explicit reason in the UI
 
-- [ ] **EPIC 3**: Enhanced CPM & Solution Consistency
+- [x] **EPIC 4**: Tabs, Logs & Observability
+  - [x] Packages / Logs tabs, styled with VS Code tokens and keyboard-navigable
+  - [x] Bounded session journal: restore runs with full output, plus every write operation
+  - [x] Failure banner navigates to the matching run in the Logs tab
+  - [x] Per-project install for packages absent from a project
+  - [x] Update-availability badge answering "what can I gain?", sorted most actionable first
 
-### 📋 Planned
+- [x] **EPIC 5**: Interactive Search and Installation
+  - [x] Free-text paginated search on nuget.org, behind a source port ready for private feeds
+  - [x] Single list: installed packages only until you type, then two labelled sections
+  - [x] Install a package absent from the whole solution, one project at a time
+  - [x] Multi-source aggregation: parallel queries, deduplication, one failing source never sinks the rest
 
-- [ ] **EPIC 4**: Advanced Configuration & Runtime Engines
+- [x] **Internationalization**: English, French, Spanish and German, with per-key fallback to English
 
-- [ ] **EPIC 5**: Interactive Search and Predictive Installation
+### 🚧 Next
 
-- [ ] **EPIC 6**: Maintenance, Diagnostics, and Observability
+- [ ] **EPIC 6**: Enhanced CPM & Solution Consistency
+  - [ ] Automatic migration to Central Package Management where applicable
+  - [ ] Consolidation of versions that diverge across projects
+  - [ ] `packages.config` → `PackageReference` migration
 
-- [ ] **EPIC 7**: User Interface (UI/UX)
+- [ ] **EPIC 7**: Dependency Graph Impact Analysis
+  - [ ] Answer "you want EF 10, but you depend on Pomelo, which has no .NET 10 release yet"
+  - [ ] Transitive resolution and version-constraint conflicts
+
+- [ ] **EPIC 8**: TFM Upgrade Assistance
+  - [ ] Raise project TFMs on a new .NET release, together with the packages that guarantee compatibility
 
 ---
 
