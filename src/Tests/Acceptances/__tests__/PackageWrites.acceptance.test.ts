@@ -39,6 +39,7 @@ import { BuildConfigDetector } from "@Infrastructure/Build/BuildConfigDetector";
 import { BuildConfigParser } from "@Infrastructure/Build/BuildConfigParser";
 import { CsprojParser } from "@Infrastructure/Projects/CsprojParser";
 import { TfmResolver } from "@Infrastructure/Projects/TfmResolver";
+import { ProjectTfmResolutionService } from "@Infrastructure/Projects/ProjectTfmResolutionService";
 import { type IUserPrompt } from "@Application/Abstractions/Prompt/IUserPrompt";
 import { type ILogger } from "@Application/Abstractions/Log/ILogger";
 
@@ -137,11 +138,13 @@ describe("Acceptance: écritures de packages (Epic 5)", () => {
       tfmCache,
       apiClient as unknown as NuGetV3ApiClient,
       new TfmCompatibilityService(),
-      new SlnParser(),
-      new SlnxParser(),
-      new BuildConfigDetector(),
-      new BuildConfigParser(noOpLogger),
-      new TfmResolver(new CsprojParser(), noOpLogger),
+      new ProjectTfmResolutionService(
+        new SlnParser(),
+        new SlnxParser(),
+        new BuildConfigDetector(),
+        new BuildConfigParser(noOpLogger),
+        new TfmResolver(new CsprojParser(), noOpLogger),
+      ),
       prompt,
       noOpLogger,
     );

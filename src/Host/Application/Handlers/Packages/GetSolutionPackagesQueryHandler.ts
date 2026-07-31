@@ -1,4 +1,6 @@
 import { injectable } from "tsyringe";
+import { ProjectTfmResolutionService } from "@Infrastructure/Projects/ProjectTfmResolutionService";
+
 import * as path from "path";
 import { type IQueryHandler } from "@Shared/Abstractions/Messaging/IQueryHandler";
 import { HandlerFor } from "@Shared/Infrastructure/Messaging/HandlerFor";
@@ -11,15 +13,10 @@ import {
   type SolutionProjectDto,
 } from "@Shared/Features/Dtos/SolutionPackagesDto";
 import { BuildConfigFileType } from "@Domain/Build/Enums/BuildConfigFileType";
-import { SlnParser } from "@Infrastructure/Solution/SlnParser";
-import { SlnxParser } from "@Infrastructure/Solution/SlnxParser";
-import { BuildConfigDetector } from "@Infrastructure/Build/BuildConfigDetector";
-import { BuildConfigParser } from "@Infrastructure/Build/BuildConfigParser";
 import { PackageReferenceParser } from "@Infrastructure/Packages/PackageReferenceParser";
 import { PackagesConfigParser } from "@Infrastructure/Packages/PackagesConfigParser";
 import { CpmDiagnosticService } from "@Infrastructure/Packages/CpmDiagnosticService";
 import { NuGetConfigResolver } from "@Infrastructure/Packages/NuGetConfigResolver";
-import { TfmResolver } from "@Infrastructure/Projects/TfmResolver";
 
 @injectable()
 @HandlerFor(GetSolutionPackagesQuery)
@@ -28,26 +25,16 @@ export class GetSolutionPackagesQueryHandler implements IQueryHandler<
   SolutionPackagesDto
 > {
   constructor(
-    private readonly slnParser: SlnParser,
-    private readonly slnxParser: SlnxParser,
-    private readonly buildConfigDetector: BuildConfigDetector,
-    private readonly buildConfigParser: BuildConfigParser,
+    private readonly tfmResolution: ProjectTfmResolutionService,
     private readonly packageReferenceParser: PackageReferenceParser,
     private readonly packagesConfigParser: PackagesConfigParser,
     private readonly cpmDiagnosticService: CpmDiagnosticService,
     private readonly nuGetConfigResolver: NuGetConfigResolver,
-    private readonly tfmResolver: TfmResolver,
   ) {}
 
   async Handle(query: GetSolutionPackagesQuery): Promise<SolutionPackagesDto> {
-    const projectPaths = this.parseProjects(query.solutionPath);
-
-    const buildConfigFiles = await this.buildConfigDetector.findAllConfigFiles();
-    this.buildConfigDetector.buildHierarchy(buildConfigFiles);
-    for (const file of buildConfigFiles) {
-      this.buildConfigParser.parse(file.path, file);
-    }
-    const resolvedTfms = this.tfmResolver.resolveMultiple(projectPaths, buildConfigFiles);
+    const { projectPaths, buildConfigFiles, resolvedTfms } =
+      await this.tfmResolution.resolveSolution(query.solutionPath);
 
     const sdkProjects = projectPaths.filter((p) => !this.packagesConfigParser.isLegacyProject(p));
     const legacyProjects = projectPaths.filter((p) => this.packagesConfigParser.isLegacyProject(p));
@@ -143,16 +130,5 @@ export class GetSolutionPackagesQueryHandler implements IQueryHandler<
       .map((source) => source.name);
 
     return { packages, projects, uninterrogatedFeeds };
-  }
-
-  private parseProjects(solutionPath: string): string[] {
-    const ext = path.extname(solutionPath).toLowerCase();
-    if (ext === ".slnx") {
-      return this.slnxParser.parse(solutionPath).projects.map((p) => p.path);
-    }
-    if (ext === ".sln") {
-      return this.slnParser.parse(solutionPath).projects.map((p) => p.path);
-    }
-    throw new Error(`Unsupported solution format: ${ext}`);
   }
 }

@@ -15,6 +15,7 @@ import { NuGetConfigResolver } from "@Infrastructure/Packages/NuGetConfigResolve
 import { NuGetConfigParser } from "@Infrastructure/Packages/NuGetConfigParser";
 import { CsprojParser } from "@Infrastructure/Projects/CsprojParser";
 import { TfmResolver } from "@Infrastructure/Projects/TfmResolver";
+import { ProjectTfmResolutionService } from "@Infrastructure/Projects/ProjectTfmResolutionService";
 import { type ILogger } from "@/Host/Application/Abstractions/Log/ILogger";
 
 const noOpLogger: ILogger = {
@@ -33,7 +34,9 @@ export function createDiagnosticHandler(): GetPackageManagementDiagnosticQueryHa
   const packagesConfigParser = new PackagesConfigParser(noOpLogger);
   const packageVersionParser = new PackageVersionParser();
   const cpmDiagnosticService = new CpmDiagnosticService(packageVersionParser);
-  const packageManagementDiagnosticService = new PackageManagementDiagnosticService(cpmDiagnosticService);
+  const packageManagementDiagnosticService = new PackageManagementDiagnosticService(
+    cpmDiagnosticService,
+  );
 
   return new GetPackageManagementDiagnosticQueryHandler(
     slnParser,
@@ -46,50 +49,34 @@ export function createDiagnosticHandler(): GetPackageManagementDiagnosticQueryHa
   );
 }
 
-export function createTfmHandler(): GetProjectsTfmQueryHandler {
-  const slnParser = new SlnParser();
-  const slnxParser = new SlnxParser();
-  const buildConfigDetector = new BuildConfigDetector();
-  const buildConfigParser = new BuildConfigParser(noOpLogger);
-  const csprojParser = new CsprojParser();
-  const tfmResolver = new TfmResolver(csprojParser, noOpLogger);
+/** Composition partagée de la résolution de solution, utilisée par tous les handlers. */
+function tfmResolution(): ProjectTfmResolutionService {
+  return new ProjectTfmResolutionService(
+    new SlnParser(),
+    new SlnxParser(),
+    new BuildConfigDetector(),
+    new BuildConfigParser(noOpLogger),
+    new TfmResolver(new CsprojParser(), noOpLogger),
+  );
+}
 
-  return new GetProjectsTfmQueryHandler(slnParser, slnxParser, buildConfigDetector, buildConfigParser, tfmResolver);
+export function createTfmHandler(): GetProjectsTfmQueryHandler {
+  return new GetProjectsTfmQueryHandler(tfmResolution());
 }
 
 export function createSolutionPackagesHandler(): GetSolutionPackagesQueryHandler {
-  const slnParser = new SlnParser();
-  const slnxParser = new SlnxParser();
-  const buildConfigDetector = new BuildConfigDetector();
-  const buildConfigParser = new BuildConfigParser(noOpLogger);
-  const packageReferenceParser = new PackageReferenceParser(noOpLogger);
-  const packagesConfigParser = new PackagesConfigParser(noOpLogger);
-  const packageVersionParser = new PackageVersionParser();
-  const cpmDiagnosticService = new CpmDiagnosticService(packageVersionParser);
-  const nuGetConfigParser = new NuGetConfigParser(noOpLogger);
-  const nuGetConfigResolver = new NuGetConfigResolver(nuGetConfigParser);
-  const csprojParser = new CsprojParser();
-  const tfmResolver = new TfmResolver(csprojParser, noOpLogger);
-
   return new GetSolutionPackagesQueryHandler(
-    slnParser,
-    slnxParser,
-    buildConfigDetector,
-    buildConfigParser,
-    packageReferenceParser,
-    packagesConfigParser,
-    cpmDiagnosticService,
-    nuGetConfigResolver,
-    tfmResolver
+    tfmResolution(),
+    new PackageReferenceParser(noOpLogger),
+    new PackagesConfigParser(noOpLogger),
+    new CpmDiagnosticService(new PackageVersionParser()),
+    new NuGetConfigResolver(new NuGetConfigParser(noOpLogger)),
   );
 }
 
 export function createPackageWriteTargetResolver(): PackageWriteTargetResolver {
   return new PackageWriteTargetResolver(
-    new SlnParser(),
-    new SlnxParser(),
-    new BuildConfigDetector(),
-    new BuildConfigParser(noOpLogger),
+    tfmResolution(),
     new PackageReferenceParser(noOpLogger),
     new PackagesConfigParser(noOpLogger),
     new CpmDiagnosticService(new PackageVersionParser()),

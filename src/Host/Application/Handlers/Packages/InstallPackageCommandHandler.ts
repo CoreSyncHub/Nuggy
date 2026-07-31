@@ -24,11 +24,7 @@ import {
   TfmCompatibilityService,
   type CompatibilityResult,
 } from "@Infrastructure/Projects/TfmCompatibilityService";
-import { SlnParser } from "@Infrastructure/Solution/SlnParser";
-import { SlnxParser } from "@Infrastructure/Solution/SlnxParser";
-import { BuildConfigDetector } from "@Infrastructure/Build/BuildConfigDetector";
-import { BuildConfigParser } from "@Infrastructure/Build/BuildConfigParser";
-import { TfmResolver } from "@Infrastructure/Projects/TfmResolver";
+import { ProjectTfmResolutionService } from "@Infrastructure/Projects/ProjectTfmResolutionService";
 import { USER_PROMPT, type IUserPrompt } from "../../Abstractions/Prompt/IUserPrompt";
 import { type ILogger, LOGGER } from "../../Abstractions/Log/ILogger";
 
@@ -58,11 +54,7 @@ export class InstallPackageCommandHandler implements ICommandHandler<
     private readonly tfmCache: ProjectTfmCache,
     private readonly apiClient: NuGetV3ApiClient,
     private readonly compatibility: TfmCompatibilityService,
-    private readonly slnParser: SlnParser,
-    private readonly slnxParser: SlnxParser,
-    private readonly buildConfigDetector: BuildConfigDetector,
-    private readonly buildConfigParser: BuildConfigParser,
-    private readonly tfmResolver: TfmResolver,
+    private readonly tfmResolution: ProjectTfmResolutionService,
     @injectToken(USER_PROMPT) private readonly prompt: IUserPrompt,
     @injectToken(LOGGER) private readonly logger: ILogger,
   ) {}
@@ -313,28 +305,12 @@ export class InstallPackageCommandHandler implements ICommandHandler<
   private async resolveProjectTfmsSafely(solutionPath: string): Promise<Map<string, string[]>> {
     try {
       return await this.tfmCache.getOrResolve(solutionPath, () =>
-        this.resolveProjectTfms(solutionPath),
+        this.tfmResolution.resolveProjectTfms(solutionPath),
       );
     } catch (error) {
       this.logger.Error("Failed to resolve project TFMs from solution", error as Error);
       return new Map();
     }
-  }
-
-  private async resolveProjectTfms(solutionPath: string): Promise<Map<string, string[]>> {
-    const ext = path.extname(solutionPath).toLowerCase();
-    const projectPaths =
-      ext === ".slnx"
-        ? this.slnxParser.parse(solutionPath).projects.map((p) => p.path)
-        : this.slnParser.parse(solutionPath).projects.map((p) => p.path);
-
-    const buildConfigFiles = await this.buildConfigDetector.findAllConfigFiles();
-    this.buildConfigDetector.buildHierarchy(buildConfigFiles);
-    for (const file of buildConfigFiles) {
-      this.buildConfigParser.parse(file.path, file);
-    }
-    const resolved = this.tfmResolver.resolveMultiple(projectPaths, buildConfigFiles);
-    return new Map([...resolved.entries()].map(([p, r]) => [p, r.targetFrameworks]));
   }
 
   private verdictFor(tfms: string[], packageFrameworks: string[]): CompatibilityResult {

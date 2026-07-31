@@ -31,6 +31,7 @@ import { BuildConfigParser } from "@Infrastructure/Build/BuildConfigParser";
 import { CsprojParser } from "@Infrastructure/Projects/CsprojParser";
 import { TfmResolver } from "@Infrastructure/Projects/TfmResolver";
 import { ProjectTfmCache } from "@Infrastructure/Projects/ProjectTfmCache";
+import { ProjectTfmResolutionService } from "@Infrastructure/Projects/ProjectTfmResolutionService";
 import { type ILogger } from "@/Host/Application/Abstractions/Log/ILogger";
 
 const mockFs = fs as jest.Mocked<typeof fs>;
@@ -108,11 +109,13 @@ function createHandler(
     apiClient as NuGetV3ApiClient,
     new PackageMetadataCache(),
     new TfmCompatibilityService(),
-    overrides?.slnParser ?? new SlnParser(),
-    new SlnxParser(),
-    new BuildConfigDetector(),
-    new BuildConfigParser(noOpLogger),
-    new TfmResolver(new CsprojParser(), noOpLogger),
+    new ProjectTfmResolutionService(
+      overrides?.slnParser ?? new SlnParser(),
+      new SlnxParser(),
+      new BuildConfigDetector(),
+      new BuildConfigParser(noOpLogger),
+      new TfmResolver(new CsprojParser(), noOpLogger),
+    ),
     overrides?.tfmCache ?? new ProjectTfmCache(),
     noOpLogger,
   );

@@ -27,6 +27,7 @@ import { BuildConfigParser } from "@Infrastructure/Build/BuildConfigParser";
 import { CsprojParser } from "@Infrastructure/Projects/CsprojParser";
 import { TfmResolver } from "@Infrastructure/Projects/TfmResolver";
 import { ProjectTfmCache } from "@Infrastructure/Projects/ProjectTfmCache";
+import { ProjectTfmResolutionService } from "@Infrastructure/Projects/ProjectTfmResolutionService";
 import { type ILogger } from "@/Host/Application/Abstractions/Log/ILogger";
 
 const mockFs = fs as jest.Mocked<typeof fs>;
@@ -128,11 +129,13 @@ describe("Acceptance: Package updates (Epic 2)", () => {
       new NuGetV3ApiClient(noOpLogger),
       new PackageMetadataCache(),
       new TfmCompatibilityService(),
-      new SlnParser(),
-      new SlnxParser(),
-      new BuildConfigDetector(),
-      new BuildConfigParser(noOpLogger),
-      new TfmResolver(new CsprojParser(), noOpLogger),
+      new ProjectTfmResolutionService(
+        new SlnParser(),
+        new SlnxParser(),
+        new BuildConfigDetector(),
+        new BuildConfigParser(noOpLogger),
+        new TfmResolver(new CsprojParser(), noOpLogger),
+      ),
       new ProjectTfmCache(),
       noOpLogger,
     );
