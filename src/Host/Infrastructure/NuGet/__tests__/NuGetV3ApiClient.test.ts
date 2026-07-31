@@ -170,4 +170,68 @@ describe("NuGetV3ApiClient", () => {
 
     await expect(client.searchPackage("Paquet.Prive")).rejects.toMatchObject({ kind: "NotFound" });
   });
+
+  it("searchPackages construit l'URL de recherche paginée et mappe les résultats", async () => {
+    fetchMock
+      .mockResolvedValueOnce(okResponse(fixture("service-index.json")))
+      .mockResolvedValueOnce(okResponse(fixture("search-refit.json")));
+
+    const page = await client.searchPackages("refit", {
+      skip: 0,
+      take: 25,
+      includePrerelease: false,
+    });
+
+    expect(fetchMock.mock.calls[1][0]).toBe(
+      "https://azuresearch-usnc.nuget.org/query?q=refit&skip=0&take=25&prerelease=false&semVerLevel=2.0.0",
+    );
+    expect(page.entries).toEqual([
+      {
+        id: "Refit",
+        version: "7.0.0",
+        description: "The automatic type-safe REST library for .NET",
+        totalDownloads: 120000000,
+        verified: true,
+        iconUrl: "https://api.nuget.org/v3-flatcontainer/refit/7.0.0/icon",
+      },
+      {
+        id: "Refit.HttpClientFactory",
+        version: "7.0.0",
+        description: "HttpClientFactory support for Refit",
+        totalDownloads: 80000000,
+        verified: true,
+        iconUrl: undefined,
+      },
+    ]);
+    // Le fixture contient 3 entrées brutes, dont une sans version (donc non
+    // installable, filtrée des `entries`) : rawCount doit rester à 3, seul
+    // juge de la plénitude de la page — pas la longueur post-filtrage.
+    expect(page.rawCount).toBe(3);
+  });
+
+  it("searchPackages encode les termes et transmet la pagination et les préversions", async () => {
+    fetchMock
+      .mockResolvedValueOnce(okResponse(fixture("service-index.json")))
+      .mockResolvedValueOnce(okResponse({ totalHits: 0, data: [] }));
+
+    await client.searchPackages("entity framework", {
+      skip: 50,
+      take: 25,
+      includePrerelease: true,
+    });
+
+    expect(fetchMock.mock.calls[1][0]).toBe(
+      "https://azuresearch-usnc.nuget.org/query?q=entity%20framework&skip=50&take=25&prerelease=true&semVerLevel=2.0.0",
+    );
+  });
+
+  it("searchPackages rend une liste vide quand la réponse n'a pas de data", async () => {
+    fetchMock
+      .mockResolvedValueOnce(okResponse(fixture("service-index.json")))
+      .mockResolvedValueOnce(okResponse({ totalHits: 0 }));
+
+    await expect(
+      client.searchPackages("rien", { skip: 0, take: 25, includePrerelease: false }),
+    ).resolves.toEqual({ entries: [], rawCount: 0 });
+  });
 });

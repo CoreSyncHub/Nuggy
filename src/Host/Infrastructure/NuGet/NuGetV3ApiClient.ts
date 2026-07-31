@@ -38,6 +38,22 @@ export interface SearchResult {
   licenseUrl?: string;
   tags: string[];
 }
+/** Résultat brut du SearchQueryService, avant estampillage par une source. */
+export interface SearchPackagesEntry {
+  id: string;
+  version: string;
+  description: string;
+  totalDownloads?: number;
+  verified: boolean;
+  iconUrl?: string;
+}
+
+export interface SearchPackagesPage {
+  entries: SearchPackagesEntry[];
+  /** Longueur du tableau `data` reçu de l'API, avant le filtrage des entrées
+   *  sans `id`/`version` : seul juge de savoir si la page brute est pleine. */
+  rawCount: number;
+}
 
 const SERVICE_INDEX_URL = "https://api.nuget.org/v3/index.json";
 const REQUEST_TIMEOUT_MS = 10_000;
@@ -95,6 +111,41 @@ export class NuGetV3ApiClient {
       licenseUrl: entry.licenseUrl,
       tags: entry.tags ?? [],
     };
+  }
+
+  /**
+   * Recherche libre paginée. Contrairement à `searchPackage`, qui résout un id
+   * exact, celle-ci sert la liste de résultats de la webview.
+   */
+  public async searchPackages(
+    terms: string,
+    options: { skip: number; take: number; includePrerelease: boolean },
+  ): Promise<SearchPackagesPage> {
+    const { searchQueryUrl } = await this.getServiceIndex();
+    const url =
+      `${searchQueryUrl}?q=${encodeURIComponent(terms)}` +
+      `&skip=${options.skip}&take=${options.take}` +
+      `&prerelease=${options.includePrerelease}&semVerLevel=2.0.0`;
+    const body = (await this.fetchJson(url)) as { data?: RawSearchEntry[] };
+    const rawEntries = body.data ?? [];
+    const entries = rawEntries
+      // Un résultat sans version n'est pas installable : l'écarter ici évite de
+      // propager un hit inutilisable jusqu'aux boutons d'installation. Le compte
+      // AVANT ce filtre est conservé à part (rawCount) : c'est lui qui juge si la
+      // page brute est pleine, pas le nombre d'entrées survivantes.
+      .filter(
+        (entry): entry is RawSearchEntry & { id: string; version: string } =>
+          typeof entry.id === "string" && typeof entry.version === "string",
+      )
+      .map((entry) => ({
+        id: entry.id,
+        version: entry.version,
+        description: entry.description ?? "",
+        totalDownloads: entry.totalDownloads,
+        verified: entry.verified === true,
+        iconUrl: entry.iconUrl,
+      }));
+    return { entries, rawCount: rawEntries.length };
   }
 
   private getServiceIndex(): Promise<{ registrationsBaseUrl: string; searchQueryUrl: string }> {
@@ -170,6 +221,9 @@ interface RawCatalogEntry {
   }>;
 }
 interface RawSearchEntry {
+  id?: string;
+  version?: string;
+  description?: string;
   verified?: boolean;
   authors?: string | string[];
   owners?: string | string[];
