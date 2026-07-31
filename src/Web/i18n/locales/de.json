@@ -12,7 +12,9 @@
   },
   "tabs": {
     "installed": "Installiert",
-    "search": "Durchsuchen"
+    "search": "Durchsuchen",
+    "packages": "Pakete",
+    "logs": "Protokolle"
   },
   "packages": {
     "noPackages": "Keine Pakete gefunden",
@@ -31,7 +33,78 @@
     "availableUpdates": "Aktualisierungen verfügbar",
     "upToDate": "Auf dem neuesten Stand",
     "authors": "Autoren",
-    "downloads": "Downloads"
+    "downloads": "Downloads",
+    "noPackageSelected": "Wählen Sie ein Paket aus",
+    "detail": {
+      "loading": "Wird geladen…",
+      "fetchStatus": {
+        "offline": "nuget.org nicht erreichbar — Paket erneut auswählen, um es zu wiederholen",
+        "notFound": "Paket auf nuget.org nicht gefunden (privater Feed?)",
+        "rateLimited": "nuget.org drosselt die Anfragen — versuchen Sie es gleich erneut"
+      },
+      "verifiedLabel": "verifiziert",
+      "verifiedTooltip": "Reserviertes Präfix — verifizierter Herausgeber",
+      "microsoftTooltip": "Offizielles Microsoft-Paket",
+      "byAuthor": "von {{author}}",
+      "projectSiteLink": "Projektseite",
+      "license": "Lizenz",
+      "sourceComingSoon": "Quellenauswahl: in Kürze — Epic Konfiguration",
+      "prereleaseLabel": "Vorabversionen",
+      "installEverywhere": "Überall installieren",
+      "updateAllEverywhere": "Überall aktualisieren",
+      "uninstallEverywhere": "Überall deinstallieren"
+    },
+    "dependencies": {
+      "title": "Abhängigkeiten nach Framework (v {{version}})",
+      "empty": "Keine Abhängigkeiten",
+      "allFrameworks": "Alle Frameworks"
+    },
+    "installations": {
+      "title": "Projekte",
+      "legacyTooltip": "Legacy-Projekt — auf PackageReference migrieren",
+      "installTooltip": "In diesem Projekt installieren",
+      "updateTooltip": "Auf die ausgewählte Version aktualisieren",
+      "uninstallTooltip": "Aus diesem Projekt deinstallieren",
+      "cpmManagedTooltip": "Zentral verwaltet — globale Aktualisierung verwenden",
+      "count": "{{installed}} installiert / {{total}}"
+    },
+    "list": {
+      "filterPlaceholder": "Filtern oder auf nuget.org suchen…",
+      "verdictOk": "Kompatibel",
+      "filterAll": "Alle",
+      "filterOutOfTfm": "Außerhalb des TFM",
+      "searchHint": "Geben Sie mindestens 2 Zeichen ein",
+      "searching": "Suche läuft…",
+      "noResults": "Keine Ergebnisse",
+      "allSourcesFailed": "Keine Quelle konnte abgefragt werden",
+      "failedSources": "Nicht erreichbare Quellen: {{names}}",
+      "loadMore": "Mehr laden",
+      "includePrerelease": "Vorabversionen",
+      "downloads": "{{count}} Downloads",
+      "badge": {
+        "update": "Update verfügbar",
+        "updatePartial": "Update für einige Projekte verfügbar",
+        "outOfTfm": "Neuere Versionen vorhanden, aber nicht für Ihre TFMs",
+        "upToDate": "Aktuell",
+        "unknown": "Informationen nicht verfügbar",
+        "loading": "Wird geladen…"
+      },
+      "sectionInstalled": "Installierte Pakete",
+      "sectionResults": "Suchergebnisse",
+      "noInstalledMatch": "Kein installiertes Paket passt"
+    },
+    "restore": {
+      "running": "Wiederherstellung läuft…",
+      "succeeded": "Wiederherstellung abgeschlossen",
+      "failed": "Wiederherstellung fehlgeschlagen",
+      "timedOut": "Status der Wiederherstellung unbekannt (Zeitüberschreitung)",
+      "viewLogs": "Protokolle anzeigen →",
+      "moreLines": "+{{count}} weitere Zeilen"
+    },
+    "write": {
+      "skipped": "{{count}} Projekt(e) übersprungen: ",
+      "error": "Schreibvorgang fehlgeschlagen: {{message}}"
+    }
   },
   "search": {
     "placeholder": "NuGet-Pakete suchen...",
@@ -58,5 +131,21 @@
     "allProjects": "Alle Projekte",
     "project": "Projekt",
     "projects": "Projekte"
+  },
+  "logs": {
+    "empty": "Noch keine Aktivität",
+    "restoreTitle": "Wiederherstellung — {{solution}}",
+    "running": "läuft…",
+    "durationSeconds": "{{seconds}} s",
+    "exitCode": "Code {{code}}",
+    "whyTitle": "Abhängigkeitsketten (dotnet nuget why)",
+    "operation": {
+      "install": "Installation",
+      "upgrade": "Aktualisierung",
+      "uninstall": "Deinstallation"
+    },
+    "filesChanged": "Geänderte Dateien",
+    "skipped": "Übersprungen",
+    "affectedProjects": "{{count}} Projekt(e)"
   }
 }
