@@ -3,7 +3,7 @@ import {
   type RestoreRunEntryDto,
   type WriteOperationEntryDto,
 } from "@Shared/Features/Dtos/OperationLogDto";
-import { type SkippedProjectDto } from "@Shared/Features/Dtos/PackageWriteResultDto";
+import { type SkippedTargetDto } from "@Shared/Features/Dtos/PackageWriteResultDto";
 
 describe("OperationLogStore", () => {
   beforeEach(() => {
@@ -116,7 +116,7 @@ describe("OperationLogStore", () => {
     const store = new OperationLogStore();
     const affectedProjects = ["/repo/src/App/App.csproj"];
     const filesChanged = ["/repo/src/App/App.csproj"];
-    const skipped: SkippedProjectDto[] = [{ projectPath: "/repo/Skip", reason: "Original" }];
+    const skipped: SkippedTargetDto[] = [{ path: "/repo/Skip", reason: "Original" }];
     store.recordWrite({
       ...writeEntry(),
       affectedProjects,

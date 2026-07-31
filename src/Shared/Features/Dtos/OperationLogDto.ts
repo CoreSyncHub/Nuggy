@@ -1,4 +1,4 @@
-import { type SkippedProjectDto } from "./PackageWriteResultDto";
+import { type SkippedTargetDto } from "./PackageWriteResultDto";
 
 export interface RestoreRunEntryDto {
   kind: "restore";
@@ -23,7 +23,7 @@ export interface WriteOperationEntryDto {
   status: "Ok" | "Error";
   affectedProjects: string[];
   filesChanged: string[];
-  skipped: SkippedProjectDto[];
+  skipped: SkippedTargetDto[];
   error?: string;
 }
 

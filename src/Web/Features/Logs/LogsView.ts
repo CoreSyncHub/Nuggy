@@ -277,7 +277,7 @@ export class LogsView extends LitElement {
             ? html`<div class="sub">
                 <strong>${t.t("logs.skipped")}</strong> :
                 ${entry.skipped.map(
-                  (s) => html`<div>${warningIcon(11)} ${s.projectPath} — ${s.reason}</div>`,
+                  (s) => html`<div>${warningIcon(11)} ${s.path} — ${s.reason}</div>`,
                 )}
               </div>`
             : nothing

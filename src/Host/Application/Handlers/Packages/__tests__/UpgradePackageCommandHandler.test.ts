@@ -257,7 +257,7 @@ EndProject
       status: "Ok",
       filesChanged: [],
       affectedProjects: [],
-      skipped: [{ projectPath: "/Solution/Api/Api.csproj", reason: "wildcard version" }],
+      skipped: [{ path: "/Solution/Api/Api.csproj", reason: "wildcard version" }],
     });
   });
 
@@ -284,7 +284,7 @@ EndProject
       status: "Ok",
       filesChanged: [],
       affectedProjects: [],
-      skipped: [{ projectPath: "/Solution/Core/Core.csproj", reason: "not installed" }],
+      skipped: [{ path: "/Solution/Core/Core.csproj", reason: "not installed" }],
     });
   });
 });
