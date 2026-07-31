@@ -25,6 +25,7 @@ import {
   trashIcon,
 } from "./Icons";
 import { writeActionStyles } from "./WriteActionStyles";
+import { formatCount, formatDate } from "../../Shared/Utils/Formatting";
 import "./DependencyGroups";
 import "./ProjectInstallations";
 import "./WriteStatusBanner";
@@ -244,10 +245,6 @@ export class PackageDetail extends LitElement {
     return versions.find((v) => v.version === this.selectedVersion) ?? versions[0];
   }
 
-  private formatDownloads(n?: number): string {
-    return n === undefined ? "" : n.toLocaleString("fr-FR");
-  }
-
   /** Émet un événement d'écriture global (bubbles+composed, comme package-selected) : la
    *  confirmation pour une action "partout" se fait côté Host — ce composant se contente d'envoyer.
    *  Sans projectPath, PackagesView.onWriteCommand sait qu'il s'agit d'une action globale. */
@@ -274,10 +271,9 @@ export class PackageDetail extends LitElement {
     }
 
     const current = this.currentVersion;
-    const published = this.info.publishedUtc
-      ? new Date(this.info.publishedUtc).toLocaleDateString("fr-FR")
-      : undefined;
-    const downloads = this.formatDownloads(this.info.totalDownloads) || undefined;
+    const language = this.i18n.getCurrentLanguage();
+    const published = formatDate(this.info.publishedUtc, language) || undefined;
+    const downloads = formatCount(this.info.totalDownloads, language) || undefined;
 
     return html` <div class="header">
         ${
