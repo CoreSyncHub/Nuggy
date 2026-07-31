@@ -48,7 +48,24 @@ export class UpgradePackageCommandHandler implements ICommandHandler<
   ) {}
 
   async Handle(command: UpgradePackageCommand): Promise<PackageWriteResultDto> {
-    const result = await this.handleCore(command);
+    let result: PackageWriteResultDto;
+    try {
+      result = await this.handleCore(command);
+    } catch (error) {
+      // handleCore est conçu pour ne jamais jeter : si cela arrive malgré tout,
+      // l'audit de session ne doit pas garder le silence sur l'opération tentée.
+      this.operationLog.recordWrite({
+        operation: "upgrade",
+        packageId: command.packageId,
+        version: command.version,
+        status: "Error",
+        affectedProjects: [],
+        filesChanged: [],
+        skipped: [],
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
     this.operationLog.recordWrite({
       operation: "upgrade",
       packageId: command.packageId,

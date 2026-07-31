@@ -66,6 +66,41 @@ function createHandler(overrides?: {
   return { handler, restoreScheduler, prompt, metadataCache, tfmCache, operationLog };
 }
 
+describe("journalisation des exceptions inattendues", () => {
+  it("enregistre l'opération tentée puis laisse remonter l'erreur", async () => {
+    // handleCore est conçu pour ne jamais jeter ; si cela arrivait, l'audit de
+    // session resterait muet sur l'écriture tentée. On force donc l'exception
+    // par une résolution de cibles qui échoue.
+    const operationLog = new OperationLogStore();
+    const targetResolver = {
+      resolveTargets: jest.fn().mockRejectedValue(new Error("solution illisible")),
+    };
+    const handler = new UninstallPackageCommandHandler(
+      operationLog,
+      targetResolver as never,
+      new MsBuildTextEditor(),
+      { schedule: jest.fn() } as unknown as RestoreScheduler,
+      new PackageMetadataCache(),
+      new ProjectTfmCache(),
+      { confirm: jest.fn() } as unknown as IUserPrompt,
+      noOpLogger,
+    );
+
+    await expect(
+      handler.Handle(new UninstallPackageCommand("Serilog", "/Solution/MySolution.sln")),
+    ).rejects.toThrow("solution illisible");
+
+    const [entry] = operationLog.getEntries() as WriteOperationEntryDto[];
+    expect(entry).toMatchObject({
+      kind: "write",
+      operation: "uninstall",
+      packageId: "Serilog",
+      status: "Error",
+      error: "solution illisible",
+    });
+  });
+});
+
 /**
  * Contrairement aux autres handlers d'écriture, l'orphelinage CPM exige une
  * RE-résolution des cibles APRÈS écriture : `writeFileSync` doit donc
