@@ -5,6 +5,7 @@ import { type PackageSearchHitDto } from "@Shared/Features/Dtos/SearchResultsDto
 import { TranslationService } from "../../Core/Services/TranslationService";
 import { defaultPackageIcon } from "./DefaultPackageIcon";
 import { verifiedBadgeIcon, VERIFIED_BLUE } from "./VerifiedBadgeIcon";
+import { formatCount } from "../../Shared/Utils/Formatting";
 
 /**
  * Ligne de résultat distant. Volontairement sans badge de compatibilité : la
@@ -104,7 +105,7 @@ export class PackageSearchItem extends LitElement {
         ? nothing
         : html`<span class="meta"
             >${this.i18n.t("packages.list.downloads", {
-              count: this.hit.totalDownloads.toLocaleString("fr-FR"),
+              count: formatCount(this.hit.totalDownloads, this.i18n.getCurrentLanguage()),
             })}</span
           >`;
     return html`<div
