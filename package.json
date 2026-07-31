@@ -100,7 +100,7 @@
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint src --ignore-pattern src/Web",
+    "lint": "eslint src",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
