@@ -1,0 +1,100 @@
+###############################################################################
+# Normalize line endings and ensure UTF-8 working-tree encoding for text files.
+# Strong recommended config for cross-platform .NET / VSCode / WSL setups.
+###############################################################################
+* text=auto eol=lf
+* text working-tree-encoding=UTF-8
+
+###############################################################################
+# Explicit text files — force LF consistency and UTF-8.
+###############################################################################
+*.cs        text eol=lf
+*.csproj    text eol=lf
+*.sln       text eol=lf
+*.slnx      text eol=lf
+*.props     text eol=lf
+*.targets   text eol=lf
+*.xml       text eol=lf
+*.js        text eol=lf
+*.ts        text eol=lf
+*.json      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.md        text eol=lf
+*.markdown  text eol=lf
+*.txt       text eol=lf
+*.ps1       text eol=lf
+*.sh        text eol=lf
+# Windows scripts
+*.bat       text eol=crlf
+
+Dockerfile    text eol=lf
+.editorconfig text eol=lf
+.vscode/*     text eol=lf
+
+###############################################################################
+# Binary files (do not diff or attempt normalization)
+###############################################################################
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.bmp    binary
+*.zip    binary
+*.nupkg  binary
+*.exe    binary
+*.dll    binary
+*.so     binary
+*.dylib  binary
+*.pdb    binary
+*.mp4    binary
+*.mov    binary
+*.pdf    binary
+
+bin/**   -text
+obj/**   -text
+.vs/**   -text
+.idea/** -text
+
+###############################################################################
+# Diff improvements
+###############################################################################
+*.cs      diff=csharp
+*.json    diff=json
+*.xml     diff=xml
+*.csproj  diff=xml
+*.sln     diff=cs
+*.ps1     diff=ps1
+*.sh      diff=sh
+*.md      diff=markdown
+
+###############################################################################
+# KEEP historical suggestions from the previous file (still commented)
+###############################################################################
+# Merge drivers for solution/project files (disabled by default)
+#*.sln       merge=binary
+#*.slnx      merge=binary
+#*.csproj    merge=binary
+#*.vbproj    merge=binary
+#*.vcxproj   merge=binary
+#*.vcproj    merge=binary
+#*.dbproj    merge=binary
+#*.fsproj    merge=binary
+#*.lsproj    merge=binary
+#*.wixproj   merge=binary
+#*.modelproj merge=binary
+#*.sqlproj   merge=binary
+#*.wwaproj   merge=binary
+
+# Document diffing via `astextplain` (disabled — rarely useful)
+#*.doc   diff=astextplain
+#*.docx  diff=astextplain
+#*.dot   diff=astextplain
+#*.pdf   diff=astextplain
+#*.rtf   diff=astextplain
+
+###############################################################################
+# Preserve executable bit for shell scripts
+###############################################################################
+*.sh text eol=lf working-tree-encoding=UTF-8
