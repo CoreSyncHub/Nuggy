@@ -2,9 +2,9 @@ export type FrameworkFamily =
   "netframework" | "netstandard" | "netcoreapp" | "net5plus" | "unknown";
 
 /**
- * Objet-valeur représentant un Target Framework Moniker parsé.
- * Accepte les formats courts (net8.0, net472, netstandard2.0) et les formats
- * longs des registrations nuget.org (.NETStandard2.0, .NETFramework4.5).
+ * Value object representing a parsed Target Framework Moniker (TFM).
+ * Accepts both short forms (net8.0, net472, netstandard2.0) and long forms
+ * from nuget.org registrations (.NETStandard2.0, .NETFramework4.5).
  */
 export class NuGetFramework {
   private constructor(
@@ -25,7 +25,8 @@ export class NuGetFramework {
       return NuGetFramework.unknown();
     }
 
-    // Formats longs de la registration → forme courte équivalente
+    // Long forms from nuget.org registration → equivalent short form
+    // .NETStandard2.0 → netstandard2.0
     const longForms: Array<[RegExp, FrameworkFamily]> = [
       [/^\.netstandard(\d+)\.(\d+)$/, "netstandard"],
       [/^\.netcoreapp(\d+)\.(\d+)$/, "netcoreapp"],
@@ -38,7 +39,7 @@ export class NuGetFramework {
       }
     }
 
-    // net5.0+ : version avec point, suffixe plateforme optionnel
+    // net5.0+ : version with dot, optional platform suffix
     const modern = normalized.match(/^net(\d+)\.(\d+)(?:-([a-z]+)[\d.]*)?$/);
     if (modern && Number(modern[1]) >= 5) {
       return new NuGetFramework("net5plus", Number(modern[1]), Number(modern[2]), 0, modern[3]);
@@ -54,7 +55,7 @@ export class NuGetFramework {
       return new NuGetFramework("netcoreapp", Number(netcoreapp[1]), Number(netcoreapp[2]), 0);
     }
 
-    // .NET Framework court : net45, net472, net48 (chiffres = composantes de version)
+    // Short .NET Framework forms : net45, net472, net48 (digits = version components)
     const legacy = normalized.match(/^net(\d)(\d)(\d)?$/);
     if (legacy) {
       return new NuGetFramework(
@@ -68,7 +69,11 @@ export class NuGetFramework {
     return NuGetFramework.unknown();
   }
 
-  /** Comparaison de version au sein d'une même famille (patch inclus). */
+  /**
+   * Compares the version of this framework with another framework of the same family.
+   * @param other The other NuGetFramework to compare with.
+   * @returns True if this framework's version is greater than or equal to the other framework's version; false otherwise.
+   */
   public versionAtLeast(other: NuGetFramework): boolean {
     if (this.major !== other.major) {
       return this.major > other.major;

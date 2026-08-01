@@ -17,44 +17,44 @@ function props(directory: string): BuildConfigFile {
 const PROJECT = "/repo/src/Api/Api.csproj";
 
 describe("findGoverningCpmFile", () => {
-  it("retient le fichier CPM le plus proche du projet, pas le premier de la liste", () => {
-    // Ordre de découverte volontairement défavorable : la racine vient en premier.
+  it("keeps the CPM file closest to the project, not the first one in the list", () => {
+    // Deliberately unfavourable discovery order: the root comes first.
     const files = [cpm("/repo"), cpm("/repo/src")];
     expect(findGoverningCpmFile(PROJECT, files)).toBe("/repo/src/Directory.Packages.props");
   });
 
-  it("est insensible à l'ordre de la liste", () => {
+  it("is insensitive to the order of the list", () => {
     const files = [cpm("/repo/src"), cpm("/repo")];
     expect(findGoverningCpmFile(PROJECT, files)).toBe("/repo/src/Directory.Packages.props");
   });
 
-  it("accepte un fichier situé dans le répertoire même du projet", () => {
+  it("accepts a file sitting in the project's own directory", () => {
     const files = [cpm("/repo"), cpm("/repo/src/Api")];
     expect(findGoverningCpmFile(PROJECT, files)).toBe("/repo/src/Api/Directory.Packages.props");
   });
 
-  it("ignore un fichier CPM qui n'est pas un ancêtre du projet", () => {
-    // Cas qui motive le correctif : un CPM d'un autre domaine ne gouverne pas ce projet.
+  it("ignores a CPM file that is not an ancestor of the project", () => {
+    // The case that motivates the fix: a CPM file from another domain does not govern this project.
     const files = [cpm("/repo/tests")];
     expect(findGoverningCpmFile(PROJECT, files)).toBeUndefined();
   });
 
-  it("ne se laisse pas piéger par un préfixe de nom de répertoire", () => {
-    // « /repo/src-legacy » commence par « /repo/src » sans en être un ancêtre.
+  it("is not fooled by a directory name prefix", () => {
+    // "/repo/src-legacy" starts with "/repo/src" without being an ancestor of it.
     const files = [cpm("/repo/src-legacy")];
     expect(findGoverningCpmFile(PROJECT, files)).toBeUndefined();
   });
 
-  it("ignore les fichiers de configuration qui ne sont pas des Directory.Packages.props", () => {
+  it("ignores configuration files that are not Directory.Packages.props", () => {
     const files = [props("/repo/src"), cpm("/repo")];
     expect(findGoverningCpmFile(PROJECT, files)).toBe("/repo/Directory.Packages.props");
   });
 
-  it("rend undefined quand aucun fichier de configuration n'est fourni", () => {
+  it("returns undefined when no configuration file is supplied", () => {
     expect(findGoverningCpmFile(PROJECT, [])).toBeUndefined();
   });
 
-  it("gère un fichier CPM à la racine du système de fichiers", () => {
+  it("handles a CPM file at the filesystem root", () => {
     expect(findGoverningCpmFile(PROJECT, [cpm("/")])).toBe("/Directory.Packages.props");
   });
 });

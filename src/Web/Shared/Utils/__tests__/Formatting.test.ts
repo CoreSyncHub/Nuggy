@@ -3,31 +3,31 @@ import { formatCount, formatDate } from "../Formatting";
 const digitsOf = (s: string) => s.replace(/\D/g, "");
 
 describe("formatCount", () => {
-  it("groupe les milliers selon la langue active", () => {
+  it("groups thousands according to the active language", () => {
     expect(digitsOf(formatCount(1234567, "en"))).toBe("1234567");
     expect(digitsOf(formatCount(1234567, "fr"))).toBe("1234567");
-    // Le séparateur diffère d'une langue à l'autre : c'est tout l'objet du correctif,
-    // le formatage était figé en fr-FR quelle que soit la langue de l'interface.
+    // The separator differs from one language to the next: that is the whole point of
+    // the fix, formatting was pinned to fr-FR whatever the interface language.
     expect(formatCount(1234567, "en")).not.toBe(formatCount(1234567, "fr"));
   });
 
-  it("rend une chaîne vide pour une valeur absente", () => {
+  it("returns an empty string for an absent value", () => {
     expect(formatCount(undefined, "fr")).toBe("");
   });
 
-  it("formate zéro plutôt que de le confondre avec une absence", () => {
+  it("formats zero rather than confusing it with an absence", () => {
     expect(formatCount(0, "en")).toBe("0");
   });
 
-  it("ne jette pas sur une étiquette de langue invalide", () => {
-    // currentLanguage vient d'un réglage VS Code, mais un repli silencieux vaut
-    // mieux qu'une exception qui casserait le rendu de toute la vue.
-    expect(digitsOf(formatCount(42, "pas une langue"))).toBe("42");
+  it("does not throw on an invalid language tag", () => {
+    // currentLanguage comes from a VS Code setting, but a silent fallback beats
+    // an exception that would break the rendering of the whole view.
+    expect(digitsOf(formatCount(42, "not a language"))).toBe("42");
   });
 });
 
 describe("formatDate", () => {
-  it("formate une date ISO selon la langue active", () => {
+  it("formats an ISO date according to the active language", () => {
     const en = formatDate("2024-06-08T10:00:00Z", "en");
     const fr = formatDate("2024-06-08T10:00:00Z", "fr");
     expect(en).toContain("2024");
@@ -35,12 +35,12 @@ describe("formatDate", () => {
     expect(en).not.toBe(fr);
   });
 
-  it("rend une chaîne vide pour une date absente ou invalide", () => {
+  it("returns an empty string for an absent or invalid date", () => {
     expect(formatDate(undefined, "fr")).toBe("");
-    expect(formatDate("pas une date", "fr")).toBe("");
+    expect(formatDate("not a date", "fr")).toBe("");
   });
 
-  it("ne jette pas sur une étiquette de langue invalide", () => {
-    expect(formatDate("2024-06-08T10:00:00Z", "pas une langue")).toContain("2024");
+  it("does not throw on an invalid language tag", () => {
+    expect(formatDate("2024-06-08T10:00:00Z", "not a language")).toContain("2024");
   });
 });

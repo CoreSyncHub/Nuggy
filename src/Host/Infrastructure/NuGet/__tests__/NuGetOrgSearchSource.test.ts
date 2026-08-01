@@ -6,11 +6,11 @@ function createSource(searchPackages: jest.Mock): NuGetOrgSearchSource {
 }
 
 describe("NuGetOrgSearchSource", () => {
-  it("s'annonce sous le nom nuget.org", () => {
+  it("announces itself under the nuget.org name", () => {
     expect(createSource(jest.fn()).name).toBe("nuget.org");
   });
 
-  it("transmet les termes et les options au client, et estampille la source", async () => {
+  it("passes the terms and options to the client, and stamps the source", async () => {
     const searchPackages = jest.fn().mockResolvedValue({
       entries: [
         {
@@ -47,10 +47,10 @@ describe("NuGetOrgSearchSource", () => {
     expect(page.rawCount).toBe(1);
   });
 
-  it("propage rawCount du client tel quel, même quand des entrées ont été filtrées côté client", async () => {
-    // Le client renvoie 2 entrées exploitables mais rawCount=3 : une entrée
-    // sans version a été écartée en amont. La source doit transmettre ce
-    // rawCount BRUT sans le recalculer sur les hits survivants.
+  it("propagates the client rawCount as is, even when entries were filtered client-side", async () => {
+    // The client returns 2 usable entries but rawCount=3: an entry without a
+    // version was dropped upstream. The source must pass that RAW rawCount along
+    // without recomputing it from the surviving hits.
     const searchPackages = jest.fn().mockResolvedValue({
       entries: [
         { id: "Refit", version: "7.0.0", description: "REST library", verified: true },
@@ -66,7 +66,7 @@ describe("NuGetOrgSearchSource", () => {
     expect(page.rawCount).toBe(3);
   });
 
-  it("laisse remonter l'erreur du client : c'est le service qui décide de l'isoler", async () => {
+  it("lets the client error propagate: it is the service that decides to isolate it", async () => {
     const source = createSource(jest.fn().mockRejectedValue(new Error("hors ligne")));
     await expect(
       source.search("refit", { skip: 0, take: 25, includePrerelease: false }),

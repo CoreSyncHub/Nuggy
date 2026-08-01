@@ -2,9 +2,9 @@ export type TranslationDictionary = Record<string, unknown>;
 export type TranslationParams = Record<string, string | number>;
 
 /**
- * Résolution d'une clé en notation pointée dans un dictionnaire de traductions.
- * Fonctions pures, sans `fetch` ni `window` : c'est ce qui les rend testables,
- * là où `TranslationService` dépend de l'environnement de la webview.
+ * Resolution of a dot-notation key inside a translation dictionary.
+ * Pure functions, no `fetch` and no `window`: that is what makes them testable,
+ * where `TranslationService` depends on the webview environment.
  */
 export function lookupTranslation(
   dictionary: TranslationDictionary,
@@ -15,18 +15,18 @@ export function lookupTranslation(
     if (typeof value !== "object" || value === null) {
       return undefined;
     }
-    // hasOwnProperty : sans cette garde, des clés comme « constructor » ou
-    // « toString » remonteraient un membre du prototype au lieu d'une traduction.
+    // hasOwnProperty: without this guard, keys such as "constructor" or
+    // "toString" would surface a prototype member instead of a translation.
     if (!Object.prototype.hasOwnProperty.call(value, segment)) {
       return undefined;
     }
     value = (value as Record<string, unknown>)[segment];
   }
-  // Un nœud intermédiaire n'est pas une traduction affichable.
+  // An intermediate node is not a displayable translation.
   return typeof value === "string" ? value : undefined;
 }
 
-/** Substitue les paramètres `{{nom}}` ; un paramètre non fourni reste littéral. */
+/** Substitutes `{{name}}` parameters; a parameter that is not supplied stays literal. */
 export function interpolate(text: string, params: TranslationParams): string {
   return text.replace(/\{\{(\w+)\}\}/g, (match, key: string) =>
     key in params ? String(params[key]) : match,
@@ -34,11 +34,11 @@ export function interpolate(text: string, params: TranslationParams): string {
 }
 
 /**
- * Traduction avec repli par clé sur l'anglais. Une locale partielle affiche donc
- * de l'anglais là où il lui manque une clé, au lieu du chemin brut — un
- * dictionnaire incomplet ne peut plus faire apparaître « packages.list.loadMore »
- * dans l'interface. La clé elle-même ne subsiste qu'en dernier recours, quand
- * aucun des deux dictionnaires ne la connaît.
+ * Translation with a per-key fallback to English. A partial locale therefore
+ * displays English wherever a key is missing, instead of the raw path — an
+ * incomplete dictionary can no longer surface "packages.list.loadMore" in the
+ * interface. The key itself survives only as a last resort, when neither
+ * dictionary knows it.
  */
 export function translate(
   primary: TranslationDictionary,

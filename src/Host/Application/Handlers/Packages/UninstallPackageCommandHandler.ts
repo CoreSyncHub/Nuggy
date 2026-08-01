@@ -22,18 +22,17 @@ import { USER_PROMPT, type IUserPrompt } from "../../Abstractions/Prompt/IUserPr
 import { type ILogger, LOGGER } from "../../Abstractions/Log/ILogger";
 
 /**
- * Retire un package d'un projet explicite, ou de tous les projets où il est
- * déjà installé si `projectPath` est absent.
+ * Uninstalls a package from a specific project, or from all projects where it is
+ * already installed if `projectPath` is not provided.
  *
- * Contrairement à `UpgradePackageCommandHandler`, retirer une
- * `<PackageReference>` reste une action par-projet valide même sous CPM (on
- * ne modifie pas la version centrale, seulement la référence locale) : il
- * n'existe donc pas de branche de refus pour une cible CPM explicite. En
- * revanche, une fois tous les retraits appliqués, si plus aucun projet de la
- * solution ne référence le package, le `<PackageVersion>` devenu orphelin
- * est retiré du fichier CPM — ce qui impose de RE-résoudre les cibles après
- * écriture (`PackageWriteTargetResolver.resolveTargets` reflète l'état
- * disque courant).
+ * Unlike `UpgradePackageCommandHandler`, removing a `<PackageReference>`
+ * remains a valid per-project action even under CPM(we do not modify
+ * the central version, only the local reference).
+ * Therefore, there is no rejection branch for an explicit CPM target.
+ * However, once all removals have been applied, if no project in the solution
+ * references the package anymore, the orphaned `<PackageVersion>` is removed
+ * from the CPM file — which requires RE-resolving the targets after writing
+ * (`PackageWriteTargetResolver.resolveTargets` reflects the current disk state).
  */
 @injectable()
 @HandlerFor(UninstallPackageCommand)
@@ -57,8 +56,6 @@ export class UninstallPackageCommandHandler implements ICommandHandler<
     try {
       result = await this.handleCore(command);
     } catch (error) {
-      // handleCore est conçu pour ne jamais jeter : si cela arrive malgré tout,
-      // l'audit de session ne doit pas garder le silence sur l'opération tentée.
       this.operationLog.recordWrite({
         operation: "uninstall",
         packageId: command.packageId,
@@ -165,9 +162,9 @@ export class UninstallPackageCommandHandler implements ICommandHandler<
             filesChanged.add(solutionCpmFilePath);
           }
         } else {
-          // Les csproj ont déjà été écrits avec succès à ce stade : jamais de perte
-          // silencieuse de ce résultat, ni d'exception qui s'échapperait de Handle().
-          const reason = `${cpmResult.reason} (le nettoyage du PackageVersion orphelin de '${command.packageId}' a échoué)`;
+          // The csproj files have already been written successfully at this point: never
+          // lose that result silently, and never let an exception escape Handle().
+          const reason = `${cpmResult.reason} (cleanup of the orphaned PackageVersion for '${command.packageId}' failed)`;
           if (command.projectPath !== undefined) {
             this.invalidateAndSchedule(command.solutionPath, command.packageId, filesChanged);
             return {
@@ -202,11 +199,11 @@ export class UninstallPackageCommandHandler implements ICommandHandler<
   }
 
   /**
-   * Re-résout les cibles d'écriture APRÈS les retraits déjà appliqués sur le
-   * disque, pour déterminer si un projet de la solution référence encore le
-   * package (quel que soit son style). Un échec de résolution n'est jamais
-   * fatal ici : on considère alors, par prudence, que le package est encore
-   * référencé — le `<PackageVersion>` central n'est retiré que sur certitude.
+   *  Re-resolves the write targets AFTER the removals have already been applied on disk,
+   * to determine if any project in the solution still references the package
+   * (regardless of its style). A resolution failure is never fatal here: we then consider,
+   * as a precaution, that the package is still referenced — the central `<PackageVersion>`
+   * is only removed on certainty.
    */
   private async isStillReferenced(solutionPath: string, packageId: string): Promise<boolean> {
     try {
@@ -214,7 +211,7 @@ export class UninstallPackageCommandHandler implements ICommandHandler<
       return targets.some((t) => t.installedVersion !== undefined);
     } catch (error) {
       this.logger.Warning(
-        "Impossible de vérifier si le package est encore référencé après désinstallation : le PackageVersion central est conservé par prudence",
+        "Cannot verify whether the package is still referenced after uninstall: the central PackageVersion is kept out of caution",
         { packageId, error },
       );
       return true;
@@ -222,11 +219,10 @@ export class UninstallPackageCommandHandler implements ICommandHandler<
   }
 
   /**
-   * Retire le `<PackageVersion>` central devenu orphelin (au plus une tentative
-   * par Handle : appelée une seule fois, après tous les retraits). Lecture ET
-   * écriture sont protégées (même discipline que `InstallPackageCommandHandler.
-   * ensureCpmVersion`) : cette méthode ne doit jamais laisser une exception
-   * s'échapper de `Handle()`.
+   * Removes the orphaned central `<PackageVersion>`(at most one attempt per Handle:
+   * called only once, after all removals). Both reading AND writing are protected
+   * (same discipline as `InstallPackageCommandHandler.ensureCpmVersion`): this
+   * method must never let an exception escape from `Handle()`.
    */
   private removeOrphanCpmVersion(
     cpmFilePath: string,
@@ -236,7 +232,7 @@ export class UninstallPackageCommandHandler implements ICommandHandler<
     try {
       cpmContent = fs.readFileSync(cpmFilePath, "utf8");
     } catch {
-      return { ok: false, reason: `lecture du fichier CPM impossible : ${cpmFilePath}` };
+      return { ok: false, reason: `cannot read the CPM file: ${cpmFilePath}` };
     }
     if (!this.editor.findItemElement(cpmContent, "PackageVersion", packageId)) {
       return { ok: true, changed: false };
@@ -248,7 +244,7 @@ export class UninstallPackageCommandHandler implements ICommandHandler<
     try {
       fs.writeFileSync(cpmFilePath, cpmEdit.content);
     } catch {
-      return { ok: false, reason: `écriture du fichier CPM impossible : ${cpmFilePath}` };
+      return { ok: false, reason: `cannot write the CPM file: ${cpmFilePath}` };
     }
     return { ok: true, changed: true };
   }
@@ -261,7 +257,7 @@ export class UninstallPackageCommandHandler implements ICommandHandler<
     try {
       content = fs.readFileSync(filePath, "utf8");
     } catch {
-      return { ok: false, reason: `lecture impossible : ${filePath}` };
+      return { ok: false, reason: `cannot read: ${filePath}` };
     }
     const result = edit(content);
     if (!result.ok) {
@@ -270,7 +266,7 @@ export class UninstallPackageCommandHandler implements ICommandHandler<
     try {
       fs.writeFileSync(filePath, result.content);
     } catch {
-      return { ok: false, reason: `écriture impossible : ${filePath}` };
+      return { ok: false, reason: `cannot write: ${filePath}` };
     }
     return { ok: true };
   }

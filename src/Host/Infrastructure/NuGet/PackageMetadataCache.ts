@@ -4,9 +4,9 @@ import { type PackageUpdateInfoDto } from "@Shared/Features/Dtos/PackageUpdateIn
 const TTL_MS = 30 * 60 * 1000;
 
 /**
- * Cache mémoire des métadonnées nuget.org : TTL 30 min, dédoublonnage des
- * requêtes en vol. Les résultats en échec (fetchStatus !== 'Ok') ne sont pas
- * conservés afin d'être retentés.
+ * In-memory cache of nuget.org metadata: 30 min TTL, in-flight request
+ * deduplication. Failed results (fetchStatus !== 'Ok') are not kept, so they are
+ * retried.
  */
 @singleton()
 export class PackageMetadataCache {
@@ -40,7 +40,7 @@ export class PackageMetadataCache {
     return promise;
   }
 
-  /** Supprime l'entrée en cache (et toute requête en vol) pour cette clé. */
+  /** Drops the cached entry (and any in-flight request) for this key. */
   public invalidate(key: string): void {
     this.entries.delete(key);
     this.inFlight.delete(key);

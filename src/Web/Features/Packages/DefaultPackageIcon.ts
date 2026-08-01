@@ -1,9 +1,9 @@
 import { html, type TemplateResult } from "lit";
 
 /**
- * Logo NuGet simplifié en trait (outline), colorié via currentColor pour
- * suivre le thème (blanc en thème sombre, foncé en thème clair).
- * Sert d'icône par défaut pour les packages sans icône embarquée.
+ * Simplified outline NuGet logo, coloured through currentColor so it follows the
+ * theme (white on a dark theme, dark on a light one).
+ * Used as the default icon for packages without an embedded one.
  */
 export function defaultPackageIcon(size: number): TemplateResult {
   return html`<svg

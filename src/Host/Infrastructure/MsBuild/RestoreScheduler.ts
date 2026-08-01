@@ -11,13 +11,13 @@ const RESTORE_TIMEOUT_MS = 300_000;
 const WHY_TIMEOUT_MS = 30_000;
 const WHY_MAX_PACKAGES = 3;
 const WHY_MAX_LINES = 40;
-/** Budget total pour l'ensemble des appels `dotnet nuget why` d'un même échec : borne le
- *  retard de publication du Failed (cf. PackagesView.RESTORE_POLL_TIMEOUT_MS côté UI). */
+/** Total budget for all `dotnet nuget why` calls of a single failure: bounds how late
+ *  the Failed status is published (cf. PackagesView.RESTORE_POLL_TIMEOUT_MS on the UI side). */
 const WHY_TOTAL_BUDGET_MS = 60_000;
 
 /**
- * Programme les dotnet restore : débounce 300 ms, jamais deux runs
- * concurrents (le suivant s'enchaîne), statut consultable par query.
+ * Schedules dotnet restore runs: 300 ms debounce, never two concurrent runs
+ * (the next one chains after), status readable through a query.
  */
 @singleton()
 export class RestoreScheduler {
@@ -61,12 +61,12 @@ export class RestoreScheduler {
         path.dirname(solutionPath),
         RESTORE_TIMEOUT_MS,
       );
-      this.logger.Info("dotnet restore terminé", { solutionPath, exitCode: result.exitCode });
+      this.logger.Info("dotnet restore finished", { solutionPath, exitCode: result.exitCode });
       this.logger.Debug(result.output);
       const terminal = this.toStatus(result, runId);
       const messagesBeforeWhy = terminal.messages.length;
-      // Un run est déjà en attente : on va republier "Running" ci-dessous, l'enrichissement
-      // serait du travail jeté — on le saute pour ne pas retarder la publication.
+      // A run is already pending: we are about to republish "Running" below, so the
+      // enrichment would be wasted work — skip it rather than delay publication.
       if (!this.pendingSolution && terminal.status === "Failed") {
         await this.attributeTransitiveDependencies(terminal, solutionPath);
       }
@@ -76,24 +76,24 @@ export class RestoreScheduler {
         output: result.output.split(/\r?\n/),
         whyInsights: terminal.messages.slice(messagesBeforeWhy),
       });
-      // Une écriture est arrivée pendant ce run (pendingSolution déjà réarmé) : ne jamais
-      // publier le terminal du run qui se termine, sous peine de faire croire au polling
-      // UI que TOUT est fini alors qu'un second run va démarrer et écraser ce résultat.
+      // A write landed during this run (pendingSolution already re-armed): never publish
+      // the terminal status of the finishing run, or the UI polling would believe
+      // EVERYTHING is done while a second run is about to start and overwrite that result.
       this.status = this.pendingSolution ? { status: "Running", messages: [], runId } : terminal;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      this.logger.Error(`dotnet restore a échoué`, error instanceof Error ? error : undefined, {
+      this.logger.Error(`dotnet restore failed`, error instanceof Error ? error : undefined, {
         solutionPath,
       });
       const terminal: RestoreStatusDto = {
         status: "Failed",
-        messages: [`erreur d'exécution du processus: ${errorMessage}`],
+        messages: [`process execution error: ${errorMessage}`],
         runId,
         finishedAtUtc: new Date().toISOString(),
       };
       this.operationLog.completeRestore(runId, {
         status: "Failed",
-        output: [`erreur d'exécution du processus: ${errorMessage}`],
+        output: [`process execution error: ${errorMessage}`],
         whyInsights: [],
       });
       this.status = this.pendingSolution ? { status: "Running", messages: [], runId } : terminal;
@@ -130,18 +130,19 @@ export class RestoreScheduler {
       .map((line) => line.trim());
     return {
       status: "Failed",
-      messages: errors.length > 0 ? errors : [`dotnet restore a échoué (code ${result.exitCode})`],
+      messages:
+        errors.length > 0 ? errors : [`dotnet restore failed (exit code ${result.exitCode})`],
       runId,
       finishedAtUtc,
     };
   }
 
   /**
-   * Pour un échec de restore portant des erreurs NuGet (NU****), tente d'identifier via
-   * `dotnet nuget why` quels packages directs introduisent chaque package transitif en
-   * faute, et complète les messages du statut en conséquence. Best-effort : toute
-   * défaillance de `dotnet nuget why` (exit non nul, timeout, exitCode null, rejet) est
-   * loguée puis ignorée — le Failed d'origine ne doit jamais être retardé indéfiniment.
+   * For a restore failure carrying NuGet errors (NU****), tries to identify through
+   * `dotnet nuget why` which direct packages pull in each offending transitive package,
+   * and completes the status messages accordingly. Best-effort: any failure of
+   * `dotnet nuget why` (non-zero exit, timeout, null exitCode, rejection) is logged then
+   * ignored — the original Failed status must never be delayed indefinitely.
    */
   private async attributeTransitiveDependencies(
     status: RestoreStatusDto,
@@ -152,7 +153,7 @@ export class RestoreScheduler {
     for (const packageId of packageIds) {
       const remaining = deadline - Date.now();
       if (remaining <= 0) {
-        this.logger.Warning("dotnet nuget why : budget d'enrichissement épuisé, paquet ignoré", {
+        this.logger.Warning("dotnet nuget why: enrichment budget exhausted, package skipped", {
           solutionPath,
           packageId,
         });
@@ -166,7 +167,7 @@ export class RestoreScheduler {
           Math.min(WHY_TIMEOUT_MS, remaining),
         );
         if (result.timedOut || result.exitCode !== 0) {
-          this.logger.Warning("dotnet nuget why a échoué", {
+          this.logger.Warning("dotnet nuget why failed", {
             solutionPath,
             packageId,
             exitCode: result.exitCode,
@@ -185,11 +186,11 @@ export class RestoreScheduler {
           continue;
         }
         status.messages.push(
-          `— dépendances de '${packageId}' (dotnet nuget why) —`,
+          `— dependencies of '${packageId}' (dotnet nuget why) —`,
           ...lines.slice(0, WHY_MAX_LINES),
         );
       } catch (error) {
-        this.logger.Warning("dotnet nuget why a échoué", {
+        this.logger.Warning("dotnet nuget why failed", {
           solutionPath,
           packageId,
           error: error instanceof Error ? error.message : String(error),
@@ -198,7 +199,7 @@ export class RestoreScheduler {
     }
   }
 
-  /** Ids de packages candidats pour `dotnet nuget why`, extraits des lignes `error NU****`. */
+  /** Candidate package ids for `dotnet nuget why`, extracted from the `error NU****` lines. */
   private extractCandidatePackageIds(messages: string[]): string[] {
     const ids: string[] = [];
     for (const line of messages) {

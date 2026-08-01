@@ -118,7 +118,7 @@ describe("Acceptance: Package updates (Epic 2)", () => {
 
   afterEach(() => jest.restoreAllMocks());
 
-  it("liste locale puis verdicts réseau, de bout en bout", async () => {
+  it("local list then network verdicts, end to end", async () => {
     const listHandler = createSolutionPackagesHandler();
     const list = await listHandler.Handle(new GetSolutionPackagesQuery("/Solution/MySolution.sln"));
 

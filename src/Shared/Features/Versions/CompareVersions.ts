@@ -1,12 +1,12 @@
 /**
- * Comparaison de versions NuGet (SemVer 2.0.0), partagée par le Host (tri des
- * versions d'une registration) et la webview (détection d'une mise à jour
- * disponible). Fonctions pures, sans I/O : elles vivent en Shared pour ne pas
- * obliger le bundle webview à importer un handler Host (et ses dépendances fs
- * et vscode) pour une simple comparaison.
+ * NuGet version comparison (SemVer 2.0.0), shared by the Host (sorting the
+ * versions of a registration) and the webview (detecting an available update).
+ * Pure functions, no I/O: they live in Shared so the webview bundle never has to
+ * import a Host handler — and its fs and vscode dependencies — just to compare
+ * two versions.
  */
 
-/** Tri décroissant : composantes numériques, préversion après la stable de même numéro (SemVer 2.0.0). */
+/** Descending order: numeric components, prerelease after the stable of the same number (SemVer 2.0.0). */
 export function compareVersionsDesc(a: string, b: string): number {
   const [aBase, aPre] = splitPrerelease(stripBuildMetadata(a));
   const [bBase, bPre] = splitPrerelease(stripBuildMetadata(b));
@@ -23,20 +23,20 @@ export function compareVersionsDesc(a: string, b: string): number {
   }
   if (aPre === undefined) {
     return -1;
-  } // stable avant la préversion de même base
+  } // stable before the prerelease of the same base
   if (bPre === undefined) {
     return 1;
   }
   return comparePrereleaseIdentifiers(bPre, aPre);
 }
 
-/** Retire les métadonnées de build ('+...') qui ne participent pas à la précédence SemVer. */
+/** Strips build metadata ('+...'), which takes no part in SemVer precedence. */
 function stripBuildMetadata(version: string): string {
   const plusIndex = version.indexOf("+");
   return plusIndex === -1 ? version : version.slice(0, plusIndex);
 }
 
-/** Sépare la base ('X.Y.Z') de la préversion sur le premier '-' seulement. */
+/** Splits the base ('X.Y.Z') from the prerelease on the first '-' only. */
 function splitPrerelease(version: string): [string, string | undefined] {
   const dashIndex = version.indexOf("-");
   return dashIndex === -1
@@ -44,18 +44,18 @@ function splitPrerelease(version: string): [string, string | undefined] {
     : [version.slice(0, dashIndex), version.slice(dashIndex + 1)];
 }
 
-/** Composante non numérique (ex. build metadata résiduelle) : ne fait pas échouer la comparaison. */
+/** Non-numeric component (e.g. leftover build metadata): must not fail the comparison. */
 function toNumberOrZero(component: string): number {
   const n = Number(component);
   return Number.isNaN(n) ? 0 : n;
 }
 
 /**
- * Comparaison ASCENDANTE des identifiants de préversion, séparés par '.', selon SemVer 2.0.0 §11 :
- * les identifiants numériques se comparent numériquement, un identifiant numérique est toujours
- * plus petit qu'un identifiant alphanumérique, les identifiants alphanumériques se comparent en
- * ordre ASCII, et un jeu d'identifiants plus court est plus petit lorsque les identifiants communs
- * sont égaux.
+ * ASCENDING comparison of prerelease identifiers, separated by '.', per SemVer
+ * 2.0.0 §11: numeric identifiers compare numerically, a numeric identifier is
+ * always lower than an alphanumeric one, alphanumeric identifiers compare in
+ * ASCII order, and a shorter set of identifiers is lower when the shared
+ * identifiers are equal.
  */
 function comparePrereleaseIdentifiers(x: string, y: string): number {
   const xIds = x.split(".");

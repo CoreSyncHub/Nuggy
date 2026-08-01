@@ -14,14 +14,14 @@ const CSPROJ = `<Project Sdk="Microsoft.NET.Sdk">
 describe("MsBuildTextEditor - findItemElement / setVersionAttribute", () => {
   const editor = new MsBuildTextEditor();
 
-  it("localise un élément avec ses attributs", () => {
+  it("locates an element together with its attributes", () => {
     const found = editor.findItemElement(CSPROJ, "PackageReference", "Serilog");
     expect(found).toBeDefined();
     expect(found!.attributes).toEqual({ Include: "Serilog", Version: "3.1.0" });
     expect(CSPROJ.slice(found!.start, found!.end)).toContain('Include="Serilog"');
   });
 
-  it("localise le span COMPLET d'un élément en forme bloc, enfants inclus (Finding 1)", () => {
+  it("locates the COMPLETE span of a block-form element, children included (Finding 1)", () => {
     const blockForm = `<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <PackageReference Include="Serilog" Version="3.1.0">
@@ -37,13 +37,13 @@ describe("MsBuildTextEditor - findItemElement / setVersionAttribute", () => {
     );
   });
 
-  it("localise insensiblement à la casse mais ignore les Update=", () => {
+  it("locates case-insensitively but ignores Update= entries", () => {
     expect(editor.findItemElement(CSPROJ, "PackageReference", "newtonsoft.json")).toBeDefined();
     const withUpdate = CSPROJ.replace('Include="Serilog"', 'Update="Serilog"');
     expect(editor.findItemElement(withUpdate, "PackageReference", "Serilog")).toBeUndefined();
   });
 
-  it("remplace uniquement la valeur de Version, reste byte-identique", () => {
+  it("replaces only the Version value, the rest stays byte-identical", () => {
     const result = editor.setVersionAttribute(
       CSPROJ,
       "PackageReference",
@@ -56,7 +56,7 @@ describe("MsBuildTextEditor - findItemElement / setVersionAttribute", () => {
     }
   });
 
-  it("préserve CRLF, BOM et guillemets simples", () => {
+  it("preserves CRLF, BOM and single quotes", () => {
     const crlf = "﻿" + CSPROJ.replace(/\n/g, "\r\n").replace('Version="3.1.0"', "Version='3.1.0'");
     const result = editor.setVersionAttribute(crlf, "PackageReference", "Serilog", "4.0.0");
     expect(result.ok).toBe(true);
@@ -68,7 +68,7 @@ describe("MsBuildTextEditor - findItemElement / setVersionAttribute", () => {
     }
   });
 
-  it("gère un élément multi-lignes", () => {
+  it("handles a multi-line element", () => {
     const multi = CSPROJ.replace(
       '<PackageReference Include="Serilog" Version="3.1.0" />',
       '<PackageReference Include="Serilog"\n                      Version="3.1.0" />',
@@ -80,7 +80,7 @@ describe("MsBuildTextEditor - findItemElement / setVersionAttribute", () => {
     }
   });
 
-  it("échoue proprement : élément introuvable, Version absente, wildcard accepté tel quel", () => {
+  it("fails cleanly: element not found, Version missing, wildcard accepted as is", () => {
     expect(editor.setVersionAttribute(CSPROJ, "PackageReference", "Inconnu", "1.0.0").ok).toBe(
       false,
     );
@@ -99,7 +99,7 @@ describe("MsBuildTextEditor - findItemElement / setVersionAttribute", () => {
     }
   });
 
-  it("tolère les chevrons (>) quotés dans les attributs Condition", () => {
+  it("tolerates quoted angle brackets (>) inside Condition attributes", () => {
     const withCondition = `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -122,7 +122,7 @@ describe("MsBuildTextEditor - findItemElement / setVersionAttribute", () => {
     }
   });
 
-  it("met à jour toutes les occurrences (multi-ItemGroups conditionnés)", () => {
+  it("updates every occurrence (multiple conditioned ItemGroups)", () => {
     const multiGroup = `<Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
     <PackageReference Include="Serilog" Version="3.0.0" />
@@ -135,10 +135,10 @@ describe("MsBuildTextEditor - findItemElement / setVersionAttribute", () => {
     const result = editor.setVersionAttribute(multiGroup, "PackageReference", "Serilog", "4.0.0");
     expect(result.ok).toBe(true);
     if (result.ok) {
-      // Vérifie que les deux occurrences ont été mises à jour
+      // Checks that both occurrences were updated
       const count = (result.content.match(/Version="4\.0\.0"/g) || []).length;
       expect(count).toBe(2);
-      // Vérifie que le reste du fichier est identique
+      // Checks that the rest of the file is unchanged
       const withReplaced = multiGroup
         .replace('Version="3.0.0"', 'Version="4.0.0"')
         .replace('Version="3.1.0"', 'Version="4.0.0"');
@@ -146,22 +146,22 @@ describe("MsBuildTextEditor - findItemElement / setVersionAttribute", () => {
     }
   });
 
-  it("gère les motifs dollar ($$, $`) sans interprétation", () => {
-    // $& et $' sont exclus de ce fixture : ils contiennent '&' et '\'', désormais
-    // refusés par la validation anti-injection XML (Finding 3b) — ce test ne
-    // couvre donc que les motifs de remplacement JS encore valides côté MSBuild.
+  it("handles dollar patterns ($$, $`) without interpreting them", () => {
+    // $& and $' are excluded from this fixture: they contain '&' and '\'', now
+    // refused by the XML anti-injection validation (Finding 3b) — so this test only
+    // covers the JS replacement patterns still valid on the MSBuild side.
     const dollarVersion = "1.0.0$$$`";
     const result = editor.setVersionAttribute(CSPROJ, "PackageReference", "Serilog", dollarVersion);
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.content).toContain(`Version="${dollarVersion}"`);
       expect(result.content).toContain('Version="1.0.0$$$`"');
-      // Vérifier qu'il n'y a pas de duplication causée par l'interprétation de $$ ou $`
+      // Check that no duplication was caused by interpreting $$ or $`
       expect(result.content).not.toContain('Version="1.0.0Version=');
     }
   });
 
-  it("refuse une nouvelle version contenant des caractères d'injection XML (Finding 3b)", () => {
+  it("refuses a new version containing XML injection characters (Finding 3b)", () => {
     for (const bad of ['1.0.0"', "1.0.0'", "1.0.0<x>", "1.0.0&amp;"]) {
       const result = editor.setVersionAttribute(CSPROJ, "PackageReference", "Serilog", bad);
       expect(result.ok).toBe(false);

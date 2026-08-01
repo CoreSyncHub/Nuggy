@@ -49,7 +49,7 @@ export function createDiagnosticHandler(): GetPackageManagementDiagnosticQueryHa
   );
 }
 
-/** Composition partagée de la résolution de solution, utilisée par tous les handlers. */
+/** Shared composition of the solution resolution, used by every handler. */
 function tfmResolution(): ProjectTfmResolutionService {
   return new ProjectTfmResolutionService(
     new SlnParser(),

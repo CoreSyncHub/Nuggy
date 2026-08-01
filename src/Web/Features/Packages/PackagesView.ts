@@ -35,34 +35,34 @@ import "./PackageDetail";
 export class PackagesView extends LitElement {
   private static readonly BATCH_SIZE = 5;
   private static readonly RESTORE_POLL_INTERVAL_MS = 1_000;
-  /** Doit dépasser le budget total côté Host (300 s restore, cf. RestoreScheduler.RESTORE_TIMEOUT_MS,
-   *  + 60 s d'enrichissement dotnet nuget why en cas d'échec, cf. RestoreScheduler.WHY_TOTAL_BUDGET_MS,
-   *  + marge) pour ne jamais couper le polling avant que le Host n'ait pu publier son propre état
-   *  terminal (Finding 4). */
+  /** Must exceed the total Host-side budget (300 s restore, cf. RestoreScheduler.RESTORE_TIMEOUT_MS,
+   *  + 60 s of dotnet nuget why enrichment on failure, cf. RestoreScheduler.WHY_TOTAL_BUDGET_MS,
+   *  + margin) so polling is never cut before the Host has been able to publish its own
+   *  terminal state (Finding 4). */
   private static readonly RESTORE_POLL_TIMEOUT_MS = 370_000;
   private static readonly RESTORE_SUCCESS_HIDE_MS = 4_000;
 
   @state() private data?: SolutionPackagesDto;
   @state() private selectedId = "";
   @state() private verdictBadges = new Map<string, PackageUpdateState>();
-  /** Résultats en échec (fetchStatus !== 'Ok') volontairement absents de ce cache : les conserver
-   *  figerait un DTO synthétique 'Offline' pour toujours, empêchant toute nouvelle tentative. */
+  /** Failed results (fetchStatus !== 'Ok') are deliberately absent from this cache: keeping them
+   *  would freeze a synthetic 'Offline' DTO forever, preventing any retry. */
   protected readonly updateInfoCache = new Map<string, PackageUpdateInfoDto>();
-  /** Dernier DTO reçu (succès OU échec) pour le package actuellement sélectionné, utilisé par le
-   *  rendu du détail. Transitoire par design : contrairement à updateInfoCache, il n'est jamais lu
-   *  pour décider si un fetch peut être évité — resélectionner un package en échec relance toujours
+  /** Last DTO received (success OR failure) for the currently selected package, used by the
+   *  detail rendering. Transient by design: unlike updateInfoCache, it is never read to decide
+   *  whether a fetch can be skipped — reselecting a failed package always restarts
    *  loadUpdateInfo. */
   @state() private selectedInfo?: PackageUpdateInfoDto;
-  /** Projets avec une action d'écriture en cours (Host non encore répondu) — relayé jusqu'aux
-   *  cartes de ProjectInstallations pour désactiver leurs boutons et afficher le spinner. */
+  /** Projects with a write action in flight (Host has not answered yet) — relayed down to the
+   *  ProjectInstallations cards to disable their buttons and show the spinner. */
   @state() private busyProjects = new Set<string>();
-  /** Une action globale (toolbar de PackageDetail, sans projectPath) est en cours. */
+  /** A global action (PackageDetail toolbar, without projectPath) is in flight. */
   @state() private globalBusy = false;
-  /** Dernier résultat d'écriture (succès ou échec) : consommé par le bandeau (Task 11). */
+  /** Last write result (success or failure): consumed by the banner (Task 11). */
   @state() private lastWriteResult?: PackageWriteResultDto;
-  /** Dernier statut restore connu (polling démarré après chaque écriture), consommé par le
-   *  bandeau. `undefined` tant qu'aucune écriture n'a eu lieu dans la session, et de nouveau après
-   *  l'auto-masquage 4 s suivant un `Succeeded` (cf. `startRestorePolling`). */
+  /** Last known restore status (polling started after each write), consumed by the
+   *  banner. `undefined` until a write happens in the session, and again after the
+   *  4 s auto-hide following a `Succeeded` (cf. `startRestorePolling`). */
   @state() private restoreStatus?: RestoreStatusDto;
 
   private static readonly SEARCH_PAGE_SIZE = 25;
@@ -71,33 +71,33 @@ export class PackagesView extends LitElement {
   @state() private searchLoading = false;
   @state() private searchHasMore = false;
   @state() private searchFailedSources: string[] = [];
-  /** La requête elle-même n'a pas abouti (timeout du bus, postMessage indisponible…),
-   *  à distinguer d'une recherche qui a abouti sans résultat : sans cet état dédié,
-   *  `searchHits` vide et `searchFailedSources` vide feraient à tort conclure à
-   *  « aucun résultat » alors qu'aucune source n'a réellement pu être interrogée. */
+  /** The request itself did not complete (bus timeout, postMessage unavailable…),
+   *  to be told apart from a search that completed with no result: without this dedicated
+   *  state, an empty `searchHits` and an empty `searchFailedSources` would wrongly read as
+   *  "no results" when in fact no source could be queried at all. */
   @state() private searchRequestFailed = false;
   private searchTerms = "";
   private searchPrerelease = false;
-  /** Invalide les réponses d'une recherche périmée : seule la dernière frappe compte. */
+  /** Invalidates the answers of a stale search: only the latest keystroke counts. */
   private searchGeneration = 0;
-  /** Numéro de la page courante de résultats (0 = première page). Remis à zéro à
-   *  chaque nouvelle recherche ; incrémenté par `onLoadMore`. `skip` est TOUJOURS
-   *  dérivé de ce compteur, jamais de `searchHits.length` — ce dernier reflète le
-   *  flux après filtrage client et déduplication, décalé par rapport aux pages
-   *  brutes réellement servies par chaque source. */
+  /** Current result page number (0 = first page). Reset to zero on every new search;
+   *  incremented by `onLoadMore`. `skip` is ALWAYS derived from this counter, never
+   *  from `searchHits.length` — the latter reflects the flow after client-side
+   *  filtering and deduplication, which is offset from the raw pages each source
+   *  actually served. */
   private searchPage = 0;
 
   private dispatcher!: IDispatcher;
   private logger!: ILogger;
   private i18n!: TranslationService;
   private unsubscribeI18n?: () => void;
-  /** Incrémentée à chaque (re)démarrage du polling restore : invalide toute boucle précédente
-   *  encore en vol, garantissant qu'une seule tourne à la fois (une écriture pendant un polling en
-   *  cours le réarme au lieu d'empiler un second intervalle). */
+  /** Incremented on every (re)start of the restore polling: invalidates any previous loop
+   *  still in flight, guaranteeing only one runs at a time (a write during an ongoing poll
+   *  re-arms it instead of stacking a second interval). */
   private restorePollGeneration = 0;
   private restorePollTimer?: ReturnType<typeof setTimeout>;
   private restoreHideTimer?: ReturnType<typeof setTimeout>;
-  /** Résolu à la connexion via GetWorkspaceSolutionsQuery (solution marquée isSelected, sinon la première détectée). */
+  /** Resolved on connection through GetWorkspaceSolutionsQuery (the solution marked isSelected, otherwise the first one detected). */
   protected solutionPath = "";
 
   static styles = css`
@@ -171,8 +171,8 @@ export class PackagesView extends LitElement {
     super.disconnectedCallback();
     this.unsubscribeI18n?.();
     this.restorePollGeneration++;
-    // Même discipline que le polling restore : une recherche en vol ne doit pas
-    // écrire sur l'état d'un élément déconnecté.
+    // Same discipline as the restore polling: a search in flight must not write
+    // to the state of a disconnected element.
     this.searchGeneration++;
     if (this.restorePollTimer) {
       clearTimeout(this.restorePollTimer);
@@ -192,7 +192,7 @@ export class PackagesView extends LitElement {
     }
   }
 
-  /** Détermine la solution active de la même façon que le reste de l'extension : la solution marquée `isSelected` (persistée en workspace settings via SelectSolutionCommand), avec repli sur la première solution détectée. */
+  /** Determines the active solution the same way as the rest of the extension: the solution marked `isSelected` (persisted in workspace settings through SelectSolutionCommand), falling back to the first one detected. */
   private async resolveSolutionPath(): Promise<void> {
     const solutions = (await this.dispatcher.Send(
       new GetWorkspaceSolutionsQuery(),
@@ -200,7 +200,7 @@ export class PackagesView extends LitElement {
     const solution = solutions.find((s) => s.isSelected) ?? solutions[0];
     if (!solution) {
       this.logger.Warning(
-        "Aucune solution détectée dans le workspace : la vue packages restera vide.",
+        "No solution detected in the workspace: the packages view will stay empty.",
       );
       return;
     }
@@ -220,13 +220,13 @@ export class PackagesView extends LitElement {
     for (let i = 0; i < ids.length; i += PackagesView.BATCH_SIZE) {
       const batch = ids.slice(i, i + PackagesView.BATCH_SIZE);
       const results = await Promise.all(batch.map((id) => this.loadUpdateInfo(id)));
-      // Nouvelle Map : déclenche le re-render de package-list
+      // New Map: triggers the re-render of package-list
       this.verdictBadges = new Map(this.verdictBadges);
-      // HTTP 429 : on met la file en pause plutôt que d'amplifier la limitation en enchaînant les
-      // lots suivants. Les badges restants gardent volontairement leur état par défaut 'loading'
-      // (glyphe '…') plutôt qu'un 'unknown' trompeur — un reload ou une resélection relance le fetch.
+      // HTTP 429: pause the queue rather than amplifying the throttling by chaining the
+      // next batches. The remaining badges deliberately keep their default 'loading' state
+      // (the '…' glyph) rather than a misleading 'unknown' — a reload or a reselection restarts the fetch.
       if (results.some((info) => info.fetchStatus === "RateLimited")) {
-        this.logger.Warning("nuget.org limite les requêtes (429) : file des badges mise en pause.");
+        this.logger.Warning("nuget.org is throttling requests (429): the badge queue is paused.");
         break;
       }
     }
@@ -244,8 +244,8 @@ export class PackagesView extends LitElement {
       const info = (await this.dispatcher.Send(
         new GetPackageUpdateInfoQuery(packageId, this.solutionPath),
       )) as PackageUpdateInfoDto;
-      // Ne mettre en cache que les succès : un DTO d'échec caché figerait le statut pour toujours
-      // et empêcherait toute nouvelle tentative lors d'une resélection du package.
+      // Only cache successes: a cached failure DTO would freeze the status forever
+      // and prevent any retry when the package is reselected.
       if (info.fetchStatus === "Ok") {
         this.updateInfoCache.set(packageId, info);
       }
@@ -273,9 +273,9 @@ export class PackagesView extends LitElement {
     }
   }
 
-  /** Marge de progression du package installé (cf. `resolvePackageUpdateState`) :
-   *  sans le DTO du package — donc sans ses versions installées — la question
-   *  « reste-t-il quelque chose à gagner ? » n'a pas de réponse. */
+  /** How much the installed package has left to gain (cf. `resolvePackageUpdateState`):
+   *  without the package DTO — hence without its installed versions — the question
+   *  "is there anything left to gain?" has no answer. */
   private aggregateBadge(info: PackageUpdateInfoDto): PackageUpdateState {
     const pkg = this.data?.packages.find((p) => p.id === info.id);
     if (!pkg) {
@@ -287,21 +287,21 @@ export class PackagesView extends LitElement {
   private onPackageSelected(e: CustomEvent<{ packageId: string }>): void {
     const changed = e.detail.packageId !== this.selectedId;
     this.selectedId = e.detail.packageId;
-    // Reflète immédiatement le dernier état connu (cache de succès, sinon 'loading' via undefined) ;
-    // loadUpdateInfo relance toujours un fetch Host si aucun succès n'est en cache pour ce package.
+    // Immediately reflects the last known state (success cache, otherwise 'loading' through undefined);
+    // loadUpdateInfo always restarts a Host fetch when no success is cached for this package.
     this.selectedInfo = this.updateInfoCache.get(this.selectedId);
     void this.loadUpdateInfo(this.selectedId).then(() => this.requestUpdate());
-    // Le résultat de la dernière écriture est attaché au package sur lequel elle a eu lieu : sans
-    // ce reset, changer de sélection laisserait le bandeau 'skipped'/'error' d'un autre package
-    // fuiter sur celui-ci (restoreStatus, lui, reste solution-wide et cohérent quelle que soit la
-    // sélection — volontairement pas touché ici).
+    // The last write result belongs to the package it happened on: without this reset,
+    // changing selection would let another package's 'skipped'/'error' banner leak onto
+    // this one (restoreStatus, by contrast, stays solution-wide and consistent whatever the
+    // selection — deliberately untouched here).
     if (changed) {
       this.lastWriteResult = undefined;
     }
   }
 
-  /** Le champ est repassé sous le seuil : oublier les résultats précédents, sinon
-   *  ceux d'une recherche abandonnée réapparaîtraient à la frappe suivante. */
+  /** The field dropped back below the threshold: forget the previous results, or those
+   *  of an abandoned search would reappear on the next keystroke. */
   private onSearchCleared(): void {
     this.searchGeneration++;
     this.searchTerms = "";
@@ -325,13 +325,13 @@ export class PackagesView extends LitElement {
     void this.runSearch(this.searchPage * PackagesView.SEARCH_PAGE_SIZE);
   }
 
-  /** Une génération périmée est ignorée à l'arrivée : pas de résultat en retard
-   *  qui écraserait ceux d'une frappe plus récente. */
+  /** A stale generation is ignored on arrival: no late result overwrites those of a
+   *  more recent keystroke. */
   private async runSearch(skip: number): Promise<void> {
     const generation = ++this.searchGeneration;
-    // skip=0 signale toujours le début d'une recherche (nouveaux termes,
-    // bascule prerelease) : le compteur de page redémarre en phase avec lui,
-    // que l'appelant soit onSearchTermsChanged ou tout futur appelant.
+    // skip=0 always signals the start of a search (new terms, prerelease toggle):
+    // the page counter restarts in step with it, whatever the caller —
+    // onSearchTermsChanged or any future one.
     if (skip === 0) {
       this.searchPage = 0;
     }
@@ -356,12 +356,12 @@ export class PackagesView extends LitElement {
       if (generation !== this.searchGeneration) {
         return;
       }
-      this.logger.Error("Échec de la recherche de packages", error as Error);
+      this.logger.Error("Package search failed", error as Error);
       this.searchHasMore = false;
-      // Aucune source n'a pu être nommée (la requête entière a échoué avant de
-      // les interroger) : ne pas inventer un nom de source dans
-      // searchFailedSources, le bandeau afficherait à tort une source précise
-      // comme responsable. L'état dédié porte cette distinction jusqu'au rendu.
+      // No source could be named (the whole request failed before querying them):
+      // do not invent a source name in searchFailedSources, or the banner would
+      // wrongly point at one specific source as responsible. The dedicated state
+      // carries that distinction all the way to the rendering.
       this.searchRequestFailed = true;
     } finally {
       if (generation === this.searchGeneration) {
@@ -371,9 +371,9 @@ export class PackagesView extends LitElement {
   }
 
   /**
-   * DTO synthétique pour un résultat de recherche : reprend les installations
-   * réelles si le package est déjà dans la solution, sinon aucune. Le détail et
-   * ses cartes projet fonctionnent alors sans modification.
+   * Synthetic DTO for a search result: reuses the real installations when the
+   * package is already in the solution, none otherwise. The detail panel and its
+   * project cards then work without any modification.
    */
   private get selectedSearchPackage(): SolutionPackageDto | undefined {
     const hit = this.searchHits.find((h) => h.id.toLowerCase() === this.selectedId.toLowerCase());
@@ -388,10 +388,10 @@ export class PackagesView extends LitElement {
     };
   }
 
-  /** Point d'entrée unique pour les 3 actions d'écriture, envoyées par ProjectInstallations
-   *  (par projet) ou par la toolbar de PackageDetail (globale, projectPath absent). Les
-   *  confirmations pour les actions globales sont gérées côté Host (modale) : ce composant se
-   *  contente d'envoyer la commande et de rafraîchir l'état local une fois la réponse reçue. */
+  /** Single entry point for the 3 write actions, sent by ProjectInstallations
+   *  (per project) or by the PackageDetail toolbar (global, projectPath absent).
+   *  Confirmations for global actions are handled Host-side (modal): this component just
+   *  sends the command and refreshes the local state once the answer comes back. */
   private async onWriteCommand(
     kind: "install" | "upgrade" | "uninstall",
     detail: { projectPath?: string; version?: string },
@@ -418,7 +418,7 @@ export class PackagesView extends LitElement {
             : new UninstallPackageCommand(packageId, solutionPath, projectPath);
       this.lastWriteResult = (await this.dispatcher.Send(command)) as PackageWriteResultDto;
     } catch (error) {
-      this.logger.Error(`Échec de l'action '${kind}' sur le package ${packageId}`, error as Error);
+      this.logger.Error(`Action '${kind}' failed on package ${packageId}`, error as Error);
       this.lastWriteResult = {
         status: "Error",
         filesChanged: [],
@@ -436,33 +436,33 @@ export class PackagesView extends LitElement {
       }
     }
 
-    // Recharge l'état solution-wide et le détail du package sélectionné : une écriture peut avoir
-    // changé les installations, les versions effectives et les verdicts de compatibilité affichés.
+    // Reloads the solution-wide state and the selected package detail: a write may have
+    // changed the installations, the effective versions and the compatibility verdicts shown.
     try {
       await this.loadPackages();
       this.updateInfoCache.delete(packageId);
       await this.loadUpdateInfo(packageId);
-      // Nouvelle Map : déclenche le re-render du badge dans package-list (cf. fillBadges).
+      // New Map: triggers the badge re-render in package-list (cf. fillBadges).
       this.verdictBadges = new Map(this.verdictBadges);
     } catch (error) {
-      this.logger.Error("Échec du rechargement des packages après une écriture", error as Error);
+      this.logger.Error("Failed to reload the packages after a write", error as Error);
     }
 
     this.startRestorePolling();
   }
 
-  /** (Re)démarre le polling de `GetRestoreStatusQuery` après une commande d'écriture. La génération
-   *  incrémentée invalide toute boucle précédente encore en vol : une nouvelle écriture pendant un
-   *  polling en cours le réarme au lieu d'empiler un second intervalle, et un poll tardif d'une
-   *  génération périmée devient un no-op silencieux. Le premier poll fixe le `runId` de référence :
-   *  on ne s'arrête sur un état terminal (Succeeded/Failed) que si son `runId` est au moins celui-là
-   *  — sans cette garde, un statut terminal laissé par un restore précédent (avant même que le
-   *  nouveau restore programmé par cette écriture n'incrémente son runId) arrêterait le polling à
-   *  tort. Filet de sécurité : arrêt forcé après RESTORE_POLL_TIMEOUT_MS (> timeout restore Host)
-   *  quel que soit l'état — le bandeau bascule alors sur un état Failed dédié (Finding 4) plutôt que
-   *  de rester figé sur un `Running` qui ne progressera plus jamais. Sur `Succeeded`, le statut est
-   *  masqué après 4 s (sauf si entre-temps une écriture plus récente ou un nouveau statut a déjà pris
-   *  sa place). */
+  /** (Re)starts the `GetRestoreStatusQuery` polling after a write command. The incremented
+   *  generation invalidates any previous loop still in flight: a new write during an ongoing
+   *  poll re-arms it instead of stacking a second interval, and a late poll from a stale
+   *  generation becomes a silent no-op. The first poll fixes the reference `runId`:
+   *  a terminal state (Succeeded/Failed) only stops the polling when its `runId` is at least
+   *  that one — without this guard, a terminal status left by a previous restore (before the
+   *  restore scheduled by this write has even incremented its runId) would wrongly stop the
+   *  polling. Safety net: forced stop after RESTORE_POLL_TIMEOUT_MS (> Host restore timeout)
+   *  whatever the state — the banner then switches to a dedicated Failed state (Finding 4)
+   *  rather than staying frozen on a `Running` that will never progress again. On `Succeeded`,
+   *  the status is hidden after 4 s (unless a more recent write or status has taken its place
+   *  in the meantime). */
   private startRestorePolling(): void {
     const generation = ++this.restorePollGeneration;
     if (this.restorePollTimer) {
@@ -485,7 +485,7 @@ export class PackagesView extends LitElement {
       try {
         status = (await this.dispatcher.Send(new GetRestoreStatusQuery())) as RestoreStatusDto;
       } catch (error) {
-        this.logger.Error("Échec du polling du statut de restore", error as Error);
+        this.logger.Error("Restore status polling failed", error as Error);
         return;
       }
       if (generation !== this.restorePollGeneration) {
@@ -495,7 +495,7 @@ export class PackagesView extends LitElement {
       baselineRunId ??= status.runId;
       const terminal = status.status === "Succeeded" || status.status === "Failed";
       if (terminal && status.runId >= baselineRunId) {
-        // L'onglet Logs (nuget-tabs) rafraîchit sa liste quand un restore se termine.
+        // The Logs tab (nuget-tabs) refreshes its list when a restore finishes.
         this.dispatchEvent(new CustomEvent("restore-finished", { bubbles: true, composed: true }));
         if (status.status === "Succeeded") {
           this.restoreHideTimer = setTimeout(() => {
@@ -507,13 +507,13 @@ export class PackagesView extends LitElement {
         return;
       }
       if (Date.now() >= deadline) {
-        // Le cap est atteint sans état terminal connu : ne jamais laisser le bandeau figé
-        // sur 'Running' indéfiniment (Finding 4) — bascule vers un état Failed dédié.
-        // runId à 0 (neutre) et non status.runId : en cours de run, ce dernier désigne
-        // encore le run PRÉCÉDENT (le scheduler ne publie le nouveau qu'à la fin), donc
-        // un clic « Voir les logs → » surlignerait le mauvais run. Les runId de journal
-        // commencent à 1, donc revealRun(0) est un no-op garanti : on retombe sur le
-        // comportement spec « runId absent → simple activation de l'onglet ».
+        // The cap was reached with no known terminal state: never leave the banner frozen
+        // on 'Running' indefinitely (Finding 4) — switch to a dedicated Failed state.
+        // runId 0 (neutral) rather than status.runId: mid-run, the latter still designates
+        // the PREVIOUS run (the scheduler only publishes the new one at the end), so a
+        // "View logs →" click would highlight the wrong run. Journal runIds start at 1, so
+        // revealRun(0) is a guaranteed no-op: we fall back on the specified behaviour
+        // "runId absent → simply activate the tab".
         this.restoreStatus = {
           status: "Failed",
           messages: [this.i18n.t("packages.restore.timedOut")],
@@ -529,8 +529,8 @@ export class PackagesView extends LitElement {
   }
 
   render() {
-    // Une seule liste, deux origines : un package de la solution l'emporte sur un
-    // résultat distant de même id — ses installations réelles sont la vérité.
+    // A single list, two origins: a package from the solution wins over a remote
+    // result with the same id — its real installations are the truth.
     const selected =
       this.data?.packages.find((p) => p.id === this.selectedId) ?? this.selectedSearchPackage;
     const feeds =

@@ -20,13 +20,13 @@ describe("TfmCompatibilityService", () => {
       ["net45", ["netstandard1.1"]],
       ["net8.0-windows", ["net8.0"]],
       ["net8.0-windows", ["net6.0-windows"]],
-      // Un seul framework compatible dans la liste suffit
+      // A single compatible framework in the list is enough
       ["net472", ["netstandard2.1", "netstandard2.0"]],
     ])("projet %s ← package %j", (project, pkg) => {
       expect(service.isCompatible(project, pkg).verdict).toBe("Compatible");
     });
 
-    it("package sans groupes de dépendances → Compatible", () => {
+    it("package without dependency groups → Compatible", () => {
       expect(service.isCompatible("net8.0", []).verdict).toBe("Compatible");
     });
   });
@@ -55,7 +55,7 @@ describe("TfmCompatibilityService", () => {
       expect(service.isCompatible(project, pkg).verdict).toBe("Unknown");
     });
 
-    it("un TFM package inconnu mais un autre compatible → Compatible", () => {
+    it("one unknown package TFM but another compatible one → Compatible", () => {
       expect(
         service.isCompatible("net8.0", ["portable-net45+win8", "netstandard2.0"]).verdict,
       ).toBe("Compatible");

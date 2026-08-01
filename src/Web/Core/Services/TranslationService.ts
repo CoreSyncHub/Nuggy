@@ -19,8 +19,8 @@ type LanguageChangeCallback = (language: string) => void;
 export class TranslationService {
   private currentLanguage: string = "en";
   private translations: TranslationDictionary = {};
-  /** Dictionnaire anglais, chargé une seule fois : filet par clé pour les langues
-   *  incomplètes, qui affichaient sinon le chemin brut de la clé dans l'interface. */
+  /** English dictionary, loaded once: a per-key safety net for incomplete languages,
+   *  which otherwise displayed the raw key path in the interface. */
   private fallbackTranslations: TranslationDictionary = {};
   private listeners: Set<LanguageChangeCallback> = new Set();
 
@@ -73,9 +73,9 @@ export class TranslationService {
   }
 
   /**
-   * Charge l'anglais comme dictionnaire de repli. En anglais, les deux pointent
-   * le même objet : aucune requête supplémentaire. Un échec de chargement laisse
-   * le repli vide — `t()` rend alors la clé, comme avant ce correctif.
+   * Loads English as the fallback dictionary. In English, both point at the same
+   * object: no extra request. A loading failure leaves the fallback empty — `t()`
+   * then returns the key, as it did before this fix.
    */
   private async ensureFallbackLoaded(): Promise<void> {
     if (this.currentLanguage === "en") {

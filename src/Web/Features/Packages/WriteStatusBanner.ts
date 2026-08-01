@@ -7,11 +7,11 @@ import { TranslationService } from "../../Core/Services/TranslationService";
 import { checkIcon, crossIcon, ellipsisIcon, warningIcon } from "./Icons";
 
 /**
- * Bandeau présentation-pure (aucun dispatcher) affiché entre la toolbar et le
- * corps de `package-detail` : statut du dernier `dotnet restore` (polling
- * géré par `PackagesView`) et retour du dernier `PackageWriteResultDto`
- * (`skipped`/`error`). `PackagesView` possède tout l'état (y compris
- * l'auto-masquage après succès) ; ce composant se contente de le rendre.
+ * Presentation-pure banner (no dispatcher) shown between the toolbar and the body
+ * of `package-detail`: status of the last `dotnet restore` (polling handled by
+ * `PackagesView`) and the outcome of the last `PackageWriteResultDto`
+ * (`skipped`/`error`). `PackagesView` owns all the state (including the auto-hide
+ * after success); this component merely renders it.
  */
 @customElement("write-status-banner")
 export class WriteStatusBanner extends LitElement {
@@ -68,7 +68,7 @@ export class WriteStatusBanner extends LitElement {
     .clickable {
       cursor: pointer;
     }
-    /* Le bandeau est atteignable au clavier : il lui faut un focus visible. */
+    /* The banner is reachable by keyboard: it needs a visible focus ring. */
     .clickable:focus-visible {
       outline: 1px solid var(--vscode-focusBorder);
       outline-offset: 2px;
@@ -92,8 +92,7 @@ export class WriteStatusBanner extends LitElement {
     }
   `;
 
-  /** Le détail des erreurs vit dans l'onglet Logs : le bandeau en échec navigue vers le run. */
-  /** Entrée/Espace activent le bandeau, comme un vrai bouton. */
+  /** Enter/Space activate the banner, like a real button. */
   private onKeydown(e: KeyboardEvent): void {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
@@ -101,6 +100,7 @@ export class WriteStatusBanner extends LitElement {
     }
   }
 
+  /** Error details live in the Logs tab: the failure banner navigates to the run. */
   private onShowLogs(): void {
     this.dispatchEvent(
       new CustomEvent("show-logs", {

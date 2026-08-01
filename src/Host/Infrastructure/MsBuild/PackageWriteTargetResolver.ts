@@ -14,8 +14,8 @@ export interface WriteTarget {
 }
 
 /**
- * Résout, pour un package donné, l'état d'écriture de chaque projet de la
- * solution : style de référence, version installée, fichier CPM applicable.
+ * Resolves, for a given package, the write state of every project in the
+ * solution: reference style, installed version, applicable CPM file.
  */
 @singleton()
 export class PackageWriteTargetResolver {
@@ -47,9 +47,9 @@ export class PackageWriteTargetResolver {
       const ref = (references.get(projectPath) ?? []).find(
         (r) => r.name.toLowerCase() === packageId.toLowerCase(),
       );
-      // Le fichier CPM applicable est celui que MSBuild retiendrait en remontant
-      // depuis ce projet — pas le premier de la solution. Un projet hors de toute
-      // portée CPM n'est pas géré centralement, même si la solution en contient.
+      // The applicable CPM file is the one MSBuild would keep while walking up from
+      // this project — not the first one in the solution. A project outside any CPM
+      // scope is not centrally managed, even if the solution holds such a file.
       const projectCpmFile = findGoverningCpmFile(projectPath, buildConfigFiles);
       const isCpm = projectCpmFile !== undefined && (!ref || !ref.hasLocalVersion);
       if (isCpm) {
@@ -67,8 +67,8 @@ export class PackageWriteTargetResolver {
       };
     });
 
-    // Repli solution-wide : le fichier CPM d'une cible effectivement gérée
-    // centralement. Les appelants s'en servent quand une cible n'en porte pas.
+    // Solution-wide fallback: the CPM file of a target that is actually centrally
+    // managed. Callers use it when a target carries none.
     const cpmFilePath = targets.find((t) => t.cpmFilePath !== undefined)?.cpmFilePath;
     return { targets, cpmFilePath };
   }

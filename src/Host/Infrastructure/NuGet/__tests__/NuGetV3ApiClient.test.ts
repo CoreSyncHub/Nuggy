@@ -31,7 +31,7 @@ describe("NuGetV3ApiClient", () => {
 
   afterEach(() => jest.restoreAllMocks());
 
-  it("getRegistrationLeaves découvre le service index puis lit la registration", async () => {
+  it("getRegistrationLeaves discovers the service index then reads the registration", async () => {
     fetchMock
       .mockResolvedValueOnce(okResponse(fixture("service-index.json")))
       .mockResolvedValueOnce(okResponse(fixture("registration-newtonsoft.json.bson.json")));
@@ -48,7 +48,7 @@ describe("NuGetV3ApiClient", () => {
     expect(leaves[1].dependencyGroups[0].dependencies[0].versionRange).toBe("[13.0.1, )");
   });
 
-  it("le service index est mis en cache (un seul fetch pour deux appels)", async () => {
+  it("the service index is cached (a single fetch for two calls)", async () => {
     fetchMock
       .mockResolvedValueOnce(okResponse(fixture("service-index.json")))
       .mockResolvedValueOnce(okResponse(fixture("registration-newtonsoft.json.bson.json")))
@@ -63,7 +63,7 @@ describe("NuGetV3ApiClient", () => {
     expect(indexCalls).toHaveLength(1);
   });
 
-  it("searchPackage renvoie les métadonnées", async () => {
+  it("searchPackage returns the metadata", async () => {
     fetchMock
       .mockResolvedValueOnce(okResponse(fixture("service-index.json")))
       .mockResolvedValueOnce(okResponse(fixture("search-newtonsoft.json.bson.json")));
@@ -85,7 +85,7 @@ describe("NuGetV3ApiClient", () => {
     });
   });
 
-  it("404 sur la registration → NuGetApiError NotFound", async () => {
+  it("404 on the registration → NuGetApiError NotFound", async () => {
     fetchMock
       .mockResolvedValueOnce(okResponse(fixture("service-index.json")))
       .mockResolvedValueOnce({ ok: false, status: 404 } as unknown as Response);
@@ -103,14 +103,14 @@ describe("NuGetV3ApiClient", () => {
     await expect(client.getRegistrationLeaves("X")).rejects.toMatchObject({ kind: "RateLimited" });
   });
 
-  it("échec réseau → NuGetApiError Offline", async () => {
+  it("network failure → NuGetApiError Offline", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"));
 
     await expect(client.getRegistrationLeaves("X")).rejects.toMatchObject({ kind: "Offline" });
     expect(noOpLogger.Warning).toHaveBeenCalled();
   });
 
-  it("pagination : une page sans items déclenche un fetch de la page dédiée", async () => {
+  it("pagination: a page without items triggers a fetch of the dedicated page", async () => {
     const pageUrl =
       "https://api.nuget.org/v3/registration5-gz-semver2/big.package/page/1.0.0/2.0.0.json";
     const registrationIndex = {
@@ -143,7 +143,7 @@ describe("NuGetV3ApiClient", () => {
     expect(leaves[0].version).toBe("1.5.0");
   });
 
-  it("le service index est retenté après un échec réseau", async () => {
+  it("the service index is retried after a network failure", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"));
 
     await expect(client.getRegistrationLeaves("Newtonsoft.Json.Bson")).rejects.toMatchObject({
@@ -163,7 +163,7 @@ describe("NuGetV3ApiClient", () => {
     expect(indexCalls).toHaveLength(2);
   });
 
-  it("404 sur la recherche → NuGetApiError NotFound", async () => {
+  it("404 on the search → NuGetApiError NotFound", async () => {
     fetchMock
       .mockResolvedValueOnce(okResponse(fixture("service-index.json")))
       .mockResolvedValueOnce({ ok: false, status: 404 } as unknown as Response);
@@ -171,7 +171,7 @@ describe("NuGetV3ApiClient", () => {
     await expect(client.searchPackage("Paquet.Prive")).rejects.toMatchObject({ kind: "NotFound" });
   });
 
-  it("searchPackages construit l'URL de recherche paginée et mappe les résultats", async () => {
+  it("searchPackages builds the paginated search URL and maps the results", async () => {
     fetchMock
       .mockResolvedValueOnce(okResponse(fixture("service-index.json")))
       .mockResolvedValueOnce(okResponse(fixture("search-refit.json")));
@@ -203,13 +203,13 @@ describe("NuGetV3ApiClient", () => {
         iconUrl: undefined,
       },
     ]);
-    // Le fixture contient 3 entrées brutes, dont une sans version (donc non
-    // installable, filtrée des `entries`) : rawCount doit rester à 3, seul
-    // juge de la plénitude de la page — pas la longueur post-filtrage.
+    // The fixture holds 3 raw entries, one of them without a version (hence not
+    // installable, filtered out of `entries`): rawCount must stay at 3, the only
+    // judge of whether the page is full — not the post-filter length.
     expect(page.rawCount).toBe(3);
   });
 
-  it("searchPackages encode les termes et transmet la pagination et les préversions", async () => {
+  it("searchPackages encodes the terms and passes pagination and prereleases through", async () => {
     fetchMock
       .mockResolvedValueOnce(okResponse(fixture("service-index.json")))
       .mockResolvedValueOnce(okResponse({ totalHits: 0, data: [] }));
@@ -225,7 +225,7 @@ describe("NuGetV3ApiClient", () => {
     );
   });
 
-  it("searchPackages rend une liste vide quand la réponse n'a pas de data", async () => {
+  it("searchPackages returns an empty list when the response has no data", async () => {
     fetchMock
       .mockResolvedValueOnce(okResponse(fixture("service-index.json")))
       .mockResolvedValueOnce(okResponse({ totalHits: 0 }));

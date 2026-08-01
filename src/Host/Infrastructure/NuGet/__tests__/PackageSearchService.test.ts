@@ -22,10 +22,10 @@ function hit(id: string, sourceName: string): PackageSearchHit {
   };
 }
 
-/** rawCount vaut par défaut hits.length : les tests qui ne s'intéressent pas au
- *  filtrage pré-service (la plupart) gardent alors la même sémantique qu'avant
- *  l'introduction de PackageSearchPage. Un rawCount explicite simule une source
- *  dont la page brute contenait plus d'entrées que de hits utilisables. */
+/** rawCount defaults to hits.length: tests that do not care about pre-service
+ *  filtering (most of them) then keep the same semantics as before
+ *  PackageSearchPage was introduced. An explicit rawCount simulates a source whose
+ *  raw page held more entries than usable hits. */
 function source(
   name: string,
   hits: PackageSearchHit[],
@@ -41,7 +41,7 @@ function failingSource(name: string): IPackageSearchSource {
 const OPTIONS = { skip: 0, take: 2, includePrerelease: false };
 
 describe("PackageSearchService", () => {
-  it("fusionne les résultats en conservant l'ordre des sources", async () => {
+  it("merges the results while preserving the source order", async () => {
     const service = new PackageSearchService(
       [
         source("nuget.org", [hit("Refit", "nuget.org")]),
@@ -54,13 +54,13 @@ describe("PackageSearchService", () => {
 
     expect(outcome.hits.map((h) => h.id)).toEqual(["Refit", "Maison"]);
     expect(outcome.failedSources).toEqual([]);
-    // Discriminant : chaque source ne renvoie qu'1 hit pour take=2, donc AUCUNE
-    // n'a rempli sa page. Un calcul fautif de hasMore fait après déduplication
-    // verrait 2 hits fusionnés >= take et conclurait à tort à true.
+    // Discriminating case: each source returns only 1 hit for take=2, so NONE of
+    // them filled its page. A faulty hasMore computed after deduplication would
+    // see 2 merged hits >= take and wrongly conclude true.
     expect(outcome.hasMore).toBe(false);
   });
 
-  it("déduplique par id insensible à la casse, la source prioritaire l'emporte", async () => {
+  it("deduplicates by case-insensitive id, the higher-priority source wins", async () => {
     const service = new PackageSearchService(
       [
         source("nuget.org", [hit("Refit", "nuget.org")]),
@@ -75,7 +75,7 @@ describe("PackageSearchService", () => {
     expect(outcome.hits[0].sourceName).toBe("nuget.org");
   });
 
-  it("isole une source en échec et nomme celles qui ont échoué", async () => {
+  it("isolates a failing source and names the ones that failed", async () => {
     const service = new PackageSearchService(
       [source("nuget.org", [hit("Refit", "nuget.org")]), failingSource("interne")],
       noOpLogger,
@@ -87,7 +87,7 @@ describe("PackageSearchService", () => {
     expect(outcome.failedSources).toEqual(["interne"]);
   });
 
-  it("rend une liste vide et nomme toutes les sources quand aucune ne répond", async () => {
+  it("returns an empty list and names every source when none answers", async () => {
     const service = new PackageSearchService(
       [failingSource("nuget.org"), failingSource("interne")],
       noOpLogger,
@@ -100,9 +100,9 @@ describe("PackageSearchService", () => {
     expect(outcome.hasMore).toBe(false);
   });
 
-  it("hasMore vrai dès qu'une source renvoie une page pleine, jugé avant déduplication", async () => {
-    // Les deux sources renvoient les MÊMES packages : après déduplication il ne
-    // reste que 2 hits pour take=2, mais d'autres résultats existent en aval.
+  it("hasMore is true as soon as one source returns a full page, judged before deduplication", async () => {
+    // Both sources return the SAME packages: after deduplication only 2 hits remain
+    // for take=2, yet more results exist downstream.
     const service = new PackageSearchService(
       [
         source("nuget.org", [hit("A", "nuget.org"), hit("B", "nuget.org")]),
@@ -117,11 +117,11 @@ describe("PackageSearchService", () => {
     expect(outcome.hasMore).toBe(true);
   });
 
-  it("hasMore reste vrai quand le filtrage pré-service a raccourci les hits sous take (page brute pleine)", async () => {
-    // La source a reçu 2 entrées brutes de nuget.org (take=2, page pleine) mais
-    // une seule a survécu au filtrage des entrées non installables (sans
-    // version) : rawCount=2 conserve la vérité, hits.length=1 ne doit pas être
-    // utilisé pour juger de la fin des résultats.
+  it("hasMore stays true when pre-service filtering shortened the hits below take (full raw page)", async () => {
+    // The source received 2 raw entries from nuget.org (take=2, full page) but
+    // only one survived the filtering of non-installable entries (without a
+    // version): rawCount=2 keeps the truth, hits.length=1 must not be used to
+    // judge the end of the results.
     const service = new PackageSearchService(
       [source("nuget.org", [hit("A", "nuget.org")], 2)],
       noOpLogger,
@@ -134,7 +134,7 @@ describe("PackageSearchService", () => {
     expect(outcome.hasMore).toBe(true);
   });
 
-  it("hasMore faux quand aucune source ne remplit sa page", async () => {
+  it("hasMore is false when no source fills its page", async () => {
     const service = new PackageSearchService(
       [source("nuget.org", [hit("A", "nuget.org")])],
       noOpLogger,
@@ -142,7 +142,7 @@ describe("PackageSearchService", () => {
     await expect(service.search("x", OPTIONS)).resolves.toMatchObject({ hasMore: false });
   });
 
-  it("transmet les mêmes skip et take à chaque source", async () => {
+  it("passes the same skip and take to every source", async () => {
     const first = source("nuget.org", []);
     const second = source("interne", []);
     const service = new PackageSearchService([first, second], noOpLogger);

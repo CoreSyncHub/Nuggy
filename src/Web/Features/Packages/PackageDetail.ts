@@ -33,17 +33,17 @@ import "./WriteStatusBanner";
 @customElement("package-detail")
 export class PackageDetail extends LitElement {
   @property({ attribute: false }) package!: SolutionPackageDto;
-  /** Tous les projets de la solution : fusionnés aux installations pour rendre les
-   *  projets non équipés (et donc leur bouton d'installation) — cf. `allInstallations`. */
+  /** Every project in the solution: merged with the installations so unequipped
+   *  projects — and therefore their install button — are rendered, cf. `allInstallations`. */
   @property({ attribute: false }) projects: SolutionProjectDto[] = [];
   @property({ attribute: false }) info?: PackageUpdateInfoDto;
-  /** Chemins de projet occupés (relayé tel quel à project-installations). */
+  /** Busy project paths (relayed as is to project-installations). */
   @property({ attribute: false }) busyProjects: Set<string> = new Set();
-  /** Une action globale (toolbar, sans projectPath) est en cours : désactive les 3 boutons globaux. */
+  /** A global action (toolbar, without projectPath) is in flight: disables the 3 global buttons. */
   @property({ attribute: false }) globalBusy = false;
-  /** Statut du dernier `dotnet restore` (polling géré par PackagesView), relayé tel quel au bandeau. */
+  /** Status of the last `dotnet restore` (polling handled by PackagesView), relayed as is to the banner. */
   @property({ attribute: false }) restore?: RestoreStatusDto;
-  /** Dernier résultat d'écriture (succès ou échec), relayé tel quel au bandeau. */
+  /** Last write result (success or failure), relayed as is to the banner. */
   @property({ attribute: false }) writeResult?: PackageWriteResultDto;
   @state() private selectedVersion = "";
   @state() private showPrereleases = false;
@@ -63,11 +63,11 @@ export class PackageDetail extends LitElement {
     this.unsubscribeI18n?.();
   }
 
-  /** La version sélectionnée et le filtre préversions n'ont de sens que pour le package affiché :
-   *  sans ce reset, changer de sélection dans la liste laisse ces états "fuiter" sur le nouveau
-   *  package (ex. une version choisie sur X qui n'existe pas pour Y, ou un filtre préversions
-   *  resté coché). On ne réinitialise que lorsque l'identité du package change réellement — pas à
-   *  chaque re-rendu déclenché par l'arrivée asynchrone de `.info` pour le même package. */
+  /** The selected version and the prerelease filter only make sense for the package on screen:
+   *  without this reset, changing selection in the list would let those states "leak" onto the new
+   *  package (e.g. a version picked on X that does not exist for Y, or a prerelease filter left
+   *  ticked). We only reset when the package identity actually changes — not on every re-render
+   *  triggered by the asynchronous arrival of `.info` for the same package. */
   protected willUpdate(changed: PropertyValues<this>): void {
     if (!changed.has("package")) {
       return;
@@ -89,9 +89,9 @@ export class PackageDetail extends LitElement {
         display: flex;
         flex-direction: column;
       }
-      /* L'icône (64 px) est l'étalon de hauteur du header : l'identité se
-       distribue verticalement dessus, les contrôles vivent dans un bandeau
-       dédié pleine largeur en dessous (motif toolbar VS Code). */
+      /* The icon (64 px) sets the header height: the identity distributes itself
+       vertically against it, while the controls live in a dedicated full-width
+       strip underneath (VS Code toolbar pattern). */
       .header {
         display: flex;
         gap: 14px;
@@ -201,21 +201,21 @@ export class PackageDetail extends LitElement {
   }
 
   /**
-   * Les trois actions globales n'ont de sens que si le package est déjà quelque
-   * part dans la solution : rien à mettre à jour ni à retirer sinon, et ajouter
-   * une dépendance à TOUS les projets d'un coup est rarement l'intention — cela
-   * se défait projet par projet. Un package trouvé par recherche s'installe donc
-   * depuis les cartes projet, une cible à la fois.
+   * The three global actions only make sense when the package is already somewhere
+   * in the solution: nothing to update nor to remove otherwise, and adding a
+   * dependency to EVERY project at once is rarely the intent — that is undone
+   * project by project. A package found through search is therefore installed from
+   * the project cards, one target at a time.
    */
   private get isInstalledSomewhere(): boolean {
     return this.package.installations.length > 0;
   }
 
   /**
-   * Installations réelles, suivies des projets de la solution qui n'ont pas le
-   * package (marqués `installedVersion: "unknown"`, ce que `project-installations`
-   * rend déjà comme « installable »). Chaque groupe reste trié par nom de projet ;
-   * les projets équipés d'abord, pour que l'information utile reste en tête.
+   * Real installations, followed by the solution's projects that do not have the
+   * package (marked `installedVersion: "unknown"`, which `project-installations`
+   * already renders as "installable"). Each group stays sorted by project name;
+   * equipped projects first, so the useful information stays on top.
    */
   private get allInstallations(): PackageInstallationDto[] {
     const installed = this.package.installations;
@@ -245,9 +245,9 @@ export class PackageDetail extends LitElement {
     return versions.find((v) => v.version === this.selectedVersion) ?? versions[0];
   }
 
-  /** Émet un événement d'écriture global (bubbles+composed, comme package-selected) : la
-   *  confirmation pour une action "partout" se fait côté Host — ce composant se contente d'envoyer.
-   *  Sans projectPath, PackagesView.onWriteCommand sait qu'il s'agit d'une action globale. */
+  /** Emits a global write event (bubbles+composed, like package-selected): the
+   *  confirmation for an "everywhere" action happens Host-side — this component just sends.
+   *  Without a projectPath, PackagesView.onWriteCommand knows it is a global action. */
   private dispatchWrite(
     type: "install-package" | "upgrade-package" | "uninstall-package",
     version?: string,

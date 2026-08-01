@@ -111,7 +111,7 @@ EndProject
     (vscode.workspace as unknown as { workspaceFolders?: unknown }).workspaceFolders = undefined;
   });
 
-  it("met à jour la version sur le projet cible (écriture disque + restore programmé)", async () => {
+  it("updates the version on the target project (disk write + scheduled restore)", async () => {
     setFiles({
       "/Solution/My.sln": SLN,
       "/Solution/Api/Api.csproj": API_CSPROJ,
@@ -141,7 +141,7 @@ EndProject
     });
   });
 
-  it("packageId invalide (caractère d'injection XML) → Error sans résolution ni écriture (Finding 3a)", async () => {
+  it("invalid packageId (XML injection character) → Error with no resolution and no write (Finding 3a)", async () => {
     setFiles({
       "/Solution/My.sln": SLN,
       "/Solution/Api/Api.csproj": API_CSPROJ,
@@ -167,7 +167,7 @@ EndProject
     expect(result.error).toBeDefined();
   });
 
-  it("version invalide (caractère d'injection XML) → Error sans résolution ni écriture (Finding 3a)", async () => {
+  it("invalid version (XML injection character) → Error with no resolution and no write (Finding 3a)", async () => {
     setFiles({
       "/Solution/My.sln": SLN,
       "/Solution/Api/Api.csproj": API_CSPROJ,
@@ -193,7 +193,7 @@ EndProject
     expect(result.error).toBeDefined();
   });
 
-  it("journalise l'opération dans OperationLogStore avec les données du DTO", async () => {
+  it("journals the operation into OperationLogStore with the DTO data", async () => {
     setFiles({
       "/Solution/My.sln": SLN,
       "/Solution/Api/Api.csproj": API_CSPROJ,
@@ -217,7 +217,7 @@ EndProject
     expect(entry.version).toBe("3.2.0");
   });
 
-  it("journalise aussi les erreurs de validation", async () => {
+  it("journals validation errors as well", async () => {
     setFiles({
       "/Solution/My.sln": SLN,
       "/Solution/Api/Api.csproj": API_CSPROJ,
@@ -239,7 +239,7 @@ EndProject
     expect(entry.error).toContain("identifiant ou version de package invalide");
   });
 
-  it("version wildcard existante → skipped sans écriture", async () => {
+  it("existing wildcard version → skipped without a write", async () => {
     setFiles({
       "/Solution/My.sln": SLN,
       "/Solution/Api/Api.csproj": API_CSPROJ_WILDCARD,
@@ -261,7 +261,7 @@ EndProject
     });
   });
 
-  it("package non installé sur la cible → skipped", async () => {
+  it("package not installed on the target → skipped", async () => {
     setFiles({
       "/Solution/My.sln": SLN,
       "/Solution/Api/Api.csproj": API_CSPROJ,
@@ -289,7 +289,7 @@ EndProject
   });
 });
 
-describe("UpgradePackageCommandHandler - mise à jour globale", () => {
+describe("UpgradePackageCommandHandler - global update", () => {
   const SLN = `Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CandidateA", "CandidateA\\CandidateA.csproj", "{11111111-1111-1111-1111-111111111111}"
 EndProject
@@ -328,7 +328,7 @@ EndProject
     });
   });
 
-  it("upgrade global : confirme si plus d'un projet candidat, puis met à jour tous", async () => {
+  it("global upgrade: confirms when more than one candidate project, then updates them all", async () => {
     const { handler, prompt, restoreScheduler } = createHandler();
 
     const result = await handler.Handle(
@@ -374,7 +374,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Worker", "Worker\\Worker.cs
 EndProject
 `;
 
-  // En CPM, les PackageReference n'ont plus d'attribut Version (délégué au
+  // Under CPM, PackageReference elements no longer carry a Version attribute (delegated to
   // Directory.Packages.props).
   const API_CSPROJ_CPM = `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup>
@@ -401,7 +401,7 @@ EndProject
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Un dossier de workspace est requis pour que BuildConfigDetector
+    // A workspace folder is required for BuildConfigDetector
     // interroge vscode.workspace.findFiles.
     (vscode.workspace as unknown as { workspaceFolders?: unknown }).workspaceFolders = [
       { uri: { fsPath: "/Solution" } },
@@ -413,9 +413,9 @@ EndProject
       "/Solution/Directory.Packages.props": DIRECTORY_PACKAGES_PROPS,
     });
 
-    // BuildConfigDetector.findAllConfigFiles interroge trois patterns
-    // (Directory.Build.props, Directory.Build.targets, Directory.Packages.props) ;
-    // seul le dernier doit renvoyer une correspondance ici.
+    // BuildConfigDetector.findAllConfigFiles queries three patterns
+    // (Directory.Build.props, Directory.Build.targets, Directory.Packages.props);
+    // only the last one must return a match here.
     (vscode.workspace.findFiles as jest.Mock).mockImplementation((pattern: string) => {
       if (pattern.includes("Directory.Packages.props")) {
         return Promise.resolve([vscode.Uri.file("/Solution/Directory.Packages.props")]);
@@ -424,7 +424,7 @@ EndProject
     });
   });
 
-  it("CPM : une seule écriture solution-wide, confirme si plusieurs projets affectés", async () => {
+  it("CPM: a single solution-wide write, confirms when several projects are affected", async () => {
     const { handler, prompt, restoreScheduler } = createHandler();
 
     const result = await handler.Handle(
@@ -435,7 +435,7 @@ EndProject
       "Update Microsoft.Extensions.Logging to 8.0.1? This will affect 2 projects.",
     );
 
-    // Une seule écriture : le fichier central, jamais les csproj.
+    // A single write: the central file, never the csproj files.
     expect(mockFs.writeFileSync).toHaveBeenCalledTimes(1);
     const cpmWrite = mockFs.writeFileSync.mock.calls.find(
       ([p]) => p === "/Solution/Directory.Packages.props",
@@ -453,7 +453,7 @@ EndProject
     expect(restoreScheduler.schedule).toHaveBeenCalledWith("/Solution/My.sln");
   });
 
-  it("projectPath explicite sur un package géré CPM → refus Error", async () => {
+  it("explicit projectPath on a CPM-managed package → refused with Error", async () => {
     const { handler, restoreScheduler, prompt } = createHandler();
 
     const result = await handler.Handle(

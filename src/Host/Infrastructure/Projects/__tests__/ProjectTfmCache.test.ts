@@ -10,21 +10,21 @@ describe("ProjectTfmCache", () => {
 
   afterEach(() => jest.restoreAllMocks());
 
-  it("résout une seule fois pour deux lectures successives de la même solution", async () => {
+  it("resolves only once for two successive reads of the same solution", async () => {
     const resolver = jest.fn().mockResolvedValue(new Map([["/A.csproj", ["net8.0"]]]));
     await cache.getOrResolve("/Solution/A.sln", resolver);
     await cache.getOrResolve("/Solution/A.sln", resolver);
     expect(resolver).toHaveBeenCalledTimes(1);
   });
 
-  it("résout séparément pour deux solutions distinctes", async () => {
+  it("resolves separately for two distinct solutions", async () => {
     const resolver = jest.fn().mockResolvedValue(new Map());
     await cache.getOrResolve("/Solution/A.sln", resolver);
     await cache.getOrResolve("/Solution/B.sln", resolver);
     expect(resolver).toHaveBeenCalledTimes(2);
   });
 
-  it("re-résout après expiration du TTL (60 s)", async () => {
+  it("re-resolves after the TTL expires (60 s)", async () => {
     const resolver = jest.fn().mockResolvedValue(new Map());
     await cache.getOrResolve("/Solution/A.sln", resolver);
 
@@ -34,7 +34,7 @@ describe("ProjectTfmCache", () => {
     expect(resolver).toHaveBeenCalledTimes(2);
   });
 
-  it("ne met pas en cache un resolver rejeté, et permet une nouvelle tentative", async () => {
+  it("does not cache a rejected resolver, and allows a retry", async () => {
     const resolver = jest
       .fn()
       .mockRejectedValueOnce(new Error("solution introuvable"))
@@ -48,7 +48,7 @@ describe("ProjectTfmCache", () => {
     expect(resolver).toHaveBeenCalledTimes(2);
   });
 
-  it("invalidate() supprime l'entrée : le prochain appel re-résout", async () => {
+  it("invalidate() drops the entry: the next call re-resolves", async () => {
     const resolver = jest.fn().mockResolvedValue(new Map([["/A.csproj", ["net8.0"]]]));
     await cache.getOrResolve("/Solution/A.sln", resolver);
 
@@ -58,7 +58,7 @@ describe("ProjectTfmCache", () => {
     expect(resolver).toHaveBeenCalledTimes(2);
   });
 
-  it("invalidate() n'affecte pas les autres solutions", async () => {
+  it("invalidate() does not affect the other solutions", async () => {
     const resolver = jest.fn().mockResolvedValue(new Map());
     await cache.getOrResolve("/Solution/A.sln", resolver);
     await cache.getOrResolve("/Solution/B.sln", resolver);
@@ -66,6 +66,6 @@ describe("ProjectTfmCache", () => {
     cache.invalidate("/Solution/A.sln");
     await cache.getOrResolve("/Solution/B.sln", resolver);
 
-    expect(resolver).toHaveBeenCalledTimes(2); // A puis B, B non re-résolu
+    expect(resolver).toHaveBeenCalledTimes(2); // A then B, B not re-resolved
   });
 });

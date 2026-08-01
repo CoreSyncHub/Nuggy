@@ -10,34 +10,34 @@ export interface PackageInstallationDto {
 
 export interface SolutionPackageDto {
   id: string;
-  /** URL flat-container nuget.org, déduite de l'id + version installée */
+  /** nuget.org flat-container URL, derived from the id + installed version */
   iconUrl: string;
   installations: PackageInstallationDto[];
 }
 
 /**
- * Projet de la solution, indépendamment de tout package. Permet à l'UI de
- * proposer l'installation par projet là où le package est absent : sans cette
- * liste, seuls les projets déjà équipés seraient affichés et le bouton ＋ des
- * cartes projet resterait inatteignable.
+ * A project of the solution, independent of any package. Lets the UI offer
+ * per-project installation where the package is absent: without this list, only
+ * the projects already equipped would show and the ＋ button on the project
+ * cards would stay unreachable.
  */
 export interface SolutionProjectDto {
   projectPath: string;
   projectName: string;
   effectiveTfms: string[];
   /**
-   * Style qu'aurait une installation dans ce projet, aligné sur
-   * `PackageWriteTargetResolver` : `PackagesConfig` pour un projet legacy
-   * (écritures hors périmètre), `CpmManaged` si la solution porte un
-   * Directory.Packages.props, sinon `PackageReference`.
+   * The style an installation in this project would take, aligned with
+   * `PackageWriteTargetResolver`: `PackagesConfig` for a legacy project (writes out
+   * of scope), `CpmManaged` when the solution carries a Directory.Packages.props,
+   * otherwise `PackageReference`.
    */
   referenceStyle: PackageReferenceStyle;
 }
 
 export interface SolutionPackagesDto {
   packages: SolutionPackageDto[];
-  /** Tous les projets de la solution, triés par nom (cf. SolutionProjectDto). */
+  /** Every project of the solution, sorted by name (cf. SolutionProjectDto). */
   projects: SolutionProjectDto[];
-  /** Noms des feeds privés détectés mais non interrogés (bandeau UI) */
+  /** Names of private feeds detected but not queried (UI banner) */
   uninterrogatedFeeds: string[];
 }

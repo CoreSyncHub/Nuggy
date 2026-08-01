@@ -15,8 +15,8 @@ export interface IProcessRunner {
 export const PROCESS_RUNNER = new InjectionToken<IProcessRunner>("IProcessRunner");
 
 /**
- * Exécution réelle de processus enfants (I/O pur, non testé unitairement).
- * La sortie stdout+stderr est capturée intégralement.
+ * Real child-process execution (pure I/O, not unit-tested).
+ * The stdout+stderr output is captured in full.
  */
 @singleton()
 export class ChildProcessRunner implements IProcessRunner {

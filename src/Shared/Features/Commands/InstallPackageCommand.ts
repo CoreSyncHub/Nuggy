@@ -2,8 +2,8 @@ import { type ICommand } from "../../Abstractions/Messaging/ICommand";
 import { type PackageWriteResultDto } from "../Dtos/PackageWriteResultDto";
 
 /**
- * Installe un package sur un projet, ou sur tous les projets compatibles
- * non équipés si projectPath est absent.
+ * Installs a package on one project, or on every compatible project that does
+ * not have it yet when projectPath is absent.
  */
 export class InstallPackageCommand implements ICommand<PackageWriteResultDto> {
   constructor(

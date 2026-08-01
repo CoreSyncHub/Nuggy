@@ -19,9 +19,9 @@ export function injectToken<T>(token: InjectionToken<T>) {
 }
 
 /**
- * Injecte TOUTES les implémentations enregistrées sous un même token, sous
- * forme de tableau. Utilisé là où plusieurs adaptateurs coexistent (sources de
- * recherche), là où `injectToken` n'en résoudrait qu'une.
+ * Injects EVERY implementation registered under the same token, as an array.
+ * Used where several adapters coexist (search sources), and where `injectToken`
+ * would resolve only one of them.
  */
 export function injectAllTokens<T>(token: InjectionToken<T>) {
   return tsyringeInjectAll(token.token);

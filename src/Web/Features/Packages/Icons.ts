@@ -1,13 +1,13 @@
 import { html, svg, type SVGTemplateResult, type TemplateResult } from "lit";
 
 /**
- * Icônes SVG inline (style rempli, fournies par le projet) — remplacent
- * émojis et caractères spéciaux dont le rendu varie selon l'OS. Les tracés
- * utilisent currentColor : la couleur vient du contexte CSS.
+ * Inline SVG icons (filled style, supplied by the project) — they replace emoji
+ * and special characters whose rendering varies across operating systems. The
+ * paths use currentColor: the colour comes from the CSS context.
  *
- * Les fragments internes sont construits avec le template tag `svg` de Lit :
- * un fragment `html` interpolé dans un <svg> serait créé dans le namespace
- * HTML et ne se dessinerait pas.
+ * The inner fragments are built with Lit's `svg` template tag: an `html`
+ * fragment interpolated inside an <svg> would be created in the HTML namespace
+ * and would not be drawn.
  */
 function fillIcon(
   size: number,

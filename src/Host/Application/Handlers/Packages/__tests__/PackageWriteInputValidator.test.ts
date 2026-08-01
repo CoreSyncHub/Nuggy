@@ -6,7 +6,7 @@ describe("PackageWriteInputValidator (Finding 3a)", () => {
     expect(isValidPackageId("Microsoft.Extensions.Logging_Abstractions-2")).toBe(true);
   });
 
-  it("refuse un packageId porteur de caractères d'injection XML", () => {
+  it("refuses a packageId carrying XML injection characters", () => {
     expect(isValidPackageId('Evil" Foo="bar')).toBe(false);
     expect(isValidPackageId("Evil<x>")).toBe(false);
     expect(isValidPackageId("Evil&Co")).toBe(false);
@@ -19,7 +19,7 @@ describe("PackageWriteInputValidator (Finding 3a)", () => {
     expect(isValidVersion("1.0.0-beta.1+build.2")).toBe(true);
   });
 
-  it("refuse une version porteuse de caractères d'injection XML", () => {
+  it("refuses a version carrying XML injection characters", () => {
     expect(isValidVersion('1.0.0" Foo="bar')).toBe(false);
     expect(isValidVersion("1.0.0<x>")).toBe(false);
     expect(isValidVersion("1.0.0&amp;")).toBe(false);

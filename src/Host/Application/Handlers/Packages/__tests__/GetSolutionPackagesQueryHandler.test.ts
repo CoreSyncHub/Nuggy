@@ -18,8 +18,8 @@ import { createSolutionPackagesHandler } from "../../../../../Tests/Helpers/crea
 
 const mockFs = fs as jest.Mocked<typeof fs>;
 
-/** `BuildConfigDetector.findAllConfigFiles` rend [] tant qu'aucun workspace n'est ouvert :
- *  les scénarios qui ont besoin d'un Directory.Packages.props doivent donc peupler les deux. */
+/** `BuildConfigDetector.findAllConfigFiles` returns [] until a workspace is open:
+ *  scenarios needing a Directory.Packages.props must therefore populate both. */
 const mockVscode = jest.requireMock("vscode") as {
   workspace: { findFiles: jest.Mock; workspaceFolders?: Array<{ uri: { fsPath: string } }> };
 };
@@ -72,7 +72,7 @@ describe("GetSolutionPackagesQueryHandler", () => {
     );
   });
 
-  it("consolide les packages par id avec installations par projet", async () => {
+  it("consolidates packages by id with per-project installations", async () => {
     const handler = createSolutionPackagesHandler();
     const dto = await handler.Handle(new GetSolutionPackagesQuery("/Solution/MySolution.sln"));
 
@@ -93,12 +93,12 @@ describe("GetSolutionPackagesQueryHandler", () => {
     );
   });
 
-  it("expose tous les projets de la solution, y compris ceux sans le package", async () => {
+  it("exposes every project in the solution, including those without the package", async () => {
     const handler = createSolutionPackagesHandler();
     const dto = await handler.Handle(new GetSolutionPackagesQuery("/Solution/MySolution.sln"));
 
-    // Serilog n'est référencé que par Api : sans cette liste, l'UI ne pourrait jamais
-    // proposer de l'installer sur Core (bouton ＋ par projet inatteignable).
+    // Serilog is only referenced by Api: without this list, the UI could never offer
+    // to install it on Core (the per-project ＋ button would be unreachable).
     expect(dto.packages.find((p) => p.id === "Serilog")!.installations).toHaveLength(1);
     expect(dto.projects).toEqual([
       {
@@ -116,7 +116,7 @@ describe("GetSolutionPackagesQueryHandler", () => {
     ]);
   });
 
-  it("annonce le style CpmManaged quand la solution porte un Directory.Packages.props", async () => {
+  it("reports the CpmManaged style when the solution carries a Directory.Packages.props", async () => {
     const CPM_PROPS = `<Project>
   <PropertyGroup><ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally></PropertyGroup>
   <ItemGroup><PackageVersion Include="Serilog" Version="3.1.0" /></ItemGroup>
@@ -150,18 +150,18 @@ describe("GetSolutionPackagesQueryHandler", () => {
     const handler = createSolutionPackagesHandler();
     const dto = await handler.Handle(new GetSolutionPackagesQuery("/Solution/MySolution.sln"));
 
-    // Installer ici créera une <PackageReference> sans Version + un <PackageVersion> :
-    // même sémantique que PackageWriteTargetResolver, dont dépendent les boutons de l'UI.
+    // Installing here will create a <PackageReference> without a Version plus a
+    // <PackageVersion>: same semantics as PackageWriteTargetResolver, which the UI buttons rely on.
     expect(dto.projects.map((p) => p.referenceStyle)).toEqual(["CpmManaged", "CpmManaged"]);
   });
 
-  it("sans NuGet.Config, aucun feed non interrogé", async () => {
+  it("without a NuGet.Config, no uninterrogated feed", async () => {
     const handler = createSolutionPackagesHandler();
     const dto = await handler.Handle(new GetSolutionPackagesQuery("/Solution/MySolution.sln"));
     expect(dto.uninterrogatedFeeds).toEqual([]);
   });
 
-  it("consolide un même package référencé avec des casses d'id différentes selon les projets", async () => {
+  it("consolidates the same package referenced with different id casings across projects", async () => {
     const API_CASING_CSPROJ = `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup>
   <ItemGroup>

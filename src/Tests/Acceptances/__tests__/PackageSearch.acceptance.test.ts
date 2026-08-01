@@ -48,7 +48,7 @@ const noOpLogger: ILogger = {
   Debug: jest.fn(),
 };
 
-/** Source factice servant les résultats : l'acceptance ne touche jamais le réseau. */
+/** Fake source serving the results: the acceptance never touches the network. */
 const fakeSource: IPackageSearchSource = {
   name: "nuget.org",
   search: jest.fn().mockResolvedValue({
@@ -66,9 +66,9 @@ const fakeSource: IPackageSearchSource = {
   }),
 };
 
-/** Source factice qui échoue toujours : couvre réellement le chemin de la
- *  source en échec plutôt que de se contenter d'un intitulé de test qui le
- *  prétend sans qu'aucune source ne rejette jamais. */
+/** Fake source that always fails: genuinely covers the failing-source path
+ *  rather than settling for a test title claiming it while no source ever
+ *  rejects. */
 const failingSource: IPackageSearchSource = {
   name: "interne",
   search: jest.fn().mockRejectedValue(new Error("feed interne injoignable")),
@@ -83,9 +83,9 @@ const API_CSPROJ = `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup>
 </Project>`;
 
-/** Même socle que PackageWrites.acceptance.test.ts : les écritures persistent
- *  dans le même magasin que les lectures, pour que GetSolutionPackagesQuery
- *  relise exactement ce que l'installation vient d'écrire. */
+/** Same foundation as PackageWrites.acceptance.test.ts: writes persist into the
+ *  same store as reads, so GetSolutionPackagesQuery reads back exactly what the
+ *  installation just wrote. */
 function setFiles(initial: Record<string, string>): Record<string, string> {
   const files: Record<string, string> = { ...initial };
   mockFs.existsSync.mockImplementation((p) => (p as string) in files);
@@ -110,7 +110,7 @@ describe("Acceptance : recherche de packages", () => {
     jest.clearAllMocks();
   });
 
-  it("sert les résultats, la pagination et les sources en échec", async () => {
+  it("serves the results, the pagination and the failing sources", async () => {
     const handler = new SearchPackagesQueryHandler(
       new PackageSearchService([fakeSource, failingSource], noOpLogger),
     );
@@ -136,7 +136,7 @@ describe("Acceptance : recherche de packages", () => {
     });
   });
 
-  it("recherche, sélectionne un résultat, l'installe sur un projet puis le retrouve dans les packages installés de la solution", async () => {
+  it("searches, selects a result, installs it on a project then finds it among the solution's installed packages", async () => {
     const files = setFiles({
       "/Solution/My.sln": SLN,
       "/Solution/Api/Api.csproj": API_CSPROJ,
@@ -148,11 +148,11 @@ describe("Acceptance : recherche de packages", () => {
     );
     const searchDto = await searchHandler.Handle(new SearchPackagesQuery("refit", 0, 25, false));
 
-    // ---- Sélection du résultat trouvé ----
+    // ---- Selecting the result that was found ----
     const selected = searchDto.hits.find((h) => h.id === "Refit");
     expect(selected).toBeDefined();
 
-    // ---- Installation sur le projet Api ----
+    // ---- Installing on the Api project ----
     const processRunner: IProcessRunner = {
       run: jest.fn().mockResolvedValue({ exitCode: 0, output: "", timedOut: false }),
     };
@@ -161,7 +161,7 @@ describe("Acceptance : recherche de packages", () => {
     const metadataCache = new PackageMetadataCache();
     const tfmCache = new ProjectTfmCache();
     const prompt: IUserPrompt = { confirm: jest.fn().mockResolvedValue(true) };
-    // Registration introuvable → verdict Unknown → jamais bloquant (même motif
+    // Registration not found → Unknown verdict → never blocking (same pattern
     // que InstallPackageCommandHandler.test.ts et PackageWrites.acceptance.test.ts).
     const apiClient = { getRegistrationLeaves: jest.fn().mockResolvedValue([]) };
 
@@ -204,7 +204,7 @@ describe("Acceptance : recherche de packages", () => {
       '<PackageReference Include="Refit" Version="7.0.0" />',
     );
 
-    // ---- Vérification : le package installé apparaît bien dans la solution ----
+    // ---- Check: the installed package does show up in the solution ----
     const solutionPackagesHandler = createSolutionPackagesHandler();
     const solutionDto = await solutionPackagesHandler.Handle(
       new GetSolutionPackagesQuery("/Solution/My.sln"),

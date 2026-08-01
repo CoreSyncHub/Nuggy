@@ -2,9 +2,9 @@ import { type ICommand } from "../../Abstractions/Messaging/ICommand";
 import { type PackageWriteResultDto } from "../Dtos/PackageWriteResultDto";
 
 /**
- * Désinstalle un package d'un projet, ou de tous les projets si
- * projectPath est absent. Sous CPM, le PackageVersion devenu orphelin est
- * retiré du Directory.Packages.props.
+ * Uninstalls a package from one project, or from every project when projectPath
+ * is absent. Under CPM, the PackageVersion left orphaned is removed from the
+ * Directory.Packages.props.
  */
 export class UninstallPackageCommand implements ICommand<PackageWriteResultDto> {
   constructor(

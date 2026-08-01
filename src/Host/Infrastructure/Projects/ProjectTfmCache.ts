@@ -3,17 +3,17 @@ import { singleton } from "tsyringe";
 const TTL_MS = 60 * 1000;
 
 /**
- * Cache mémoire des TFM de projets résolus par solution (TTL 60 s). Évite de
- * reparser le fichier solution et de re-résoudre chaque .csproj pour CHAQUE
- * package interrogé (sinon O(packages × projets) de travail disque par vue).
- * TTL court car ces résolutions dépendent de fichiers pouvant changer entre
- * deux interrogations utilisateur. Les résolutions en échec ne sont jamais
- * mises en cache afin d'être retentées au prochain appel.
+ * In-memory cache of project TFMs resolved per solution (60 s TTL). Avoids
+ * re-parsing the solution file and re-resolving every .csproj for EVERY package
+ * queried (otherwise O(packages × projects) of disk work per view). The TTL is
+ * short because these resolutions depend on files that may change between two
+ * user interactions. Failed resolutions are never cached, so they are retried
+ * on the next call.
  *
- * Enregistré en singleton tsyringe : contrairement aux handlers (résolus
- * transitoirement à chaque requête via le conteneur), ce cache doit survivre
- * entre les requêtes pour être utile — d'où son extraction dans un service
- * injecté plutôt qu'un champ d'instance sur le handler.
+ * Registered as a tsyringe singleton: unlike handlers (resolved transiently on
+ * each request through the container), this cache has to survive across
+ * requests to be of any use — hence its extraction into an injected service
+ * rather than an instance field on the handler.
  */
 @singleton()
 export class ProjectTfmCache {
@@ -33,7 +33,7 @@ export class ProjectTfmCache {
     return data;
   }
 
-  /** Supprime l'entrée en cache pour cette solution. */
+  /** Drops the cached entry for this solution. */
   public invalidate(key: string): void {
     this.entries.delete(key);
   }

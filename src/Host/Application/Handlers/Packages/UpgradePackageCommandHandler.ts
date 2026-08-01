@@ -22,13 +22,13 @@ import { USER_PROMPT, type IUserPrompt } from "../../Abstractions/Prompt/IUserPr
 import { type ILogger, LOGGER } from "../../Abstractions/Log/ILogger";
 
 /**
- * Met à jour la version d'un package sur un projet explicite, ou sur tous
- * les projets où il est déjà installé si `projectPath` est absent.
+ * Upgrades the version of a package on a specific project, or on all projects
+ * where it is already installed if `projectPath` is not provided.
  *
- * Contrairement à `InstallPackageCommandHandler`, aucun verdict de
- * compatibilité TFM n'est calculé ici : l'upgrade est déclenchée depuis une
- * UI qui affiche déjà les verdicts au moment du choix de version, et MSBuild
- * tranchera de toute façon au restore.
+ * Unlike `InstallPackageCommandHandler`, no TFM compatibility verdict
+ * is calculated here: the upgrade is triggered from a UI that already
+ * displays the verdicts at the time of version selection, and MSBuild
+ * will ultimately decide during restore.
  */
 @injectable()
 @HandlerFor(UpgradePackageCommand)
@@ -52,8 +52,8 @@ export class UpgradePackageCommandHandler implements ICommandHandler<
     try {
       result = await this.handleCore(command);
     } catch (error) {
-      // handleCore est conçu pour ne jamais jeter : si cela arrive malgré tout,
-      // l'audit de session ne doit pas garder le silence sur l'opération tentée.
+      // handleCore is designed never to throw: should it happen anyway, the session
+      // audit must not stay silent about the attempted operation.
       this.operationLog.recordWrite({
         operation: "upgrade",
         packageId: command.packageId,
@@ -100,15 +100,11 @@ export class UpgradePackageCommandHandler implements ICommandHandler<
         ? targets.filter((t) => t.installedVersion !== undefined)
         : targets.filter((t) => t.projectPath === command.projectPath);
 
-    // Défense en profondeur : l'UI désactive déjà le bouton d'upgrade pour un
-    // projet explicite géré centralement (CPM) — la mise à jour doit passer
-    // par la version centrale, solution-wide. Si cette branche est atteinte
-    // malgré tout, l'état de l'UI est incohérent : on logge pour le signaler.
     if (command.projectPath !== undefined) {
       const explicitTarget = selected.find((t) => t.projectPath === command.projectPath);
       if (explicitTarget?.style === "CpmManaged") {
         this.logger.Warning(
-          "Upgrade demandé sur un projet explicite géré centralement (CPM) : l'UI aurait dû désactiver cette action",
+          "Upgrade requested on an explicit project managed centrally (CPM): the UI should have disabled this action",
           { packageId: command.packageId, projectPath: command.projectPath },
         );
         return {
@@ -116,7 +112,7 @@ export class UpgradePackageCommandHandler implements ICommandHandler<
           filesChanged: [],
           affectedProjects: [],
           skipped: [],
-          error: `'${command.packageId}' est géré centralement via Directory.Packages.props ; mettez à jour la version centrale de la solution.`,
+          error: `'${command.packageId}' is managed centrally through Directory.Packages.props; update the solution's central version instead.`,
         };
       }
     }
@@ -238,13 +234,13 @@ export class UpgradePackageCommandHandler implements ICommandHandler<
   }
 
   /**
-   * Vérifie AVANT toute écriture si la version actuellement installée
-   * contient un wildcard (`Version="8.*"`). `setVersionAttribute` remplacerait
-   * cette valeur telle quelle sans le détecter : cette exclusion (hors
-   * périmètre du spec MSBuild wildcard v1) est du ressort du handler, pas de
-   * l'éditeur. Une lecture impossible ici n'est jamais fatale : l'échec réel,
-   * s'il y en a un, remonte de toute façon via `applyEdit` au moment de
-   * l'écriture.
+   * Before any write, checks if the currently installed version contains
+   * a wildcard (e.g., `Version="8.*"`). The `setVersionAttribute` would
+   * replace this value as-is without detecting it: this exclusion
+   * (outside the scope of the MSBuild wildcard spec v1) is the
+   * responsibility of the handler, not the editor. An unreadable
+   * file here is never fatal: any actual failure will surface
+   * through `applyEdit` at the time of writing.
    */
   private hasWildcardVersion(projectPath: string, packageId: string): boolean {
     let content: string;
@@ -265,7 +261,7 @@ export class UpgradePackageCommandHandler implements ICommandHandler<
     try {
       content = fs.readFileSync(filePath, "utf8");
     } catch {
-      return { ok: false, reason: `lecture impossible : ${filePath}` };
+      return { ok: false, reason: `cannot read: ${filePath}` };
     }
     const result = edit(content);
     if (!result.ok) {
@@ -274,7 +270,7 @@ export class UpgradePackageCommandHandler implements ICommandHandler<
     try {
       fs.writeFileSync(filePath, result.content);
     } catch {
-      return { ok: false, reason: `écriture impossible : ${filePath}` };
+      return { ok: false, reason: `cannot write: ${filePath}` };
     }
     return { ok: true };
   }

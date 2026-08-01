@@ -2,8 +2,8 @@ import { type ICommand } from "../../Abstractions/Messaging/ICommand";
 import { type PackageWriteResultDto } from "../Dtos/PackageWriteResultDto";
 
 /**
- * Met à jour la version d'un package sur un projet, ou partout où il est
- * installé si projectPath est absent. Sous CPM : écriture unique
+ * Updates the version of a package on one project, or everywhere it is installed
+ * when projectPath is absent. Under CPM: a single write
  * solution-wide dans Directory.Packages.props.
  */
 export class UpgradePackageCommand implements ICommand<PackageWriteResultDto> {

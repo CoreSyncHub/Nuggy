@@ -1,9 +1,9 @@
-/** Une cible qu'une écriture a laissée de côté, et pourquoi. */
+/** A target a write left aside, and why. */
 export interface SkippedTargetDto {
   /**
-   * Le projet concerné — ou le `Directory.Packages.props` lorsque l'échec porte
-   * sur la version centrale, qui n'appartient à aucun projet en particulier.
-   * Le champ s'appelait `projectPath` et mentait donc dans ce second cas.
+   * The project concerned — or the `Directory.Packages.props` when the failure is
+   * about the central version, which belongs to no project in particular.
+   * The field used to be called `projectPath` and therefore lied in that second case.
    */
   path: string;
   reason: string;

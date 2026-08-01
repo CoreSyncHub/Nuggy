@@ -5,14 +5,14 @@ export interface PackageSearchHitDto {
   totalDownloads?: number;
   verified: boolean;
   iconUrl?: string;
-  /** Source d'origine du résultat. */
+  /** Source the result came from. */
   sourceName: string;
 }
 
 export interface SearchResultsDto {
   hits: PackageSearchHitDto[];
-  /** Au moins une source a renvoyé une page pleine : « Charger plus » a du sens. */
+  /** At least one source returned a full page: "Load more" makes sense. */
   hasMore: boolean;
-  /** Sources injoignables lors de cette recherche. */
+  /** Sources unreachable during this search. */
   failedSources: string[];
 }

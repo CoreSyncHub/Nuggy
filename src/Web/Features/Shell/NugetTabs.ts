@@ -10,29 +10,29 @@ type TabId = "packages" | "logs";
 const TAB_ORDER: TabId[] = ["packages", "logs"];
 
 /**
- * Coquille à onglets de la webview : Packages (défaut) / Logs.
+ * Tabbed shell of the webview: Packages (default) / Logs.
  *
- * Onglets natifs plutôt que `fluent-tabs` : les composants Fluent portent leur
- * propre design system (palette neutre claire par défaut, d'où un libellé noir
- * illisible sur thème sombre) et interposent un shadow DOM dont le wrapper
- * interne ne propage pas la hauteur — les vues slottées ne pouvaient donc plus
- * défiler. Ici tout est stylé aux tokens `--vscode-*`, comme le reste de l'UI.
+ * Native tabs rather than `fluent-tabs`: the Fluent components carry their own
+ * design system (a light neutral palette by default, hence a black label
+ * unreadable on a dark theme) and interpose a shadow DOM whose inner wrapper
+ * does not propagate height — so the slotted views could no longer scroll. Here
+ * everything is styled with `--vscode-*` tokens, like the rest of the UI.
  *
- * Les deux panneaux restent montés en permanence : l'inactif est simplement
- * masqué, donc l'état de packages-view (sélection, largeur du splitter,
- * polling restore) survit aux changements d'onglet.
+ * Both panels stay mounted at all times: the inactive one is merely hidden, so
+ * the state of packages-view (selection, splitter width, restore polling)
+ * survives tab changes.
  *
- * Navigation croisée : le bandeau d'échec de restore (dans packages-view)
- * émet `show-logs { runId }` (bubbles + composed) → activation de l'onglet
- * Logs + ciblage du run. `restore-finished` (émis par packages-view quand son
- * polling observe un état terminal) → rafraîchissement de logs-view si actif.
+ * Cross navigation: the restore failure banner (inside packages-view) emits
+ * `show-logs { runId }` (bubbles + composed) → activates the Logs tab and
+ * targets the run. `restore-finished` (emitted by packages-view when its polling
+ * observes a terminal state) → refreshes logs-view when it is active.
  */
 @customElement("nuget-tabs")
 export class NugetTabs extends LitElement {
   @state() private activeId: TabId = "packages";
-  /** Incrémenté à chaque fin de restore observée : logs-view re-fetch si actif. */
+  /** Incremented on every observed restore completion: logs-view re-fetches when active. */
   @state() private refreshToken = 0;
-  /** runId à cibler dans logs-view à la prochaine activation (consommé puis remis à undefined). */
+  /** runId to target in logs-view on the next activation (consumed then reset to undefined). */
   @state() private targetRunId?: number;
 
   private i18n!: TranslationService;
@@ -105,8 +105,8 @@ export class NugetTabs extends LitElement {
       min-height: 0;
       overflow: hidden;
     }
-    /* Règle d'auteur nécessaire : .panel { display: flex } l'emporterait sinon
-       sur le display:none que la feuille de style du navigateur associe à [hidden]. */
+    /* Author rule required: .panel { display: flex } would otherwise win over
+       the display:none the browser stylesheet attaches to [hidden]. */
     .panel[hidden] {
       display: none;
     }
@@ -123,15 +123,15 @@ export class NugetTabs extends LitElement {
 
   private select(id: TabId): void {
     this.activeId = id;
-    // Le ciblage d'un run n'a de sens que pour l'activation qui l'a demandé :
-    // revenir sur Packages l'annule, sinon un futur retour sur Logs redéplierait
-    // et re-scrollerait un run que l'utilisateur a déjà consulté.
+    // Targeting a run only makes sense for the activation that asked for it:
+    // going back to Packages cancels it, otherwise a later return to Logs would
+    // re-expand and re-scroll a run the user has already looked at.
     if (id === "packages") {
       this.targetRunId = undefined;
     }
   }
 
-  /** Navigation clavier du motif ARIA « tabs » : flèches, Origine, Fin. */
+  /** Keyboard navigation of the ARIA "tabs" pattern: arrows, Home, End. */
   private onKeydown(e: KeyboardEvent): void {
     const current = TAB_ORDER.indexOf(this.activeId);
     let next: number | undefined;

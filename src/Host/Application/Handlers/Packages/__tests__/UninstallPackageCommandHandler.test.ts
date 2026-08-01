@@ -67,10 +67,10 @@ function createHandler(overrides?: {
 }
 
 describe("journalisation des exceptions inattendues", () => {
-  it("enregistre l'opération tentée puis laisse remonter l'erreur", async () => {
-    // handleCore est conçu pour ne jamais jeter ; si cela arrivait, l'audit de
-    // session resterait muet sur l'écriture tentée. On force donc l'exception
-    // par une résolution de cibles qui échoue.
+  it("records the attempted operation then lets the error propagate", async () => {
+    // handleCore is designed never to throw; were it to happen, the session audit
+    // would stay silent about the attempted write. So we force the exception with
+    // a target resolution that fails.
     const operationLog = new OperationLogStore();
     const targetResolver = {
       resolveTargets: jest.fn().mockRejectedValue(new Error("solution illisible")),
@@ -102,11 +102,11 @@ describe("journalisation des exceptions inattendues", () => {
 });
 
 /**
- * Contrairement aux autres handlers d'écriture, l'orphelinage CPM exige une
- * RE-résolution des cibles APRÈS écriture : `writeFileSync` doit donc
- * persister dans le même magasin que `readFileSync`, pour que la seconde
- * résolution voie l'état déjà modifié (sans quoi le nettoyage CPM ne pourrait
- * jamais constater qu'un projet ne référence plus le package).
+ * Unlike the other write handlers, CPM orphan cleanup requires RE-resolving the
+ * targets AFTER the write: `writeFileSync` must therefore persist into the same
+ * store as `readFileSync`, so the second resolution sees the already-modified
+ * state (without which the CPM cleanup could never observe that a project no
+ * longer references the package).
  */
 function setFiles(initial: Record<string, string>): Record<string, string> {
   const files: Record<string, string> = { ...initial };
@@ -156,7 +156,7 @@ EndProject
     });
   });
 
-  it("désinstalle du projet cible (écriture disque + restore programmé)", async () => {
+  it("uninstalls from the target project (disk write + scheduled restore)", async () => {
     const { handler, restoreScheduler, metadataCache, tfmCache } = createHandler();
     const invalidateMeta = jest.spyOn(metadataCache, "invalidate");
     const invalidateTfm = jest.spyOn(tfmCache, "invalidate");
@@ -181,7 +181,7 @@ EndProject
     });
   });
 
-  it("packageId invalide (caractère d'injection XML) → Error sans résolution ni écriture (Finding 3a)", async () => {
+  it("invalid packageId (XML injection character) → Error with no resolution and no write (Finding 3a)", async () => {
     const { handler, restoreScheduler } = createHandler();
 
     const result = await handler.Handle(
@@ -197,7 +197,7 @@ EndProject
     expect(result.error).toBeDefined();
   });
 
-  it("journalise l'opération dans OperationLogStore avec les données du DTO", async () => {
+  it("journals the operation into OperationLogStore with the DTO data", async () => {
     const { handler, operationLog } = createHandler();
 
     const result = await handler.Handle(
@@ -216,7 +216,7 @@ EndProject
     expect(entry.version).toBeUndefined();
   });
 
-  it("journalise aussi les erreurs de validation", async () => {
+  it("journals validation errors as well", async () => {
     const { handler, operationLog } = createHandler();
 
     await handler.Handle(
@@ -228,7 +228,7 @@ EndProject
     expect(entry.error).toContain("identifiant de package invalide");
   });
 
-  it("package non installé sur la cible → skipped", async () => {
+  it("package not installed on the target → skipped", async () => {
     const { handler, restoreScheduler } = createHandler();
 
     const result = await handler.Handle(
@@ -246,7 +246,7 @@ EndProject
   });
 });
 
-describe("UninstallPackageCommandHandler - désinstallation globale", () => {
+describe("UninstallPackageCommandHandler - global uninstall", () => {
   const SLN = `Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CandidateA", "CandidateA\\CandidateA.csproj", "{11111111-1111-1111-1111-111111111111}"
 EndProject
@@ -285,7 +285,7 @@ EndProject
     });
   });
 
-  it("désinstallation globale : confirme si plus d'un projet candidat, puis retire de tous", async () => {
+  it("global uninstall: confirms when more than one candidate project, then removes from all", async () => {
     const { handler, prompt, restoreScheduler } = createHandler();
 
     const result = await handler.Handle(
@@ -331,14 +331,14 @@ describe("UninstallPackageCommandHandler - CPM (Directory.Packages.props)", () =
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Un dossier de workspace est requis pour que BuildConfigDetector
+    // A workspace folder is required for BuildConfigDetector
     // interroge vscode.workspace.findFiles.
     (vscode.workspace as unknown as { workspaceFolders?: unknown }).workspaceFolders = [
       { uri: { fsPath: "/Solution" } },
     ];
-    // BuildConfigDetector.findAllConfigFiles interroge trois patterns
-    // (Directory.Build.props, Directory.Build.targets, Directory.Packages.props) ;
-    // seul le dernier doit renvoyer une correspondance ici.
+    // BuildConfigDetector.findAllConfigFiles queries three patterns
+    // (Directory.Build.props, Directory.Build.targets, Directory.Packages.props);
+    // only the last one must return a match here.
     (vscode.workspace.findFiles as jest.Mock).mockImplementation((pattern: string) => {
       if (pattern.includes("Directory.Packages.props")) {
         return Promise.resolve([vscode.Uri.file("/Solution/Directory.Packages.props")]);
@@ -347,7 +347,7 @@ describe("UninstallPackageCommandHandler - CPM (Directory.Packages.props)", () =
     });
   });
 
-  it("CPM : dernier consommateur retiré → le PackageVersion orphelin est retiré (deux fichiers dans filesChanged)", async () => {
+  it("CPM: last consumer removed → the orphaned PackageVersion is removed (two files in filesChanged)", async () => {
     const CPM_SLN = `Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api", "Api\\Api.csproj", "{11111111-1111-1111-1111-111111111111}"
 EndProject
@@ -395,7 +395,7 @@ EndProject
     expect(restoreScheduler.schedule).toHaveBeenCalledWith("/Solution/My.sln");
   });
 
-  it("CPM : un consommateur restant → le PackageVersion central est conservé", async () => {
+  it("CPM: one consumer left → the central PackageVersion is kept", async () => {
     const CPM_SLN = `Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api", "Api\\Api.csproj", "{11111111-1111-1111-1111-111111111111}"
 EndProject
@@ -436,8 +436,8 @@ EndProject
     expect(result.filesChanged).toEqual(["/Solution/Api/Api.csproj"]);
     expect(result.skipped).toEqual([]);
 
-    // Une seule écriture : le csproj retiré, jamais le fichier central puisque
-    // Worker référence toujours le package.
+    // A single write: the csproj that was stripped, never the central file since
+    // Worker still references the package.
     expect(mockFs.writeFileSync).toHaveBeenCalledTimes(1);
     const cpmWrite = mockFs.writeFileSync.mock.calls.find(
       ([p]) => p === "/Solution/Directory.Packages.props",

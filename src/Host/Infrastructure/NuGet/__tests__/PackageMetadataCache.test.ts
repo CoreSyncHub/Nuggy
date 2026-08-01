@@ -24,14 +24,14 @@ describe("PackageMetadataCache", () => {
 
   afterEach(() => jest.restoreAllMocks());
 
-  it("appelle le fetcher une seule fois pour deux lectures successives", async () => {
+  it("calls the fetcher only once for two successive reads", async () => {
     const fetcher = jest.fn().mockResolvedValue(dto());
     await cache.getOrFetch("X", fetcher);
     await cache.getOrFetch("X", fetcher);
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
-  it("dédoublonne les requêtes simultanées (une seule en vol)", async () => {
+  it("deduplicates simultaneous requests (a single one in flight)", async () => {
     let resolveFetch!: (v: PackageUpdateInfoDto) => void;
     const fetcher = jest.fn().mockReturnValue(
       new Promise((r) => {
@@ -47,7 +47,7 @@ describe("PackageMetadataCache", () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
-  it("refetch après expiration du TTL (30 min)", async () => {
+  it("refetches after the TTL expires (30 min)", async () => {
     const fetcher = jest.fn().mockResolvedValue(dto());
     await cache.getOrFetch("X", fetcher);
 
@@ -57,7 +57,7 @@ describe("PackageMetadataCache", () => {
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
-  it("ne met pas en cache les résultats en échec", async () => {
+  it("does not cache failed results", async () => {
     const fetcher = jest
       .fn()
       .mockResolvedValueOnce(dto("Offline"))
@@ -68,18 +68,18 @@ describe("PackageMetadataCache", () => {
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
-  it("propage le rejet du fetcher et permet une nouvelle tentative", async () => {
+  it("propagates the fetcher rejection and allows a retry", async () => {
     const fetcher = jest
       .fn()
-      .mockRejectedValueOnce(new Error("réseau"))
+      .mockRejectedValueOnce(new Error("network"))
       .mockResolvedValueOnce(dto());
 
-    await expect(cache.getOrFetch("X", fetcher)).rejects.toThrow("réseau");
+    await expect(cache.getOrFetch("X", fetcher)).rejects.toThrow("network");
     expect((await cache.getOrFetch("X", fetcher)).fetchStatus).toBe("Ok");
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
-  it("invalidate() supprime l'entrée : le prochain appel refetch", async () => {
+  it("invalidate() drops the entry: the next call refetches", async () => {
     const fetcher = jest.fn().mockResolvedValue(dto());
     await cache.getOrFetch("X", fetcher);
 
@@ -89,7 +89,7 @@ describe("PackageMetadataCache", () => {
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
-  it("invalidate() n'affecte pas les autres clés", async () => {
+  it("invalidate() does not affect the other keys", async () => {
     const fetcher = jest.fn().mockResolvedValue(dto());
     await cache.getOrFetch("X", fetcher);
     await cache.getOrFetch("Y", fetcher);
@@ -97,10 +97,10 @@ describe("PackageMetadataCache", () => {
     cache.invalidate("X");
     await cache.getOrFetch("Y", fetcher);
 
-    expect(fetcher).toHaveBeenCalledTimes(2); // X puis Y, Y non refetché
+    expect(fetcher).toHaveBeenCalledTimes(2); // X then Y, Y not refetched
   });
 
-  it("invalidate() efface aussi une requête en vol : une nouvelle requête n'attend pas l'ancienne promesse", async () => {
+  it("invalidate() also clears an in-flight request: a new request does not await the old promise", async () => {
     let resolveFirst!: (v: PackageUpdateInfoDto) => void;
     const firstFetcher = jest.fn().mockReturnValue(
       new Promise<PackageUpdateInfoDto>((r) => {
