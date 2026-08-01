@@ -1,8 +1,7 @@
 import { html, css, LitElement, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-// Le tri se réordonne à mesure que les badges arrivent : sans rendu keyé, Lit
-// réutiliserait les lignes par position et attribuerait icône et sélection au
-// mauvais package.
+// The sort reorders itself as badges arrive: without keyed rendering, Lit would
+// reuse the rows by position and hand icon and selection to the wrong package.
 import { repeat } from "lit/directives/repeat.js";
 import { container } from "tsyringe";
 import { type PackageSearchHitDto } from "@Shared/Features/Dtos/SearchResultsDto";
@@ -25,11 +24,11 @@ export class PackageList extends LitElement {
   @property({ attribute: false }) searchHits: PackageSearchHitDto[] = [];
   @property({ type: Boolean }) searchLoading = false;
   @property({ type: Boolean }) hasMore = false;
-  /** Aucune source n'a répondu : à distinguer d'une recherche sans résultat,
-   *  sous peine de faire croire que le package n'existe pas. */
+  /** No source answered: to be told apart from a search without results, or the
+   *  user would believe the package does not exist. */
   @property({ type: Boolean }) allSourcesFailed = false;
 
-  /** Champ unique : filtre les packages installés ET alimente la recherche distante. */
+  /** Single field: filters the installed packages AND feeds the remote search. */
   @state() private filterText = "";
   @state() private filterState = "all";
   @state() private includePrerelease = false;
@@ -120,8 +119,8 @@ export class PackageList extends LitElement {
       color: var(--vscode-descriptionForeground);
       text-align: center;
     }
-    /* En-tête de section : n'apparaît que lorsqu'une recherche est en cours,
-       pour séparer ce qui est déjà dans la solution de ce qui vient du feed. */
+    /* Section header: only appears while a search is in progress, to separate
+       what is already in the solution from what comes from the feed. */
     .section {
       display: flex;
       align-items: center;
@@ -166,8 +165,8 @@ export class PackageList extends LitElement {
     }
   `;
 
-  /** Les badges arrivent par lots : un package encore en cours reste en fin de
-   *  liste plutôt que de prendre la place d'un résultat déjà connu. */
+  /** Badges arrive in batches: a package still loading stays at the end of the
+   *  list rather than taking the place of an already-known result. */
   private static readonly LOADING_RANK = Number.MAX_SAFE_INTEGER;
 
   private rankOf(packageId: string): number {
@@ -175,8 +174,8 @@ export class PackageList extends LitElement {
     return badge === undefined ? PackageList.LOADING_RANK : UPDATE_STATE_RANK[badge];
   }
 
-  /** Packages montables d'abord, puis alphabétique — ce qui est actionnable
-   *  doit se voir sans défiler. Le tri se réajuste au fil des badges reçus. */
+  /** Upgradable packages first, then alphabetical — what is actionable must be
+   *  visible without scrolling. The sort readjusts as badges come in. */
   private get visiblePackages(): SolutionPackageDto[] {
     const text = this.filterText.toLowerCase();
     return this.packages
@@ -195,7 +194,7 @@ export class PackageList extends LitElement {
   private static readonly SEARCH_DEBOUNCE_MS = 300;
   private static readonly SEARCH_MIN_LENGTH = 2;
 
-  /** Le champ est vide : on n'affiche que les packages installés, sans section. */
+  /** The field is empty: only the installed packages are shown, without sections. */
   private get isSearching(): boolean {
     return this.filterText.trim().length > 0;
   }
@@ -204,16 +203,16 @@ export class PackageList extends LitElement {
     return this.filterText.trim().length >= PackageList.SEARCH_MIN_LENGTH;
   }
 
-  /** Packages installés déjà listés : inutile de les répéter dans les résultats. */
+  /** Installed packages are already listed: no point repeating them in the results. */
   private get remoteOnlyHits(): PackageSearchHitDto[] {
     const installed = new Set(this.packages.map((p) => p.id.toLowerCase()));
     return this.searchHits.filter((h) => !installed.has(h.id.toLowerCase()));
   }
 
   /**
-   * Débounce : une frappe rapide ne doit pas déclencher une requête par caractère.
-   * Sous le seuil, on demande explicitement l'oubli des résultats précédents —
-   * sans quoi ceux d'une recherche abandonnée réapparaîtraient à la frappe suivante.
+   * Debounce: fast typing must not fire one request per character.
+   * Below the threshold, we explicitly ask for the previous results to be dropped —
+   * otherwise those of an abandoned search would reappear on the next keystroke.
    */
   private scheduleSearch(): void {
     if (this.searchDebounce) {
@@ -293,7 +292,7 @@ export class PackageList extends LitElement {
     );
   }
 
-  /** Section distante : en-tête, option préversions, résultats et pagination. */
+  /** Remote section: header, prerelease option, results and pagination. */
   private renderSearchSection() {
     return html`<div class="section">
         ${this.i18n.t("packages.list.sectionResults")}

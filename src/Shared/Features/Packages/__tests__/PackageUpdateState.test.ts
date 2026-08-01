@@ -29,7 +29,7 @@ function pkg(...installations: PackageInstallationDto[]): SolutionPackageDto {
   return { id: "Serilog", iconUrl: "", installations };
 }
 
-/** Chaque version est décrite par ses verdicts : { projet → verdict }. */
+/** Each version is described by its verdicts: { project → verdict }. */
 function info(
   versions: Array<{ version: string; verdicts: Record<string, CompatibilityVerdict> }>,
   fetchStatus: PackageUpdateInfoDto["fetchStatus"] = "Ok",
@@ -55,7 +55,7 @@ function info(
 }
 
 describe("resolvePackageUpdateState", () => {
-  it("signale une mise à jour quand une version plus récente est compatible partout", () => {
+  it("reports an update when a newer version is compatible everywhere", () => {
     const state = resolvePackageUpdateState(
       pkg(installation(API, "3.0.0")),
       info([
@@ -66,7 +66,7 @@ describe("resolvePackageUpdateState", () => {
     expect(state).toBe<PackageUpdateState>("update");
   });
 
-  it("est à jour quand aucune version n'est plus récente que celle installée", () => {
+  it("is up to date when no version is newer than the installed one", () => {
     const state = resolvePackageUpdateState(
       pkg(installation(API, "4.0.0")),
       info([
@@ -77,7 +77,7 @@ describe("resolvePackageUpdateState", () => {
     expect(state).toBe<PackageUpdateState>("upToDate");
   });
 
-  it("compare à la PLUS BASSE des versions installées : un projet en retard reste montable", () => {
+  it("compares against the LOWEST installed version: a project left behind stays upgradable", () => {
     const state = resolvePackageUpdateState(
       pkg(installation(API, "3.0.0"), installation(LEGACY, "4.0.0")),
       info([
@@ -88,7 +88,7 @@ describe("resolvePackageUpdateState", () => {
     expect(state).toBe<PackageUpdateState>("update");
   });
 
-  it("signale une mise à jour partielle quand seuls certains projets peuvent monter", () => {
+  it("reports a partial update when only some projects can move up", () => {
     const state = resolvePackageUpdateState(
       pkg(installation(API, "3.0.0"), installation(LEGACY, "3.0.0")),
       info([{ version: "4.0.0", verdicts: { [API]: "Compatible", [LEGACY]: "Incompatible" } }]),
@@ -96,7 +96,7 @@ describe("resolvePackageUpdateState", () => {
     expect(state).toBe<PackageUpdateState>("updatePartial");
   });
 
-  it("signale « hors TFM » quand des versions plus récentes existent sans être compatibles", () => {
+  it('reports "out of TFM" when newer versions exist but none is compatible', () => {
     const state = resolvePackageUpdateState(
       pkg(installation(API, "3.0.0")),
       info([{ version: "4.0.0", verdicts: { [API]: "Incompatible" } }]),
@@ -104,9 +104,9 @@ describe("resolvePackageUpdateState", () => {
     expect(state).toBe<PackageUpdateState>("outOfTfm");
   });
 
-  it("ne tient compte que des projets où le package est installé", () => {
-    // Le verdict Incompatible d'un projet qui n'a PAS le package ne doit pas
-    // dégrader l'état : une mise à jour ne touche que les projets concernés.
+  it("only takes into account the projects where the package is installed", () => {
+    // The Incompatible verdict of a project that does NOT have the package must not
+    // degrade the state: an update only touches the projects concerned.
     const other = "/Solution/Other/Other.csproj";
     const state = resolvePackageUpdateState(
       pkg(installation(API, "3.0.0")),
@@ -115,7 +115,7 @@ describe("resolvePackageUpdateState", () => {
     expect(state).toBe<PackageUpdateState>("update");
   });
 
-  it("ignore les préversions tant qu'aucune version installée n'en est une", () => {
+  it("ignores prereleases as long as no installed version is one", () => {
     const state = resolvePackageUpdateState(
       pkg(installation(API, "3.0.0")),
       info([
@@ -126,7 +126,7 @@ describe("resolvePackageUpdateState", () => {
     expect(state).toBe<PackageUpdateState>("upToDate");
   });
 
-  it("prend les préversions en compte quand une version installée en est déjà une", () => {
+  it("takes prereleases into account when an installed version already is one", () => {
     const state = resolvePackageUpdateState(
       pkg(installation(API, "3.0.0-beta.1")),
       info([
@@ -137,14 +137,14 @@ describe("resolvePackageUpdateState", () => {
     expect(state).toBe<PackageUpdateState>("update");
   });
 
-  it("est inconnu quand les métadonnées n'ont pas pu être récupérées", () => {
+  it("is unknown when the metadata could not be fetched", () => {
     const state = resolvePackageUpdateState(pkg(installation(API, "3.0.0")), info([], "Offline"));
     expect(state).toBe<PackageUpdateState>("unknown");
   });
 
-  it("est inconnu quand un verdict manque pour un projet installé", () => {
-    // Verdicts absents (TFM non résolu, projet ajouté entre deux requêtes) :
-    // ne jamais affirmer « à jour » ni « hors TFM » sur une information partielle.
+  it("is unknown when a verdict is missing for an installed project", () => {
+    // Missing verdicts (unresolved TFM, project added between two requests):
+    // never assert "up to date" nor "out of TFM" on partial information.
     const state = resolvePackageUpdateState(
       pkg(installation(API, "3.0.0")),
       info([{ version: "4.0.0", verdicts: {} }]),
@@ -152,7 +152,7 @@ describe("resolvePackageUpdateState", () => {
     expect(state).toBe<PackageUpdateState>("unknown");
   });
 
-  it("est inconnu quand la version installée n'est pas résolue", () => {
+  it("is unknown when the installed version is unresolved", () => {
     const state = resolvePackageUpdateState(
       pkg(installation(API, "unknown")),
       info([{ version: "4.0.0", verdicts: { [API]: "Compatible" } }]),
@@ -160,7 +160,7 @@ describe("resolvePackageUpdateState", () => {
     expect(state).toBe<PackageUpdateState>("unknown");
   });
 
-  it("classe les états du plus actionnable au moins actionnable", () => {
+  it("ranks the states from most to least actionable", () => {
     const states: PackageUpdateState[] = [
       "unknown",
       "upToDate",

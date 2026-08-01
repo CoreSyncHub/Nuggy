@@ -23,22 +23,22 @@ import {
 } from "../Packages/Icons";
 
 /**
- * Onglet Logs : journal de session anté-chronologique (runs de restore avec
- * sortie complète repliable + opérations d'écriture). Fetch à chaque
- * activation et à chaque `refreshToken` (fin de restore observée par le
- * polling de packages-view) — jamais de polling propre.
+ * Logs tab: newest-first session journal (restore runs with their full,
+ * collapsible output plus write operations). Fetches on every activation and on
+ * every `refreshToken` (restore completion observed by packages-view's polling)
+ * — never polls on its own.
  */
 @customElement("logs-view")
 export class LogsView extends LitElement {
-  /** L'onglet Logs est actuellement actif (fourni par nuget-tabs). */
+  /** The Logs tab is currently active (supplied by nuget-tabs). */
   @property({ type: Boolean }) active = false;
-  /** Incrémenté par nuget-tabs à chaque fin de restore : déclenche un re-fetch si actif. */
+  /** Incremented by nuget-tabs on every restore completion: triggers a re-fetch when active. */
   @property({ type: Number }) refreshToken = 0;
-  /** runId du run de restore à déplier + scroller (navigation depuis le bandeau d'échec). */
+  /** runId of the restore run to expand and scroll to (navigation from the failure banner). */
   @property({ type: Number }) targetRunId?: number;
 
   @state() private entries: OperationLogEntryDto[] = [];
-  /** Cartes restore actuellement dépliées (clé runId) — préservé entre les re-fetch. */
+  /** Restore cards currently expanded (keyed by runId) — preserved across re-fetches. */
   @state() private expandedRuns = new Set<number>();
   @state() private highlightedRunId?: number;
 
@@ -82,11 +82,11 @@ export class LogsView extends LitElement {
       const dto = (await this.dispatcher.Send(new GetOperationLogQuery())) as OperationLogDto;
       this.entries = dto.entries;
     } catch (error) {
-      this.logger.Error("Échec du chargement du journal des opérations", error as Error);
+      this.logger.Error("Failed to load the operation journal", error as Error);
     }
   }
 
-  /** Déplie, scrolle et surligne brièvement la carte du run. runId absent du tampon → no-op. */
+  /** Expands, scrolls to and briefly highlights the run card. runId absent from the buffer → no-op. */
   private revealRun(runId: number): void {
     if (!this.entries.some((e) => e.kind === "restore" && e.runId === runId)) {
       return;
@@ -210,7 +210,7 @@ export class LogsView extends LitElement {
             ),
           })
         : t.t("logs.running");
-    // Chemins Windows possibles en usage réel : split multi-séparateurs plutôt que "/" seul.
+    // Windows paths are possible in real use: split on both separators rather than "/" alone.
     const solutionName = entry.solutionPath.split(/[\\/]/).pop() ?? entry.solutionPath;
     const expanded = this.expandedRuns.has(entry.runId);
     return html`<div

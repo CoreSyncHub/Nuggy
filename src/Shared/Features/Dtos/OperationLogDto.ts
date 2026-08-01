@@ -8,9 +8,9 @@ export interface RestoreRunEntryDto {
   finishedUtc?: string;
   status: "Running" | "Succeeded" | "Failed";
   exitCode?: number;
-  /** Sortie complète de dotnet restore, plafonnée à 500 lignes (+ ligne de troncature). */
+  /** Full dotnet restore output, capped at 500 lines (+ a truncation line). */
   output: string[];
-  /** Blocs `dotnet nuget why` produits par l'enrichissement (RestoreScheduler). */
+  /** `dotnet nuget why` blocks produced by the enrichment (RestoreScheduler). */
   whyInsights: string[];
 }
 

@@ -7,9 +7,9 @@ import {
 import { NuGetV3ApiClient } from "./NuGetV3ApiClient";
 
 /**
- * Source nuget.org : traduit les résultats bruts du client V3 en hits
- * estampillés. Les erreurs ne sont pas rattrapées ici — PackageSearchService
- * les isole, pour qu'une source en panne n'empêche pas les autres de servir.
+ * nuget.org source: turns the raw V3 client results into stamped hits. Errors
+ * are not caught here — PackageSearchService isolates them, so that one broken
+ * source never stops the others from serving.
  */
 @singleton()
 export class NuGetOrgSearchSource implements IPackageSearchSource {

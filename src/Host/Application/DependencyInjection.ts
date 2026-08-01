@@ -17,6 +17,9 @@ import { GetRestoreStatusQueryHandler } from "./Handlers/Packages/GetRestoreStat
 import { GetOperationLogQueryHandler } from "./Handlers/Packages/GetOperationLogQueryHandler";
 import { SearchPackagesQueryHandler } from "./Handlers/Packages/SearchPackagesQueryHandler";
 
+/**
+ * ApplicationDependencyInjection is responsible for registering all the dependencies required by the application.
+ */
 export class ApplicationDependencyInjection extends DependencyInjectionProvider {
   public Provide(): void {
     this.ProvideMediator();

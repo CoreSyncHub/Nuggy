@@ -1,10 +1,10 @@
 import { html, type TemplateResult } from "lit";
 
 /**
- * Coche de vérification festonnée (style nuget.org). La couleur du disque
- * distingue l'éditeur vérifié (bleu) du package officiel Microsoft (violet
- * .NET) — un package Microsoft étant nécessairement vérifié, on n'affiche
- * jamais les deux badges.
+ * Scalloped verification check (nuget.org style). The disc colour tells the
+ * verified publisher (blue) apart from the official Microsoft package (.NET
+ * purple) — a Microsoft package being necessarily verified, the two badges are
+ * never shown together.
  */
 export function verifiedBadgeIcon(fill: string, size: number, title: string): TemplateResult {
   return html`<svg width=${size} height=${size} viewBox="0 0 24 24" role="img" aria-label=${title}>

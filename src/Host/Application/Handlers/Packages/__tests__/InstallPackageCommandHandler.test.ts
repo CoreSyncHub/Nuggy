@@ -47,7 +47,7 @@ const noOpLogger: ILogger = {
   Debug: jest.fn(),
 };
 
-/** Registration factice avec un seul leaf pour `version`, ciblant `targetFrameworks`. */
+/** Fake registration with a single leaf for `version`, targeting `targetFrameworks`. */
 function leavesFor(version: string, targetFrameworks: string[]): RegistrationLeaf[] {
   return [
     {
@@ -146,7 +146,7 @@ EndProject
     });
   });
 
-  it("installe sur le projet cible (écriture disque + restore programmé)", async () => {
+  it("installs on the target project (disk write + scheduled restore)", async () => {
     const { handler, restoreScheduler, metadataCache, tfmCache } = createHandler({
       apiClient: {
         getRegistrationLeaves: jest.fn().mockResolvedValue(leavesFor("13.0.3", ["netstandard2.0"])),
@@ -182,7 +182,7 @@ EndProject
     });
   });
 
-  it("verdict Incompatible pour la version demandée → skipped avec raison", async () => {
+  it("Incompatible verdict for the requested version → skipped with a reason", async () => {
     const { handler, restoreScheduler } = createHandler({
       apiClient: {
         getRegistrationLeaves: jest.fn().mockResolvedValue(leavesFor("13.0.3", ["net9.0"])),
@@ -211,7 +211,7 @@ EndProject
     ]);
   });
 
-  it("packageId invalide (caractère d'injection XML) → Error sans résolution ni écriture (Finding 3a)", async () => {
+  it("invalid packageId (XML injection character) → Error with no resolution and no write (Finding 3a)", async () => {
     const { handler, restoreScheduler } = createHandler();
 
     const result = await handler.Handle(
@@ -232,7 +232,7 @@ EndProject
     expect(result.error).toBeDefined();
   });
 
-  it("version invalide (caractère d'injection XML) → Error sans résolution ni écriture (Finding 3a)", async () => {
+  it("invalid version (XML injection character) → Error with no resolution and no write (Finding 3a)", async () => {
     const { handler, restoreScheduler } = createHandler();
 
     const result = await handler.Handle(
@@ -253,7 +253,7 @@ EndProject
     expect(result.error).toBeDefined();
   });
 
-  it("journalise l'opération dans OperationLogStore avec les données du DTO", async () => {
+  it("journals the operation into OperationLogStore with the DTO data", async () => {
     const { handler, operationLog } = createHandler({
       apiClient: {
         getRegistrationLeaves: jest.fn().mockResolvedValue(leavesFor("13.0.3", ["netstandard2.0"])),
@@ -281,7 +281,7 @@ EndProject
     expect(entry.version).toBe("13.0.3");
   });
 
-  it("journalise aussi les erreurs de validation", async () => {
+  it("journals validation errors as well", async () => {
     const { handler, operationLog } = createHandler();
 
     await handler.Handle(
@@ -298,7 +298,7 @@ EndProject
     expect(entry.error).toContain("identifiant ou version de package invalide");
   });
 
-  it("registration inaccessible → Unknown → installation autorisée", async () => {
+  it("unreachable registration → Unknown → installation allowed", async () => {
     const { handler, restoreScheduler } = createHandler({
       apiClient: {
         getRegistrationLeaves: jest.fn().mockRejectedValue(new Error("nuget.org injoignable")),
@@ -376,7 +376,7 @@ EndProject
     });
   });
 
-  it("install global : saute les projets déjà équipés et les legacy, confirme si >1 cible", async () => {
+  it("global install: skips projects already equipped and legacy ones, confirms when >1 target", async () => {
     const { handler, prompt, restoreScheduler } = createHandler({
       apiClient: {
         getRegistrationLeaves: jest.fn().mockResolvedValue(leavesFor("13.0.3", ["netstandard2.0"])),
@@ -404,7 +404,7 @@ EndProject
     expect(restoreScheduler.schedule).toHaveBeenCalledWith("/Solution/My.sln");
   });
 
-  it("refus de confirmation → aucune écriture", async () => {
+  it("confirmation refused → no write", async () => {
     const { handler, prompt, restoreScheduler, metadataCache, tfmCache } = createHandler({
       apiClient: {
         getRegistrationLeaves: jest.fn().mockResolvedValue(leavesFor("13.0.3", ["netstandard2.0"])),
@@ -438,7 +438,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api", "Api\\Api.csproj", "{
 EndProject
 `;
 
-  // En CPM, les PackageReference n'ont plus d'attribut Version (délégué au
+  // Under CPM, PackageReference elements no longer carry a Version attribute (delegated to
   // Directory.Packages.props).
   const API_CSPROJ_CPM = `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup>
@@ -458,7 +458,7 @@ EndProject
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Un dossier de workspace est requis pour que BuildConfigDetector
+    // A workspace folder is required for BuildConfigDetector
     // interroge vscode.workspace.findFiles.
     (vscode.workspace as unknown as { workspaceFolders?: unknown }).workspaceFolders = [
       { uri: { fsPath: "/Solution" } },
@@ -469,9 +469,9 @@ EndProject
       "/Solution/Directory.Packages.props": DIRECTORY_PACKAGES_PROPS,
     });
 
-    // BuildConfigDetector.findAllConfigFiles interroge trois patterns
-    // (Directory.Build.props, Directory.Build.targets, Directory.Packages.props) ;
-    // seul le dernier doit renvoyer une correspondance ici.
+    // BuildConfigDetector.findAllConfigFiles queries three patterns
+    // (Directory.Build.props, Directory.Build.targets, Directory.Packages.props);
+    // only the last one must return a match here.
     (vscode.workspace.findFiles as jest.Mock).mockImplementation((pattern: string) => {
       if (pattern.includes("Directory.Packages.props")) {
         return Promise.resolve([vscode.Uri.file("/Solution/Directory.Packages.props")]);
@@ -480,7 +480,7 @@ EndProject
     });
   });
 
-  it("CPM : ajoute la référence sans Version et crée le PackageVersion manquant une seule fois", async () => {
+  it("CPM: adds the reference without a Version and creates the missing PackageVersion only once", async () => {
     const { handler, restoreScheduler } = createHandler({
       apiClient: {
         getRegistrationLeaves: jest.fn().mockResolvedValue(leavesFor("3.1.0", ["netstandard2.0"])),
@@ -498,7 +498,7 @@ EndProject
       "/Solution/Directory.Packages.props",
     ]);
 
-    // Exactement une écriture par fichier : la version centrale n'est créée qu'une fois.
+    // Exactly one write per file: the central version is created only once.
     expect(mockFs.writeFileSync).toHaveBeenCalledTimes(2);
 
     const csprojWrite = mockFs.writeFileSync.mock.calls.find(
@@ -515,7 +515,7 @@ EndProject
     expect(restoreScheduler.schedule).toHaveBeenCalledWith("/Solution/My.sln");
   });
 
-  it("échec de lecture du fichier CPM → résultat Error, pas de succès silencieux malgré le csproj déjà écrit", async () => {
+  it("CPM file read failure → Error result, no silent success even though the csproj was already written", async () => {
     const { handler, restoreScheduler, metadataCache, tfmCache } = createHandler({
       apiClient: {
         getRegistrationLeaves: jest.fn().mockResolvedValue(leavesFor("3.1.0", ["netstandard2.0"])),
@@ -524,14 +524,14 @@ EndProject
     const invalidateMeta = jest.spyOn(metadataCache, "invalidate");
     const invalidateTfm = jest.spyOn(tfmCache, "invalidate");
 
-    // La résolution des cibles (PackageWriteTargetResolver → BuildConfigParser +
-    // CpmDiagnosticService) lit déjà le fichier CPM plusieurs fois pour détecter les
-    // versions centrales existantes : ces lectures-là (toutes AVANT toute écriture)
-    // doivent réussir, sans quoi aucune cible ne serait même résolue. Seule la
-    // relecture faite par ensureCpmVersion — après que le csproj a déjà été écrit,
-    // juste avant l'édition du fichier CPM lui-même — doit échouer ici, ex. fichier
-    // verrouillé/supprimé entre-temps. On distingue les deux par ordre d'exécution
-    // réel plutôt que par un nombre d'appels fragile et couplé aux détails internes
+    // Target resolution (PackageWriteTargetResolver → BuildConfigParser +
+    // CpmDiagnosticService) already reads the CPM file several times to detect the
+    // existing central versions: those reads (all BEFORE any write) must succeed, or
+    // no target would even be resolved. Only the re-read performed by ensureCpmVersion —
+    // after the csproj has already been written, right before editing the CPM file
+    // itself — must fail here, e.g. file locked or deleted in the meantime. The two are
+    // told apart by actual execution order rather than by a call count, which would be
+    // brittle and coupled to internal details
     // du resolver.
     mockFs.readFileSync.mockImplementation((p) => {
       if (p === "/Solution/Directory.Packages.props") {
@@ -558,7 +558,7 @@ EndProject
       new InstallPackageCommand("Serilog", "3.1.0", "/Solution/My.sln", "/Solution/Api/Api.csproj"),
     );
 
-    // Le csproj a bien été écrit avant l'échec du fichier CPM : jamais perdu de l'écriture réussie.
+    // The csproj was written before the CPM failure: a successful write is never lost.
     expect(mockFs.writeFileSync).toHaveBeenCalledTimes(1);
     expect(mockFs.writeFileSync).toHaveBeenCalledWith(
       "/Solution/Api/Api.csproj",
@@ -570,14 +570,14 @@ EndProject
     expect(result.filesChanged).toEqual(["/Solution/Api/Api.csproj"]);
     expect(result.affectedProjects).toEqual(["/Solution/Api/Api.csproj"]);
 
-    // Le csproj a été modifié avec succès : les caches et le restore doivent quand
-    // même être déclenchés malgré l'échec du fichier CPM.
+    // The csproj was modified successfully: caches and restore must still be
+    // triggered despite the CPM file failure.
     expect(invalidateMeta).toHaveBeenCalledWith("/Solution/My.sln::serilog");
     expect(invalidateTfm).toHaveBeenCalledWith("/Solution/My.sln");
     expect(restoreScheduler.schedule).toHaveBeenCalledWith("/Solution/My.sln");
   });
 
-  it("install global sur 2 projets CPM avec échec de l'écriture du PackageVersion central → le 1er csproj reste dans filesChanged, le 2e projet est skipped SANS écriture (Finding 5)", async () => {
+  it("global install on 2 CPM projects with a central PackageVersion write failure → the 1st csproj stays in filesChanged, the 2nd project is skipped WITHOUT a write (Finding 5)", async () => {
     const TWO_PROJECTS_SLN = `Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiA", "ApiA\\ApiA.csproj", "{11111111-1111-1111-1111-111111111111}"
 EndProject
@@ -617,8 +617,8 @@ EndProject
 
     expect(prompt.confirm).toHaveBeenCalledWith("Install Serilog 3.1.0 on 2 projects?");
 
-    // Un seul csproj écrit (ApiA, avant que l'échec CPM ne soit connu) : jamais un
-    // second csproj écrit après que l'écriture centrale a échoué (Finding 5).
+    // A single csproj written (ApiA, before the CPM failure was known): never a
+    // second csproj written after the central write has failed (Finding 5).
     const apiAWrite = mockFs.writeFileSync.mock.calls.find(
       ([p]) => p === "/Solution/ApiA/ApiA.csproj",
     );
@@ -632,8 +632,8 @@ EndProject
     expect(result.filesChanged).toEqual(["/Solution/ApiA/ApiA.csproj"]);
     expect(result.affectedProjects).toEqual(["/Solution/ApiA/ApiA.csproj"]);
 
-    // Deux entrées skipped : le fichier CPM (échec d'écriture) et ApiB (jamais tenté,
-    // car l'écriture centrale dont il dépend a déjà échoué pour ApiA).
+    // Two skipped entries: the CPM file (write failure) and ApiB (never attempted,
+    // because the central write it depends on had already failed for ApiA).
     expect(result.skipped).toHaveLength(2);
     expect(result.skipped).toContainEqual(
       expect.objectContaining({ path: "/Solution/Directory.Packages.props" }),
@@ -645,7 +645,7 @@ EndProject
     expect(restoreScheduler.schedule).toHaveBeenCalledWith("/Solution/My.sln");
   });
 
-  it("échec d'écriture du fichier CPM → aucune exception ne s'échappe de Handle(), résultat Error, caches et restore quand même déclenchés", async () => {
+  it("CPM file write failure → no exception escapes Handle(), Error result, caches and restore still triggered", async () => {
     const { handler, restoreScheduler, metadataCache, tfmCache } = createHandler({
       apiClient: {
         getRegistrationLeaves: jest.fn().mockResolvedValue(leavesFor("3.1.0", ["netstandard2.0"])),
@@ -661,8 +661,8 @@ EndProject
       return undefined;
     });
 
-    // Si l'écriture du fichier CPM n'était pas protégée, cet appel rejetterait :
-    // le simple fait que `await` se résout ici prouve qu'aucune exception ne fuit.
+    // If the CPM file write were not guarded, this call would reject: the mere fact
+    // that `await` resolves here proves no exception leaks.
     const result = await handler.Handle(
       new InstallPackageCommand("Serilog", "3.1.0", "/Solution/My.sln", "/Solution/Api/Api.csproj"),
     );
@@ -677,8 +677,8 @@ EndProject
     expect(result.filesChanged).toEqual(["/Solution/Api/Api.csproj"]);
     expect(result.affectedProjects).toEqual(["/Solution/Api/Api.csproj"]);
 
-    // Le csproj a été modifié avec succès : les caches et le restore doivent quand
-    // même être déclenchés malgré l'échec d'écriture du fichier CPM.
+    // The csproj was modified successfully: caches and restore must still be
+    // triggered despite the CPM file write failure.
     expect(invalidateMeta).toHaveBeenCalledWith("/Solution/My.sln::serilog");
     expect(invalidateTfm).toHaveBeenCalledWith("/Solution/My.sln");
     expect(restoreScheduler.schedule).toHaveBeenCalledWith("/Solution/My.sln");

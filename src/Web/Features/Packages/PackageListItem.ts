@@ -10,7 +10,7 @@ import { arrowUpIcon, checkIcon, ellipsisIcon, helpIcon } from "./Icons";
 @customElement("package-list-item")
 export class PackageListItem extends LitElement {
   @property({ attribute: false }) package!: SolutionPackageDto;
-  /** `loading` tant que les métadonnées nuget.org du package n'ont pas répondu. */
+  /** `loading` until the package's nuget.org metadata has answered. */
   @property() badge: PackageUpdateState | "loading" = "loading";
   @property({ type: Boolean }) selected = false;
 
@@ -75,9 +75,9 @@ export class PackageListItem extends LitElement {
     .badge.updatePartial {
       color: var(--vscode-charts-yellow);
     }
-    /* Information, pas alerte : des versions plus récentes existent hors des TFM
-       en place. Rester sur une LTS pendant que l'écosystème publie pour la
-       version suivante est un choix, d'où le bleu d'info et non un rouge. */
+    /* Information, not a warning: newer versions exist outside the TFMs in place.
+       Staying on an LTS while the ecosystem publishes for the next version is a
+       choice, hence the informational blue rather than a red. */
     .badge.outOfTfm {
       color: var(--vscode-charts-blue);
     }
@@ -95,8 +95,8 @@ export class PackageListItem extends LitElement {
   }
 
   render() {
-    // Les trois états « il existe plus récent » partagent la flèche : c'est la
-    // couleur, et le libellé au survol, qui portent la nuance.
+    // The three "something newer exists" states share the arrow: the colour, and
+    // the hover label, carry the nuance.
     const title = this.i18n.t(`packages.list.badge.${this.badge}`);
     const badgeIcon = {
       loading: ellipsisIcon(12),

@@ -37,9 +37,7 @@ export class GetPackageUpdateInfoQueryHandler implements IQueryHandler<
   ) {}
 
   async Handle(query: GetPackageUpdateInfoQuery): Promise<PackageUpdateInfoDto> {
-    // Clé composite solution+package : les verdicts de compatibilité dépendent des projets
-    // de LA solution active, donc deux solutions différentes ne doivent jamais partager une
-    // entrée de cache pour le même packageId (sinon verdicts pollués en changeant de solution).
+    // Two solutions with the same packageId but different project TFMs must not share a cache entry, as compatibility verdicts depend on the projects in the active solution.
     const cacheKey = `${query.solutionPath}::${query.packageId.toLowerCase()}`;
     return this.cache.getOrFetch(cacheKey, () => this.fetchAndAssemble(query));
   }
@@ -51,8 +49,7 @@ export class GetPackageUpdateInfoQueryHandler implements IQueryHandler<
         this.tfmResolution.resolveProjectTfms(query.solutionPath),
       );
     } catch (error) {
-      // Échec local de résolution des TFM (solution manquante/invalide) : ne doit jamais
-      // faire rejeter le handler ni être confondu avec un statut réseau 'Offline'.
+      // Failure to resolve project TFMs (missing/invalid solution) should never cause the handler to reject or be confused with a network 'Offline' status.
       this.logger.Error("Failed to resolve project TFMs from solution", error as Error);
     }
 
@@ -109,9 +106,10 @@ export class GetPackageUpdateInfoQueryHandler implements IQueryHandler<
   }
 
   /**
-   * Correspondance par jeton exact (insensible à la casse), pas par sous-chaîne : une simple
-   * inclusion laisserait passer des usurpations comme "NotMicrosoft Ltd". Les owners nuget.org
-   * sont déjà des chaînes discrètes ; les authors sont une liste libre séparée par ',' ou ';'.
+   * Checks if the package is published by Microsoft based on its owners and authors.
+   * @param owners The list of owners of the package, if available.
+   * @param authors The authors of the package, if available.
+   * @returns True if the package is published by Microsoft, false otherwise.
    */
   private isMicrosoftPublisher(owners: string[] | undefined, authors: string | undefined): boolean {
     const ownerTokens = (owners ?? []).map((o) => o.trim().toLowerCase()).filter(Boolean);
@@ -149,9 +147,9 @@ export class GetPackageUpdateInfoQueryHandler implements IQueryHandler<
     packageFrameworks: string[],
   ): ProjectVerdictDto {
     if (tfms.length === 0) {
-      return { projectPath, verdict: "Unknown", reason: "TFM du projet non résolu" };
+      return { projectPath, verdict: "Unknown", reason: "project TFM not resolved" };
     }
-    // Multi-TFM : le pire verdict l'emporte (Incompatible > Unknown > Compatible)
+    // For multi-TFM projects, the worst verdict takes precedence (Incompatible > Unknown > Compatible)
     const rank: Record<CompatibilityVerdict, number> = {
       Compatible: 0,
       Unknown: 1,

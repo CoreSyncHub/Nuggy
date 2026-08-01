@@ -39,9 +39,9 @@ const CORE_CSPROJ = `<Project Sdk="Microsoft.NET.Sdk">
 describe("PackageWriteTargetResolver", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Pas de dossier de workspace ouvert => BuildConfigDetector.findAllConfigFiles
-    // court-circuite avant d'appeler vscode.workspace.findFiles : aucun fichier
-    // CPM ne peut donc être détecté dans ce describe.
+    // No workspace folder open => BuildConfigDetector.findAllConfigFiles
+    // short-circuits before calling vscode.workspace.findFiles: no configuration file
+    // CPM therefore cannot be detected in this describe block.
     (vscode.workspace as unknown as { workspaceFolders?: unknown }).workspaceFolders = undefined;
     const files: Record<string, string> = {
       "/Solution/My.sln": SLN,
@@ -61,7 +61,7 @@ describe("PackageWriteTargetResolver", () => {
     });
   });
 
-  it("résout un target par projet avec style et version installée", async () => {
+  it("resolves one target per project with its style and installed version", async () => {
     const resolver = createPackageWriteTargetResolver();
     const { targets, cpmFilePath } = await resolver.resolveTargets("/Solution/My.sln", "Serilog");
     expect(cpmFilePath).toBeUndefined();
@@ -84,7 +84,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "Core\\Core.csproj",
 EndProject
 `;
 
-  // En CPM, les PackageReference n'ont plus d'attribut Version (délégué au
+  // Under CPM, PackageReference elements no longer carry a Version attribute (delegated to
   // Directory.Packages.props).
   const API_CSPROJ_CPM = `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup>
@@ -104,7 +104,7 @@ EndProject
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // Un dossier de workspace est requis pour que BuildConfigDetector
+    // A workspace folder is required for BuildConfigDetector
     // interroge vscode.workspace.findFiles.
     (vscode.workspace as unknown as { workspaceFolders?: unknown }).workspaceFolders = [
       { uri: { fsPath: "/Solution" } },
@@ -129,7 +129,7 @@ EndProject
 
     // BuildConfigDetector.findAllConfigFiles interroge trois patterns
     // (Directory.Build.props, Directory.Build.targets, Directory.Packages.props) ;
-    // seul le dernier doit renvoyer une correspondance ici.
+    // only the last one must return a match here.
     (vscode.workspace.findFiles as jest.Mock).mockImplementation((pattern: string) => {
       if (pattern.includes("Directory.Packages.props")) {
         return Promise.resolve([vscode.Uri.file("/Solution/Directory.Packages.props")]);
@@ -138,7 +138,7 @@ EndProject
     });
   });
 
-  it("résout des targets CpmManaged avec la version issue du PackageVersion central", async () => {
+  it("resolves CpmManaged targets with the version coming from the central PackageVersion", async () => {
     const resolver = createPackageWriteTargetResolver();
     const { targets, cpmFilePath } = await resolver.resolveTargets("/Solution/My.sln", "Serilog");
 
@@ -205,7 +205,7 @@ EndProject
     });
   });
 
-  it("résout un projet packages.config en style PackagesConfig, sans toucher aux projets SDK voisins", async () => {
+  it("resolves a packages.config project as PackagesConfig style, without touching neighbouring SDK projects", async () => {
     const resolver = createPackageWriteTargetResolver();
     const { targets, cpmFilePath } = await resolver.resolveTargets(
       "/Solution/Legacy.sln",

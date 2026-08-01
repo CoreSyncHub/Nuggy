@@ -6,23 +6,23 @@ import {
 import { compareVersionsDesc } from "../Versions/CompareVersions";
 
 /**
- * Ce qu'un package déjà installé apporte comme marge de progression — la
- * question utile sur une solution existante, là où « la dernière version
- * est-elle compatible ? » ne dit rien d'actionnable.
+ * What an already-installed package has left to gain — the useful question on
+ * an existing solution, where "is the latest version compatible?" says nothing
+ * actionable.
  *
- * - `update` : une version plus récente est compatible avec tous les projets
- *   qui portent le package — montable tout de suite.
- * - `updatePartial` : plus récente compatible avec une partie des projets
- *   seulement (solution à TFM hétérogènes).
- * - `outOfTfm` : des versions plus récentes existent, aucune pour les TFM en
- *   place. Information, pas anomalie : rester sur une LTS pendant qu'un
- *   écosystème publie pour la version suivante est un choix légitime.
- * - `upToDate` : rien de plus récent.
- * - `unknown` : métadonnées indisponibles ou incomplètes.
+ * - `update`: a newer version is compatible with every project that carries the
+ *   package — upgradable right away.
+ * - `updatePartial`: a newer version is compatible with only some of the
+ *   projects (solution with heterogeneous TFMs).
+ * - `outOfTfm`: newer versions exist, none for the TFMs in place. Information,
+ *   not an anomaly: staying on an LTS while an ecosystem publishes for the next
+ *   version is a legitimate choice.
+ * - `upToDate`: nothing newer.
+ * - `unknown`: metadata unavailable or incomplete.
  */
 export type PackageUpdateState = "update" | "updatePartial" | "outOfTfm" | "upToDate" | "unknown";
 
-/** Ordre d'affichage : du plus actionnable au moins actionnable. */
+/** Display order: from most to least actionable. */
 export const UPDATE_STATE_RANK: Record<PackageUpdateState, number> = {
   update: 0,
   updatePartial: 1,
@@ -34,8 +34,8 @@ export const UPDATE_STATE_RANK: Record<PackageUpdateState, number> = {
 const UNRESOLVED_VERSION = "unknown";
 
 /**
- * Fonction pure : aucun accès réseau ni disque, uniquement les DTO déjà en
- * main côté webview. Testée à ce titre, plutôt que noyée dans un composant.
+ * Pure function: no network, no disk, only the DTOs the webview already holds.
+ * Tested as such, rather than buried inside a component.
  */
 export function resolvePackageUpdateState(
   pkg: SolutionPackageDto,
@@ -45,8 +45,8 @@ export function resolvePackageUpdateState(
     return "unknown";
   }
 
-  // Une mise à jour ne touche que les projets qui portent déjà le package :
-  // les verdicts des autres projets de la solution ne doivent rien décider.
+  // An update only touches the projects that already carry the package: the
+  // verdicts of the other projects in the solution must decide nothing here.
   const installed = pkg.installations.filter(
     (i) => i.installedVersion !== UNRESOLVED_VERSION && i.installedVersion.length > 0,
   );
@@ -55,12 +55,12 @@ export function resolvePackageUpdateState(
   }
   const installedPaths = new Set(installed.map((i) => i.projectPath));
 
-  // Référence = la plus basse des versions installées : c'est le projet le plus
-  // en retard qui détermine s'il reste quelque chose à gagner.
+  // Baseline = the lowest installed version: the project furthest behind is the
+  // one that determines whether anything is left to gain.
   const baseline = [...installed.map((i) => i.installedVersion)].sort(compareVersionsDesc).pop()!;
 
-  // Les préversions restent hors-jeu sauf si l'existant en utilise déjà une —
-  // même règle que le sélecteur de versions du détail.
+  // Prereleases stay out of play unless the existing install already uses one —
+  // the same rule as the version selector in the detail panel.
   const allowPrerelease = installed.some((i) => i.installedVersion.includes("-"));
   const newer = info.versions.filter(
     (v) => (allowPrerelease || !v.isPrerelease) && compareVersionsDesc(v.version, baseline) < 0,
@@ -72,8 +72,8 @@ export function resolvePackageUpdateState(
   const verdictsOf = (version: PackageVersionInfoDto) =>
     version.verdictsByProject.filter((v) => installedPaths.has(v.projectPath));
 
-  // Verdicts incomplets (TFM non résolu, projet apparu entre deux requêtes) :
-  // ne rien affirmer plutôt que d'annoncer à tort « hors TFM ».
+  // Incomplete verdicts (unresolved TFM, project added between two requests):
+  // say nothing rather than wrongly announcing "out of TFM".
   if (newer.some((v) => verdictsOf(v).length !== installedPaths.size)) {
     return "unknown";
   }

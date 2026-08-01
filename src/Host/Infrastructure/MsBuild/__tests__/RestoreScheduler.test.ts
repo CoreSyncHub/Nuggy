@@ -19,7 +19,7 @@ describe("RestoreScheduler", () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
 
-  it("débounce : trois schedule rapprochés → un seul run", async () => {
+  it("debounce: three schedules in quick succession → a single run", async () => {
     const runner = runnerReturning({ exitCode: 0, output: "", timedOut: false });
     const store = new OperationLogStore();
     const scheduler = new RestoreScheduler(store, runner, noOpLogger);
@@ -38,7 +38,7 @@ describe("RestoreScheduler", () => {
     expect(scheduler.getStatus().status).toBe("Succeeded");
   });
 
-  it("un schedule pendant un run en cours enchaîne un second run à la fin", async () => {
+  it("a schedule during a running run chains a second run at the end", async () => {
     let release!: (v: { exitCode: number; output: string; timedOut: boolean }) => void;
     const runner: IProcessRunner = {
       run: jest
@@ -54,17 +54,17 @@ describe("RestoreScheduler", () => {
     const store = new OperationLogStore();
     const scheduler = new RestoreScheduler(store, runner, noOpLogger);
     scheduler.schedule("/Solution/My.sln");
-    await jest.advanceTimersByTimeAsync(300); // run 1 démarre et reste pendu
+    await jest.advanceTimersByTimeAsync(300); // run 1 starts and stays hanging
     scheduler.schedule("/Solution/My.sln"); // pendant le run
     await jest.advanceTimersByTimeAsync(300);
     expect(runner.run).toHaveBeenCalledTimes(1); // pas de concurrence
     release({ exitCode: 0, output: "", timedOut: false });
     await jest.advanceTimersByTimeAsync(300);
-    expect(runner.run).toHaveBeenCalledTimes(2); // enchaîné après la fin
+    expect(runner.run).toHaveBeenCalledTimes(2); // chained after the end
     expect(scheduler.getStatus().status).toBe("Succeeded");
   });
 
-  it("échec : extrait les lignes error NU/MSB, runId croît", async () => {
+  it("failure: extracts the error NU/MSB lines, runId increases", async () => {
     const output = [
       "  Determining projects to restore...",
       "/x/A.csproj : error NU1102: Unable to find package Foo with version 9.9.9",
@@ -85,7 +85,7 @@ describe("RestoreScheduler", () => {
     expect(status.runId).toBe(1);
   });
 
-  it("timeout → Failed avec message dédié", async () => {
+  it("timeout → Failed with a dedicated message", async () => {
     const runner = runnerReturning({ exitCode: null, output: "", timedOut: true });
     const store = new OperationLogStore();
     const scheduler = new RestoreScheduler(store, runner, noOpLogger);
@@ -104,7 +104,7 @@ describe("RestoreScheduler", () => {
     expect(scheduler.getStatus().messages[0]).toContain("SDK .NET introuvable");
   });
 
-  it("l'état terminal reste consultable puis repasse Running au schedule suivant", async () => {
+  it("the terminal state stays readable then goes back to Running on the next schedule", async () => {
     const runner = runnerReturning({ exitCode: 0, output: "", timedOut: false });
     const store = new OperationLogStore();
     const scheduler = new RestoreScheduler(store, runner, noOpLogger);
@@ -117,7 +117,7 @@ describe("RestoreScheduler", () => {
     expect(scheduler.getStatus().runId).toBe(2);
   });
 
-  it("écriture reçue pendant un run en cours : le run 1 publie Running (pas son terminal), le run 2 publie ensuite son propre terminal (Finding 2)", async () => {
+  it("write received during a running run: run 1 publishes Running (not its terminal status), run 2 then publishes its own terminal status (Finding 2)", async () => {
     let release!: (v: { exitCode: number; output: string; timedOut: boolean }) => void;
     const runner: IProcessRunner = {
       run: jest
@@ -133,19 +133,19 @@ describe("RestoreScheduler", () => {
     const store = new OperationLogStore();
     const scheduler = new RestoreScheduler(store, runner, noOpLogger);
     scheduler.schedule("/Solution/My.sln");
-    await jest.advanceTimersByTimeAsync(300); // run 1 (runId 1) démarre et reste pendu
+    await jest.advanceTimersByTimeAsync(300); // run 1 (runId 1) starts and stays hanging
     scheduler.schedule("/Solution/My.sln"); // write B arrive pendant le run 1
-    release({ exitCode: 0, output: "", timedOut: false }); // run 1 se termine (succès)
-    await jest.advanceTimersByTimeAsync(0); // laisse la continuation de run 1 s'exécuter
-    // Le terminal du run 1 ne doit jamais être publié : un second run est en attente.
+    release({ exitCode: 0, output: "", timedOut: false }); // run 1 finishes (success)
+    await jest.advanceTimersByTimeAsync(0); // let run 1's continuation execute
+    // Run 1's terminal status must never be published: a second run is pending.
     expect(scheduler.getStatus().status).toBe("Running");
-    await jest.advanceTimersByTimeAsync(300); // run 2 (runId 2) démarre et se termine
+    await jest.advanceTimersByTimeAsync(300); // run 2 (runId 2) starts and finishes
     const status = scheduler.getStatus();
     expect(status.status).toBe("Succeeded");
     expect(status.runId).toBe(2);
   });
 
-  it("rejet du runner → atteint l'état Failed (pas stuck Running), pas de rejection non gérée", async () => {
+  it("runner rejection → reaches the Failed state (not stuck Running), no unhandled rejection", async () => {
     const runner: IProcessRunner = {
       run: jest.fn().mockRejectedValue(new Error("Simulated runner error")),
     };
@@ -156,15 +156,15 @@ describe("RestoreScheduler", () => {
     await jest.advanceTimersByTimeAsync(300);
     const status = scheduler.getStatus();
     expect(status.status).toBe("Failed");
-    expect(status.messages[0]).toContain("erreur d'exécution du processus");
+    expect(status.messages[0]).toContain("process execution error");
     expect(status.runId).toBe(1);
   });
 
-  describe("attribution des dépendances transitives via dotnet nuget why", () => {
-    it("échec NU sur un paquet transitif nommé deux fois : un seul appel dotnet nuget why, résultat ajouté aux messages", async () => {
+  describe("transitive dependency blame through dotnet nuget why", () => {
+    it("NU failure on a transitive package named twice: a single dotnet nuget why call, result appended to the messages", async () => {
       const restoreOutput = [
-        "/x/A.csproj : error NU1902: Le package 'OpenTelemetry.Api' 1.14.0 présente une vulnérabilité connue de gravité modérée",
-        "/x/B.csproj : error NU1902: Le package 'OpenTelemetry.Api' 1.14.0 présente une vulnérabilité connue de gravité modérée",
+        "/x/A.csproj : error NU1902: Package 'OpenTelemetry.Api' 1.14.0 has a known moderate severity vulnerability",
+        "/x/B.csproj : error NU1902: Package 'OpenTelemetry.Api' 1.14.0 has a known moderate severity vulnerability",
       ].join("\n");
       const whyOutput = [
         "Project 'My' has the following dependency graph(s) for 'OpenTelemetry.Api':",
@@ -184,7 +184,7 @@ describe("RestoreScheduler", () => {
       scheduler.schedule("/Solution/My.sln");
       await jest.advanceTimersByTimeAsync(300);
 
-      expect(run).toHaveBeenCalledTimes(2); // 1 restore + 1 why (dédupliqué)
+      expect(run).toHaveBeenCalledTimes(2); // 1 restore + 1 why (deduplicated)
       expect(run).toHaveBeenCalledWith(
         "dotnet",
         ["nuget", "why", "/Solution/My.sln", "OpenTelemetry.Api"],
@@ -195,9 +195,9 @@ describe("RestoreScheduler", () => {
       const status = scheduler.getStatus();
       expect(status.status).toBe("Failed");
       expect(status.messages).toEqual([
-        "/x/A.csproj : error NU1902: Le package 'OpenTelemetry.Api' 1.14.0 présente une vulnérabilité connue de gravité modérée",
-        "/x/B.csproj : error NU1902: Le package 'OpenTelemetry.Api' 1.14.0 présente une vulnérabilité connue de gravité modérée",
-        "— dépendances de 'OpenTelemetry.Api' (dotnet nuget why) —",
+        "/x/A.csproj : error NU1902: Package 'OpenTelemetry.Api' 1.14.0 has a known moderate severity vulnerability",
+        "/x/B.csproj : error NU1902: Package 'OpenTelemetry.Api' 1.14.0 has a known moderate severity vulnerability",
+        "— dependencies of 'OpenTelemetry.Api' (dotnet nuget why) —",
         "Project 'My' has the following dependency graph(s) for 'OpenTelemetry.Api':",
         "[net8.0]",
         "└─ Foo.Bar (>= 1.0.0)",
@@ -205,7 +205,7 @@ describe("RestoreScheduler", () => {
       ]);
     });
 
-    it("dotnet nuget why échoue (exit 1) : le restore Failed est publié sans crash, messages inchangés à part les erreurs d'origine, logger.Warning appelé", async () => {
+    it("dotnet nuget why fails (exit 1): the Failed restore is published without crashing, messages unchanged apart from the original errors, logger.Warning called", async () => {
       const restoreOutput =
         "/x/A.csproj : error NU1102: Unable to find package 'Foo' with version (>= 9.9.9)";
       const run = jest.fn().mockImplementation((_command: string, args: string[]) => {
@@ -226,7 +226,7 @@ describe("RestoreScheduler", () => {
       expect(noOpLogger.Warning).toHaveBeenCalled();
     });
 
-    it("restore réussi : aucun appel dotnet nuget why", async () => {
+    it("successful restore: no dotnet nuget why call", async () => {
       const run = jest.fn().mockResolvedValue({ exitCode: 0, output: "", timedOut: false });
       const runner: IProcessRunner = { run };
       const store = new OperationLogStore();
@@ -238,7 +238,7 @@ describe("RestoreScheduler", () => {
       expect(scheduler.getStatus().status).toBe("Succeeded");
     });
 
-    it("ligne NU sans token entre guillemets : aucune extraction, aucun crash, aucun appel why", async () => {
+    it("NU line without a quoted token: no extraction, no crash, no why call", async () => {
       const restoreOutput =
         "/x/A.csproj : error NU1102: Unable to find package Foo with version 9.9.9";
       const run = jest
@@ -253,13 +253,13 @@ describe("RestoreScheduler", () => {
       const status = scheduler.getStatus();
       expect(status.status).toBe("Failed");
       expect(status.messages).toEqual([restoreOutput]);
-      expect(run).toHaveBeenCalledTimes(1); // seul le restore, aucun why (rien à extraire)
+      expect(run).toHaveBeenCalledTimes(1); // the restore only, no why (nothing to extract)
     });
 
-    it("échec NU pendant qu'un run est déjà en attente : Running publié, enrichissement sauté (zéro appel why)", async () => {
+    it("NU failure while a run is already pending: Running published, enrichment skipped (zero why calls)", async () => {
       let release!: (v: { exitCode: number; output: string; timedOut: boolean }) => void;
       const restoreOutput =
-        "/x/A.csproj : error NU1902: Le package 'Foo' 1.0.0 présente une vulnérabilité connue";
+        "/x/A.csproj : error NU1902: Package 'Foo' 1.0.0 has a known vulnerability";
       const run = jest
         .fn()
         .mockImplementationOnce(
@@ -273,13 +273,13 @@ describe("RestoreScheduler", () => {
       const store = new OperationLogStore();
       const scheduler = new RestoreScheduler(store, runner, noOpLogger);
       scheduler.schedule("/Solution/My.sln");
-      await jest.advanceTimersByTimeAsync(300); // run 1 démarre et reste pendu
-      scheduler.schedule("/Solution/My.sln"); // un second run est mis en attente pendant le run 1
-      release({ exitCode: 1, output: restoreOutput, timedOut: false }); // run 1 échoue avec une erreur NU
-      await jest.advanceTimersByTimeAsync(0); // laisse la continuation de run 1 s'exécuter
+      await jest.advanceTimersByTimeAsync(300); // run 1 starts and stays hanging
+      scheduler.schedule("/Solution/My.sln"); // a second run is queued while run 1 is in flight
+      release({ exitCode: 1, output: restoreOutput, timedOut: false }); // run 1 fails with an NU error
+      await jest.advanceTimersByTimeAsync(0); // let run 1's continuation execute
 
-      // Le terminal Failed du run 1 ne doit jamais être publié : un second run est en attente,
-      // donc son enrichissement (dotnet nuget why) est sauté — travail jeté sinon.
+      // Run 1's Failed terminal status must never be published: a second run is pending,
+      // so its enrichment (dotnet nuget why) is skipped — it would be wasted work.
       expect(scheduler.getStatus().status).toBe("Running");
       const whyCalls = run.mock.calls.filter((call) => call[1][0] === "nuget");
       expect(whyCalls).toHaveLength(0);
@@ -287,11 +287,11 @@ describe("RestoreScheduler", () => {
   });
 
   describe("journalisation dans OperationLogStore", () => {
-    it("journalise un run réussi : start Running puis complete Succeeded avec la sortie", async () => {
+    it("journals a successful run: start Running then complete Succeeded with the output", async () => {
       const store = new OperationLogStore();
       const runner = runnerReturning({
         exitCode: 0,
-        output: "Restauration effectuée.\n",
+        output: "Restore completed.\n",
         timedOut: false,
       });
       const scheduler = new RestoreScheduler(store, runner, noOpLogger);
@@ -305,13 +305,13 @@ describe("RestoreScheduler", () => {
         status: "Succeeded",
         exitCode: 0,
       });
-      expect(entry.output).toContain("Restauration effectuée.");
+      expect(entry.output).toContain("Restore completed.");
     });
 
-    it("journalise un échec avec les blocs nuget why dans whyInsights (pas dans output)", async () => {
+    it("journals a failure with the nuget why blocks in whyInsights (not in output)", async () => {
       const store = new OperationLogStore();
       const restoreOutput =
-        "/x/A.csproj : error NU1902: Le package 'OpenTelemetry.Api' 1.14.0 présente une vulnérabilité connue de gravité modérée";
+        "/x/A.csproj : error NU1902: Package 'OpenTelemetry.Api' 1.14.0 has a known moderate severity vulnerability";
       const whyOutput = "App -> OpenTelemetry.Api";
       const run = jest.fn().mockImplementation((_command: string, args: string[]) => {
         if (args[0] === "restore") {
@@ -327,10 +327,10 @@ describe("RestoreScheduler", () => {
       const [entry] = store.getEntries() as RestoreRunEntryDto[];
       expect(entry.status).toBe("Failed");
       expect(entry.whyInsights.join("\n")).toContain("OpenTelemetry.Api");
-      expect(entry.output.join("\n")).not.toContain("— dépendances de");
+      expect(entry.output.join("\n")).not.toContain("— dependencies of");
     });
 
-    it("journalise Failed quand le runner rejette", async () => {
+    it("journals Failed when the runner rejects", async () => {
       const store = new OperationLogStore();
       const runner: IProcessRunner = {
         run: jest.fn().mockRejectedValue(new Error("boom")),
@@ -344,7 +344,7 @@ describe("RestoreScheduler", () => {
       expect(entry.output.join(" ")).toContain("boom");
     });
 
-    it("journalise le terminal du run même quand sa publication est supprimée (écriture pendant le run)", async () => {
+    it("journals the run's terminal status even when its publication is suppressed (write during the run)", async () => {
       const store = new OperationLogStore();
       let release!: (v: { exitCode: number; output: string; timedOut: boolean }) => void;
       const runner: IProcessRunner = {
@@ -360,11 +360,11 @@ describe("RestoreScheduler", () => {
       };
       const scheduler = new RestoreScheduler(store, runner, noOpLogger);
       scheduler.schedule("/Solution/My.sln");
-      await jest.advanceTimersByTimeAsync(300); // run 1 (runId 1) démarre et reste pendu
+      await jest.advanceTimersByTimeAsync(300); // run 1 (runId 1) starts and stays hanging
       scheduler.schedule("/Solution/My.sln"); // write pendant le run 1
-      release({ exitCode: 0, output: "", timedOut: false }); // run 1 se termine (succès)
-      await jest.advanceTimersByTimeAsync(0); // laisse la continuation de run 1 s'exécuter
-      // Le terminal du run 1 ne doit jamais être publié : un second run est en attente.
+      release({ exitCode: 0, output: "", timedOut: false }); // run 1 finishes (success)
+      await jest.advanceTimersByTimeAsync(0); // let run 1's continuation execute
+      // Run 1's terminal status must never be published: a second run is pending.
       expect(scheduler.getStatus().status).toBe("Running");
       const entries = store.getEntries() as RestoreRunEntryDto[];
       expect(entries.find((e) => e.runId === 1)?.status).toBe("Succeeded");

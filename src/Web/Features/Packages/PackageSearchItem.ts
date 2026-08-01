@@ -8,8 +8,8 @@ import { verifiedBadgeIcon, VERIFIED_BLUE } from "./VerifiedBadgeIcon";
 import { formatCount } from "../../Shared/Utils/Formatting";
 
 /**
- * Ligne de résultat distant. Volontairement sans badge de compatibilité : la
- * compatibilité dépend du couple package + version, et se lit dans le détail.
+ * A remote result row. Deliberately without a compatibility badge: compatibility
+ * depends on the package + version pair, and is read in the detail panel.
  */
 @customElement("package-search-item")
 export class PackageSearchItem extends LitElement {

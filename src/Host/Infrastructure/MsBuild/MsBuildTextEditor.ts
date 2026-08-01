@@ -4,19 +4,19 @@ export type EditResult = { ok: true; content: string } | { ok: false; reason: st
 export type FoundElement = { start: number; end: number; attributes: Record<string, string> };
 export type ItemElementName = "PackageReference" | "PackageVersion";
 
-/** Caractères qui permettraient d'échapper à une valeur d'attribut XML (injection MSBuild). */
+/** Characters that would let a value escape an XML attribute (MSBuild injection). */
 const XML_INJECTION_PATTERN = /["'<>&]/;
 
 /**
- * Chirurgie textuelle des fichiers MSBuild : modifications ciblées qui
- * préservent byte-à-byte tout ce qui n'est pas la zone éditée (indentation,
- * commentaires, CRLF, BOM). Service pur : aucune I/O, string → string.
+ * Textual surgery on MSBuild files: targeted edits that preserve everything
+ * outside the edited zone byte for byte (indentation, comments, CRLF, BOM).
+ * Pure service: no I/O, string → string.
  */
 @singleton()
 export class MsBuildTextEditor {
   /**
-   * Localise l'élément <elementName ... Include="packageId" ... /> (id insensible
-   * à la casse). Les éléments Update= sont ignorés (hors périmètre v1).
+   * Locates the <elementName ... Include="packageId" ... /> element (id is
+   * case-insensitive). Update= elements are ignored (out of scope for v1).
    */
   public findItemElement(
     content: string,
@@ -39,11 +39,11 @@ export class MsBuildTextEditor {
   }
 
   /**
-   * Étend la fin d'un élément trouvé (par défaut la fin de la balise ouvrante) jusqu'à
-   * la fin de sa balise fermante `</elementName>` lorsqu'il est en forme bloc (Finding 1) :
+   * Extends the end of a found element (the end of the opening tag by default) up to
+   * the end of its `</elementName>` closing tag when it is in block form (Finding 1):
    * `<PackageReference Include="X" Version="1"><PrivateAssets>all</PrivateAssets></PackageReference>`.
-   * Les éléments auto-fermants (`/>`) n'ont, par construction, aucun enfant : leur span
-   * s'arrête déjà à `openTagEnd`.
+   * Self-closing elements (`/>`) have no children by construction: their span already
+   * stops at `openTagEnd`.
    */
   private elementSpanEnd(
     text: string,
@@ -59,20 +59,20 @@ export class MsBuildTextEditor {
     return closeIndex === -1 ? openTagEnd : closeIndex + closeTag.length;
   }
 
-  /** Refuse toute valeur d'attribut porteuse d'un caractère capable de rompre l'attribut XML. */
+  /** Rejects any attribute value carrying a character able to break out of the XML attribute. */
   private validateAttributeValues(attributes: Record<string, string>): EditResult | undefined {
     for (const [key, value] of Object.entries(attributes)) {
       if (XML_INJECTION_PATTERN.test(value)) {
         return {
           ok: false,
-          reason: `valeur invalide pour l'attribut '${key}' : caractères interdits (" ' < > &)`,
+          reason: `invalid value for attribute '${key}': forbidden characters (" ' < > &)`,
         };
       }
     }
     return undefined;
   }
 
-  /** Remplace la valeur de l'attribut Version de TOUS les éléments correspondants. */
+  /** Replaces the Version attribute value of EVERY matching element. */
   public setVersionAttribute(
     content: string,
     elementName: ItemElementName,
@@ -101,7 +101,7 @@ export class MsBuildTextEditor {
         const elementText = match[0];
         const versionAttr = /(\bVersion\s*=\s*)(["'])(.*?)\2/s.exec(elementText);
         if (!versionAttr) {
-          return { ok: false, reason: `l'élément '${packageId}' n'a pas d'attribut Version` };
+          return { ok: false, reason: `element '${packageId}' has no Version attribute` };
         }
         const quote = versionAttr[2];
         const attrStart = match.index + versionAttr.index;
@@ -118,10 +118,10 @@ export class MsBuildTextEditor {
     }
 
     if (replacements.length === 0) {
-      return { ok: false, reason: `élément ${elementName} '${packageId}' introuvable` };
+      return { ok: false, reason: `${elementName} element '${packageId}' not found` };
     }
 
-    // Appliquer les remplacements du dernier au premier pour préserver les offsets
+    // Apply the replacements from last to first to keep the offsets valid
     let result = content;
     for (let i = replacements.length - 1; i >= 0; i--) {
       const { attrStart, attrEnd, newValue } = replacements[i];
@@ -133,7 +133,7 @@ export class MsBuildTextEditor {
     return { ok: true, content: result };
   }
 
-  /** Insère un élément ; refuse les doublons ; jamais dans un ItemGroup conditionné. */
+  /** Inserts an element; refuses duplicates; never inside a conditioned ItemGroup. */
   public addItemElement(
     content: string,
     elementName: ItemElementName,
@@ -148,14 +148,14 @@ export class MsBuildTextEditor {
       return invalid;
     }
     if (this.findItemElement(content, elementName, include)) {
-      return { ok: false, reason: `'${include}' est déjà présent` };
+      return { ok: false, reason: `'${include}' is already present` };
     }
     const eol = content.includes("\r\n") ? "\r\n" : "\n";
     const attrText = Object.entries(attributes)
       .map(([k, v]) => `${k}="${v}"`)
       .join(" ");
 
-    // Groupes non conditionnés contenant déjà des éléments du même type
+    // Unconditioned groups that already hold elements of the same type
     const groupPattern = /<ItemGroup(\s(?:"[^"]*"|'[^']*'|[^>"'])*)?>([\s\S]*?)<\/ItemGroup>/g;
     for (const group of content.matchAll(groupPattern)) {
       if (group[1] && /\bCondition\s*=/.test(group[1])) {
@@ -176,9 +176,9 @@ export class MsBuildTextEditor {
       const isSorted = includes.every(
         (id, i) => i === 0 || includes[i - 1].toLowerCase() <= id.toLowerCase(),
       );
-      // Position juste après le sibling précédent : la balise ouvrante pour une forme
-      // auto-fermante, mais après la balise FERMANTE pour une forme bloc — sans quoi
-      // l'insertion atterrirait à l'intérieur de l'élément précédent (Finding 1).
+      // Position right after the previous sibling: the opening tag for a self-closing
+      // form, but after the CLOSING tag for a block form — otherwise the insertion
+      // would land inside the previous element (Finding 1).
       const lastSibling = siblings[siblings.length - 1];
       const afterLastSibling =
         this.elementSpanEnd(
@@ -203,7 +203,7 @@ export class MsBuildTextEditor {
       return { ok: true, content: content.slice(0, absolute) + inserted + content.slice(absolute) };
     }
 
-    // Aucun groupe adapté : créer un ItemGroup avant </Project>
+    // No suitable group: create an ItemGroup before </Project>
     const closing = content.lastIndexOf("</Project>");
     if (closing === -1) {
       return { ok: false, reason: "balise </Project> introuvable" };
@@ -217,7 +217,7 @@ export class MsBuildTextEditor {
     }
   }
 
-  /** Supprime tous les éléments correspondants et leurs lignes ; purge les ItemGroups devenus vides. */
+  /** Removes every matching element and its lines; purges ItemGroups left empty. */
   public removeItemElement(
     content: string,
     elementName: ItemElementName,
@@ -233,29 +233,29 @@ export class MsBuildTextEditor {
       const attributes = this.parseAttributes(match[0]);
       if (attributes["Include"]?.toLowerCase() === packageId.toLowerCase()) {
         const openTagEnd = match.index + match[0].length;
-        // Forme bloc (Finding 1) : la suppression doit couvrir tout le span, enfants
-        // et balise fermante compris — sans quoi les enfants deviennent orphelins et
-        // </elementName> reste seul, ce qui corrompt le MSBuild.
+        // Block form (Finding 1): the removal must cover the whole span, children and
+        // closing tag included — otherwise the children are orphaned and
+        // </elementName> is left alone, which corrupts the MSBuild file.
         const end = this.elementSpanEnd(content, elementName, openTagEnd, match[0]);
         toRemove.push({ start: match.index, end });
       }
     }
 
     if (toRemove.length === 0) {
-      return { ok: false, reason: `élément ${elementName} '${packageId}' introuvable` };
+      return { ok: false, reason: `${elementName} element '${packageId}' not found` };
     }
 
-    // Supprimer du dernier au premier pour préserver les offsets
+    // Remove from last to first to keep the offsets valid
     let result = content;
     for (let i = toRemove.length - 1; i >= 0; i--) {
       const { start, end } = toRemove[i];
-      // Étendre aux bornes de ligne (y compris l'indentation et le saut final)
+      // Extend to the line boundaries (including indentation and the trailing newline)
       let lineStart = result.lastIndexOf("\n", start - 1) + 1;
       let lineEnd = result.indexOf("\n", end);
       lineEnd = lineEnd === -1 ? result.length : lineEnd + 1;
       result = result.slice(0, lineStart) + result.slice(lineEnd);
 
-      // Purger le ItemGroup ENCLOSANT s'il est devenu vide (et non conditionné)
+      // Purge the ENCLOSING ItemGroup if it became empty (and is not conditioned)
       const groupPattern = /<ItemGroup(\s(?:"[^"]*"|'[^']*'|[^>"'])*)?>([\s\S]*?)<\/ItemGroup>/g;
       let closestGroup:
         { start: number; end: number; isConditioned: boolean; body: string } | undefined;
@@ -276,7 +276,7 @@ export class MsBuildTextEditor {
         let purgeStart = closestGroup.start;
         let purgeEnd = closestGroup.end;
 
-        // Étendre vers l'arrière : inclure l'indentation si la ligne n'a que de l'espace avant la balise
+        // Extend backwards: include the indentation if the line holds only whitespace before the tag
         const prevNewlinePos = result.lastIndexOf("\n", purgeStart - 1);
         const lineBeforeStart = prevNewlinePos + 1;
         const beforeTag = result.slice(lineBeforeStart, purgeStart);
@@ -284,7 +284,7 @@ export class MsBuildTextEditor {
           purgeStart = lineBeforeStart;
         }
 
-        // Étendre vers l'avant : inclure les espaces/tabs et la fin de ligne
+        // Extend forwards: include spaces/tabs and the end of line
         let afterTagPos = purgeEnd;
         while (
           afterTagPos < result.length &&

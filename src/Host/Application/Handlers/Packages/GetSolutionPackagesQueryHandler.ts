@@ -101,11 +101,6 @@ export class GetSolutionPackagesQueryHandler implements IQueryHandler<
         };
       });
 
-    // Style qu'aurait une installation dans un projet qui n'a pas encore le package.
-    // Même sémantique que PackageWriteTargetResolver (la présence d'un
-    // Directory.Packages.props suffit : l'install créera une référence sans Version
-    // plus le PackageVersion manquant), sinon l'UI promettrait un bouton que
-    // l'écriture Host refuserait.
     const solutionHasCpmFile = buildConfigFiles.some(
       (f) => f.type === BuildConfigFileType.DirectoryPackagesProps,
     );

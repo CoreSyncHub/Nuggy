@@ -91,38 +91,38 @@ describe("ProjectTfmResolutionService", () => {
   });
 
   describe("parseProjectPaths", () => {
-    it("lit les projets d'une solution .sln", () => {
+    it("reads the projects of a .sln solution", () => {
       expect(createService().parseProjectPaths("/Solution/MySolution.sln")).toEqual([
         "/Solution/Api/Api.csproj",
         "/Solution/Core/Core.csproj",
       ]);
     });
 
-    it("lit les projets d'une solution .slnx", () => {
+    it("reads the projects of a .slnx solution", () => {
       expect(createService().parseProjectPaths("/Solution/MySolution.slnx")).toEqual([
         "/Solution/Api/Api.csproj",
       ]);
     });
 
-    it("jette sur une extension inconnue plutôt que de la traiter comme un .sln", () => {
-      // Deux des quatre copies d'origine retombaient silencieusement sur le parseur
-      // .sln : un fichier sans projets rendait alors une liste vide, sans rien dire.
+    it("throws on an unknown extension rather than treating it as a .sln", () => {
+      // Two of the four original copies silently fell back on the .sln parser: a file
+      // with no projects then returned an empty list, without saying anything.
       expect(() => createService().parseProjectPaths("/Solution/MySolution.txt")).toThrow(
         "Unsupported solution format: .txt",
       );
     });
 
-    it("est insensible à la casse de l'extension", () => {
+    it("is insensitive to the extension casing", () => {
       expect(createService().parseProjectPaths("/Solution/MySolution.SLN")).toHaveLength(2);
     });
   });
 
   describe("loadBuildConfigFiles", () => {
-    it("rend une liste vide quand aucun workspace n'est ouvert", async () => {
+    it("returns an empty list when no workspace is open", async () => {
       await expect(createService().loadBuildConfigFiles()).resolves.toEqual([]);
     });
 
-    it("découvre les fichiers de configuration et analyse leur contenu", async () => {
+    it("discovers the configuration files and parses their contents", async () => {
       mockVscode.workspace.workspaceFolders = [{ uri: { fsPath: "/Solution" } }];
       mockVscode.workspace.findFiles.mockImplementation((pattern: string) =>
         Promise.resolve(
@@ -135,20 +135,20 @@ describe("ProjectTfmResolutionService", () => {
       const files = await createService().loadBuildConfigFiles();
 
       expect(files.map((f) => f.path)).toEqual(["/Solution/Directory.Build.props"]);
-      // Le contenu a bien été analysé : sans l'étape de parsing, aucune propriété.
+      // The contents were indeed parsed: without the parsing step, no property at all.
       expect(files[0].properties.size).toBeGreaterThan(0);
     });
   });
 
   describe("resolveProjectTfms", () => {
-    it("rend les TFM effectifs de chaque projet, multi-TFM compris", async () => {
+    it("returns the effective TFMs of every project, multi-TFM included", async () => {
       const tfms = await createService().resolveProjectTfms("/Solution/MySolution.sln");
 
       expect(tfms.get("/Solution/Api/Api.csproj")).toEqual(["net8.0"]);
       expect(tfms.get("/Solution/Core/Core.csproj")).toEqual(["net6.0", "net8.0"]);
     });
 
-    it("propage l'erreur d'extension inconnue", async () => {
+    it("propagates the unknown-extension error", async () => {
       await expect(createService().resolveProjectTfms("/Solution/MySolution.txt")).rejects.toThrow(
         "Unsupported solution format",
       );

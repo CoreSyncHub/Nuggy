@@ -14,7 +14,7 @@ const CSPROJ = `<Project Sdk="Microsoft.NET.Sdk">
 describe("MsBuildTextEditor - addItemElement", () => {
   const editor = new MsBuildTextEditor();
 
-  it("insère trié alphabétiquement dans l'ItemGroup existant, indentation copiée", () => {
+  it("inserts alphabetically into the existing ItemGroup, copying the indentation", () => {
     const result = editor.addItemElement(CSPROJ, "PackageReference", {
       Include: "Middle",
       Version: "5.0.0",
@@ -29,7 +29,7 @@ describe("MsBuildTextEditor - addItemElement", () => {
     }
   });
 
-  it("insère après le dernier si l'existant n'est pas trié", () => {
+  it("inserts after the last one when the existing entries are not sorted", () => {
     const unsorted = CSPROJ.replace('Include="Alpha"', 'Include="Zzz"');
     const result = editor.addItemElement(unsorted, "PackageReference", {
       Include: "Beta",
@@ -43,7 +43,7 @@ describe("MsBuildTextEditor - addItemElement", () => {
     }
   });
 
-  it("crée un ItemGroup neuf s'il n'existe aucun élément du type, avant </Project>", () => {
+  it("creates a fresh ItemGroup when no element of that type exists, before </Project>", () => {
     const noRefs = `<Project Sdk="Microsoft.NET.Sdk">\n  <PropertyGroup>\n    <TargetFramework>net8.0</TargetFramework>\n  </PropertyGroup>\n</Project>\n`;
     const result = editor.addItemElement(noRefs, "PackageReference", {
       Include: "X",
@@ -57,7 +57,7 @@ describe("MsBuildTextEditor - addItemElement", () => {
     }
   });
 
-  it("n'insère jamais dans un ItemGroup conditionné", () => {
+  it("never inserts into a conditioned ItemGroup", () => {
     const conditioned = `<Project>\n  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">\n    <PackageReference Include="Alpha" Version="1.0.0" />\n  </ItemGroup>\n</Project>\n`;
     const result = editor.addItemElement(conditioned, "PackageReference", {
       Include: "Beta",
@@ -65,7 +65,7 @@ describe("MsBuildTextEditor - addItemElement", () => {
     });
     expect(result.ok).toBe(true);
     if (result.ok) {
-      // Un nouvel ItemGroup non conditionné a été créé
+      // A new unconditioned ItemGroup was created
       const groups = result.content.match(/<ItemGroup/g);
       expect(groups).toHaveLength(2);
       expect(result.content.indexOf('Include="Beta"')).toBeGreaterThan(
@@ -74,7 +74,7 @@ describe("MsBuildTextEditor - addItemElement", () => {
     }
   });
 
-  it("insère sans attribut Version (style CPM) et respecte CRLF", () => {
+  it("inserts without a Version attribute (CPM style) and preserves CRLF", () => {
     const crlf = CSPROJ.replace(/\n/g, "\r\n");
     const result = editor.addItemElement(crlf, "PackageReference", { Include: "Middle" });
     expect(result.ok).toBe(true);
@@ -83,13 +83,13 @@ describe("MsBuildTextEditor - addItemElement", () => {
     }
   });
 
-  it("refuse un doublon (même Include, casse ignorée)", () => {
+  it("refuses a duplicate (same Include, case-insensitive)", () => {
     expect(
       editor.addItemElement(CSPROJ, "PackageReference", { Include: "alpha", Version: "9" }).ok,
     ).toBe(false);
   });
 
-  it("refuse toute valeur d'attribut contenant un caractère d'injection XML (Finding 3b)", () => {
+  it("refuses any attribute value containing an XML injection character (Finding 3b)", () => {
     expect(
       editor.addItemElement(CSPROJ, "PackageReference", {
         Include: 'Evil" Foo="bar',
@@ -109,7 +109,7 @@ describe("MsBuildTextEditor - addItemElement", () => {
     ).toBe(false);
   });
 
-  it("tolère une Condition avec > dans la valeur", () => {
+  it("tolerates a Condition holding a > in its value", () => {
     const conditionWithGt = `<Project>\n  <ItemGroup Condition="'$(X)' > '1'">\n    <PackageReference Include="Alpha" Version="1.0.0" />\n  </ItemGroup>\n</Project>\n`;
     const result = editor.addItemElement(conditionWithGt, "PackageReference", {
       Include: "Beta",
@@ -117,7 +117,7 @@ describe("MsBuildTextEditor - addItemElement", () => {
     });
     expect(result.ok).toBe(true);
     if (result.ok) {
-      // Insertion dans un nouvel ItemGroup non conditionné, pas dans celui conditionné
+      // Inserted into a new unconditioned ItemGroup, not into the conditioned one
       const groups = result.content.match(/<ItemGroup/g);
       expect(groups).toHaveLength(2);
       expect(result.content.indexOf('Include="Beta"')).toBeGreaterThan(
@@ -130,7 +130,7 @@ describe("MsBuildTextEditor - addItemElement", () => {
 describe("MsBuildTextEditor - removeItemElement", () => {
   const editor = new MsBuildTextEditor();
 
-  it("supprime la ligne de l'élément", () => {
+  it("removes the element's line", () => {
     const result = editor.removeItemElement(CSPROJ, "PackageReference", "Alpha");
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -155,23 +155,23 @@ describe("MsBuildTextEditor - removeItemElement", () => {
     }
   });
 
-  it("échoue proprement si l'élément est introuvable", () => {
+  it("fails cleanly when the element cannot be found", () => {
     expect(editor.removeItemElement(CSPROJ, "PackageReference", "Inconnu").ok).toBe(false);
   });
 
-  it("préserve un groupe conditionné vide pré-existant lors de la suppression", () => {
+  it("preserves a pre-existing empty conditioned group on removal", () => {
     const withConditionedEmpty = `<Project>\n  <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">\n  </ItemGroup>\n  <ItemGroup>\n    <PackageReference Include="Alpha" Version="1.0.0" />\n    <PackageReference Include="Zulu" Version="2.0.0" />\n  </ItemGroup>\n</Project>\n`;
     const result = editor.removeItemElement(withConditionedEmpty, "PackageReference", "Alpha");
     expect(result.ok).toBe(true);
     if (result.ok) {
-      // Le groupe conditionné vide subsiste (byte-identique)
+      // The empty conditioned group survives (byte-identical)
       expect(result.content).toContain("Condition=\"'$(TargetFramework)' == 'net7.0'\"");
       expect(result.content).not.toContain("Alpha");
       expect(result.content).toContain('Include="Zulu"');
     }
   });
 
-  it("supprime tous les éléments correspondants et nettoie les groupes vidés (byte-exact)", () => {
+  it("removes every matching element and cleans up the emptied groups (byte-exact)", () => {
     const multiGroup = `<Project>\n  <ItemGroup>\n    <PackageReference Include="Alpha" Version="1.0.0" />\n  </ItemGroup>\n  <ItemGroup>\n    <PackageReference Include="Alpha" Version="2.0.0" />\n  </ItemGroup>\n</Project>\n`;
     const result = editor.removeItemElement(multiGroup, "PackageReference", "Alpha");
     expect(result.ok).toBe(true);
@@ -198,7 +198,7 @@ describe("MsBuildTextEditor - forme bloc (Finding 1)", () => {
 </Project>
 `;
 
-  it("removeItemElement : supprime le bloc ENTIER (balise ouvrante + enfants + balise fermante), pas seulement la ligne d'ouverture", () => {
+  it("removeItemElement: removes the ENTIRE block (opening tag + children + closing tag), not just the opening line", () => {
     const result = editor.removeItemElement(BLOCK_FORM_CSPROJ, "PackageReference", "Alpha");
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -220,7 +220,7 @@ describe("MsBuildTextEditor - forme bloc (Finding 1)", () => {
     }
   });
 
-  it("removeItemElement : un ItemGroup ne contenant qu'un élément bloc devient vide et est purgé (byte-exact)", () => {
+  it("removeItemElement: an ItemGroup holding a single block element becomes empty and is purged (byte-exact)", () => {
     const single = `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -245,7 +245,7 @@ describe("MsBuildTextEditor - forme bloc (Finding 1)", () => {
     }
   });
 
-  it("addItemElement : insère APRÈS la balise fermante d'un dernier sibling en forme bloc, jamais à l'intérieur", () => {
+  it("addItemElement: inserts AFTER the closing tag of a last block-form sibling, never inside it", () => {
     const singleBlock = `<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -263,7 +263,7 @@ describe("MsBuildTextEditor - forme bloc (Finding 1)", () => {
     });
     expect(result.ok).toBe(true);
     if (result.ok) {
-      // Jamais entre <PrivateAssets> et </PackageReference> : toujours après.
+      // Never between <PrivateAssets> and </PackageReference>: always after.
       expect(result.content).not.toContain(
         '<PrivateAssets>all</PrivateAssets>\n      <PackageReference Include="Zulu"',
       );
@@ -277,7 +277,7 @@ describe("MsBuildTextEditor - forme bloc (Finding 1)", () => {
     }
   });
 
-  it("supprime tous les éléments correspondants en mixant forme bloc et forme auto-fermante, nettoie les deux groupes vidés (byte-exact)", () => {
+  it("removes every matching element mixing block and self-closing forms, cleans up both emptied groups (byte-exact)", () => {
     const mixed = `<Project>
   <ItemGroup>
     <PackageReference Include="Alpha" Version="1.0.0" />

@@ -46,8 +46,8 @@ export class App extends BaseComponent {
       background-color: var(--vscode-editor-background);
     }
 
-    /* min-height: 0 est indispensable ici : sans lui, un enfant flex refuse de
-       descendre sous la taille de son contenu et aucune vue interne ne peut défiler. */
+    /* min-height: 0 is indispensable here: without it, a flex child refuses to
+       shrink below its content size and no inner view can scroll. */
     .content {
       display: flex;
       flex: 1 1 auto;

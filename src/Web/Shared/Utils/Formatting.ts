@@ -1,13 +1,13 @@
 /**
- * Formatage des nombres et des dates dans la langue de l'interface.
+ * Number and date formatting in the interface language.
  *
- * Le formatage était auparavant figé en `fr-FR` à chaque point d'appel : un
- * utilisateur anglophone lisait des séparateurs de milliers français. La langue
+ * Formatting used to be pinned to `fr-FR` at every call site: an English-speaking
+ * user read French thousands separators. The active language
  * active vient de `TranslationService.getCurrentLanguage()`.
  *
- * Une étiquette de langue invalide ne doit jamais casser le rendu de la vue :
- * `Intl` jette un `RangeError` sur une étiquette malformée, on retombe alors
- * sur le formatage par défaut de l'environnement.
+ * An invalid language tag must never break the rendering of the view: `Intl`
+ * throws a `RangeError` on a malformed tag, so we fall back on the environment's
+ * default formatting.
  */
 export function formatCount(value: number | undefined, locale: string): string {
   if (value === undefined) {
@@ -20,7 +20,7 @@ export function formatCount(value: number | undefined, locale: string): string {
   }
 }
 
-/** Date ISO UTC → date locale. Chaîne vide si absente ou non analysable. */
+/** ISO UTC date → local date. Empty string when absent or unparsable. */
 export function formatDate(isoUtc: string | undefined, locale: string): string {
   if (!isoUtc) {
     return "";

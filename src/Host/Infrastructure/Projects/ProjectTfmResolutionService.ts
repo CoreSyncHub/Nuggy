@@ -7,7 +7,7 @@ import { BuildConfigParser } from "../Build/BuildConfigParser";
 import { TfmResolver, type ResolvedTfm } from "./TfmResolver";
 import { type BuildConfigFile } from "../../Domain/Build/Entities/BuildConfigFile";
 
-/** Tout ce que la lecture d'une solution produit, en une seule passe. */
+/** Everything reading a solution produces, in a single pass. */
 export interface SolutionTfmResolution {
   projectPaths: string[];
   buildConfigFiles: BuildConfigFile[];
@@ -15,15 +15,15 @@ export interface SolutionTfmResolution {
 }
 
 /**
- * Séquence « parser la solution → charger les fichiers de configuration MSBuild →
- * résoudre les TFM effectifs », partagée par tous les handlers qui en ont besoin.
+ * The "parse the solution → load MSBuild configuration files → resolve
+ * effective TFMs" sequence, shared by every handler that needs it.
  *
- * Elle était auparavant recopiée dans quatre handlers, dont deux à l'identique au
- * caractère près, en traînant cinq dépendances de constructeur à chaque fois. Les
- * quatre copies divergeaient déjà sur un point : deux jetaient sur une extension de
- * solution inconnue, deux la traitaient silencieusement comme un `.sln`. Le service
- * tranche pour l'erreur explicite — un fichier qui n'est ni `.sln` ni `.slnx` n'a
- * pas de projets à lire, et l'annoncer vaut mieux que de rendre une liste vide.
+ * It used to be copied into four handlers, two of them character-for-character
+ * identical, each dragging along five constructor dependencies. The four copies
+ * had already diverged on one point: two threw on an unknown solution extension,
+ * two silently treated it as a `.sln`. This service settles on the explicit
+ * error — a file that is neither `.sln` nor `.slnx` has no projects to read, and
+ * saying so beats returning an empty list.
  */
 @singleton()
 export class ProjectTfmResolutionService {
@@ -35,7 +35,7 @@ export class ProjectTfmResolutionService {
     private readonly tfmResolver: TfmResolver,
   ) {}
 
-  /** Chemins des projets déclarés par la solution. Jette si l'extension est inconnue. */
+  /** Project paths declared by the solution. Throws if the extension is unknown. */
   public parseProjectPaths(solutionPath: string): string[] {
     const ext = path.extname(solutionPath).toLowerCase();
     if (ext === ".slnx") {
@@ -47,7 +47,7 @@ export class ProjectTfmResolutionService {
     throw new Error(`Unsupported solution format: ${ext}`);
   }
 
-  /** Fichiers de configuration du workspace, hiérarchie construite et contenus analysés. */
+  /** Workspace configuration files, hierarchy built and contents parsed. */
   public async loadBuildConfigFiles(): Promise<BuildConfigFile[]> {
     const buildConfigFiles = await this.buildConfigDetector.findAllConfigFiles();
     this.buildConfigDetector.buildHierarchy(buildConfigFiles);
@@ -58,10 +58,10 @@ export class ProjectTfmResolutionService {
   }
 
   /**
-   * Résolution complète en une passe. Les appelants qui ont besoin des fichiers
-   * de configuration ou de la résolution détaillée passent par ici plutôt que
-   * d'enchaîner les méthodes granulaires : la découverte des fichiers de config
-   * interroge le workspace, autant ne la faire qu'une fois.
+   * Full resolution in a single pass. Callers that need the configuration files
+   * or the detailed resolution come through here rather than chaining the
+   * granular methods: discovering configuration files queries the workspace, so
+   * it is worth doing only once.
    */
   public async resolveSolution(solutionPath: string): Promise<SolutionTfmResolution> {
     const projectPaths = this.parseProjectPaths(solutionPath);
@@ -73,7 +73,7 @@ export class ProjectTfmResolutionService {
     };
   }
 
-  /** TFM effectifs par chemin de projet, héritage MSBuild appliqué. */
+  /** Effective TFMs per project path, with MSBuild inheritance applied. */
   public async resolveProjectTfms(solutionPath: string): Promise<Map<string, string[]>> {
     const { resolvedTfms } = await this.resolveSolution(solutionPath);
     return new Map([...resolvedTfms.entries()].map(([p, r]) => [p, r.targetFrameworks]));

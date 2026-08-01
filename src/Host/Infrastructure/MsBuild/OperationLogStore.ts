@@ -9,15 +9,15 @@ const MAX_ENTRIES = 50;
 const MAX_OUTPUT_LINES = 500;
 
 /**
- * Journal mémoire de session : runs de restore + opérations d'écriture.
- * Tampon borné (50 entrées FIFO), zéro I/O, zéro persistance, ne jette jamais.
- * L'ordre interne est l'ordre d'arrivée ; `getEntries` sert l'anté-chronologique.
+ * In-memory session journal: restore runs plus write operations.
+ * Bounded buffer (50 FIFO entries), zero I/O, zero persistence, never throws.
+ * Internal order is arrival order; `getEntries` serves it newest-first.
  */
 @singleton()
 export class OperationLogStore {
   private readonly entries: OperationLogEntryDto[] = [];
 
-  /** Crée l'entrée `Running` du run — appelé par RestoreScheduler.fire() au lancement. */
+  /** Creates the `Running` entry for the run — called by RestoreScheduler.fire() at launch. */
   public recordRestoreStart(runId: number, solutionPath: string): void {
     this.push({
       kind: "restore",
@@ -30,7 +30,7 @@ export class OperationLogStore {
     });
   }
 
-  /** Complète l'entrée du run. runId inconnu (entrée éjectée par le FIFO) → no-op. */
+  /** Completes the run entry. Unknown runId (entry evicted by the FIFO) → no-op. */
   public completeRestore(
     runId: number,
     result: {
@@ -68,7 +68,7 @@ export class OperationLogStore {
     });
   }
 
-  /** Copie anté-chronologique (la plus récente d'abord). */
+  /** Newest-first copy. */
   public getEntries(): OperationLogEntryDto[] {
     return [...this.entries].reverse().map((e) =>
       e.kind === "restore"
@@ -99,7 +99,7 @@ export class OperationLogStore {
     }
     return [
       ...output.slice(0, MAX_OUTPUT_LINES),
-      `… sortie tronquée (${output.length} lignes au total)`,
+      `… output truncated (${output.length} lines in total)`,
     ];
   }
 }

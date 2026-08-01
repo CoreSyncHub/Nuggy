@@ -29,15 +29,14 @@ import { USER_PROMPT, type IUserPrompt } from "../../Abstractions/Prompt/IUserPr
 import { type ILogger, LOGGER } from "../../Abstractions/Log/ILogger";
 
 /**
- * Installe un package sur un projet explicite, ou sur tous les projets
- * compatibles non équipés de la solution si `projectPath` est absent.
+ * Install a package on a specific project, or on all compatible projects
+ * in the solution if `projectPath` is not provided.
  *
- * La résolution des TFM de projet réutilise le même motif que
+ * The resolution of project TFMs reuses the same pattern as
  * `GetPackageUpdateInfoQueryHandler.resolveProjectTfms` (via
- * `ProjectTfmCache.getOrResolve`) : `ProjectTfmCache` n'expose pas de lecture
- * synchrone des TFM déjà résolus, donc le handler porte lui-même les
- * dépendances nécessaires (parsers de solution, détection des fichiers de
- * build, `TfmResolver`) pour reconstruire cette Map à la demande.
+ * `ProjectTfmCache.getOrResolve`): `ProjectTfmCache` does not expose synchronous
+ * reading of already resolved TFMs, so the handler itself carries the necessary
+ * dependencies (solution parsers, build file detection, `TfmResolver`) to reconstruct this Map on demand.
  */
 @injectable()
 @HandlerFor(InstallPackageCommand)
@@ -64,8 +63,8 @@ export class InstallPackageCommandHandler implements ICommandHandler<
     try {
       result = await this.handleCore(command);
     } catch (error) {
-      // handleCore est conçu pour ne jamais jeter : si cela arrive malgré tout,
-      // l'audit de session ne doit pas garder le silence sur l'opération tentée.
+      // handleCore is designed never to throw: should it happen anyway, the session
+      // audit must not stay silent about the attempted operation.
       this.operationLog.recordWrite({
         operation: "install",
         packageId: command.packageId,
@@ -156,10 +155,10 @@ export class InstallPackageCommandHandler implements ICommandHandler<
     const filesChanged = new Set<string>();
     const affectedProjects: string[] = [];
     let cpmVersionEnsured = false;
-    // Non-undefined dès que l'écriture du PackageVersion central a échoué (Finding 5) :
-    // tout candidat CpmManaged restant dépend de cette même version centrale — écrire sa
-    // PackageReference produirait une référence sans version backing, un échec de build
-    // silencieux. On les route donc vers `skipped` sans jamais toucher au disque.
+    // Non-undefined as soon as writing the central PackageVersion has failed (Finding 5):
+    // every remaining CpmManaged candidate depends on that same central version — writing its
+    // PackageReference would produce a reference with no backing version, a silent build
+    // failure. They are therefore routed to `skipped` without ever touching the disk.
     let cpmFailureReason: string | undefined;
 
     for (const target of candidates) {
@@ -201,10 +200,10 @@ export class InstallPackageCommandHandler implements ICommandHandler<
             filesChanged.add(cpmFilePath);
           }
         } else {
-          // Le csproj a déjà été écrit avec succès à ce stade : jamais de perte
-          // silencieuse de ce résultat, ni d'exception qui s'échapperait de Handle().
-          const reason = `${cpmResult.reason} (la référence à '${command.packageId}' a déjà été ajoutée dans ${target.projectPath})`;
-          cpmFailureReason = `${cpmResult.reason} (l'ajout du PackageVersion central pour '${command.packageId}' a échoué : aucune autre PackageReference CPM n'est écrite pour ce package)`;
+          // The csproj has already been written successfully at this point: never lose
+          // that result silently, and never let an exception escape Handle().
+          const reason = `${cpmResult.reason} (the reference to '${command.packageId}' was already added in ${target.projectPath})`;
+          cpmFailureReason = `${cpmResult.reason} (adding the central PackageVersion for '${command.packageId}' failed: no further CPM PackageReference is written for this package)`;
           if (command.projectPath !== undefined) {
             this.invalidateAndSchedule(command.solutionPath, command.packageId, filesChanged);
             return {
@@ -239,10 +238,10 @@ export class InstallPackageCommandHandler implements ICommandHandler<
   }
 
   /**
-   * Ajoute le `<PackageVersion>` central s'il est absent (au plus une tentative par
-   * Handle : `cpmVersionEnsured` empêche les tentatives répétées pour les candidats
-   * suivants). Lecture ET écriture sont protégées (même discipline que `applyEdit`) :
-   * cette méthode ne doit jamais laisser une exception s'échapper de `Handle()`.
+   * Adds the central `<PackageVersion>` when it is missing (at most one attempt per
+   * Handle: `cpmVersionEnsured` prevents repeated attempts for the following
+   * candidates). Both read AND write are guarded (same discipline as `applyEdit`):
+   * this method must never let an exception escape `Handle()`.
    */
   private ensureCpmVersion(
     cpmFilePath: string,
@@ -253,7 +252,7 @@ export class InstallPackageCommandHandler implements ICommandHandler<
     try {
       cpmContent = fs.readFileSync(cpmFilePath, "utf8");
     } catch {
-      return { ok: false, reason: `lecture du fichier CPM impossible : ${cpmFilePath}` };
+      return { ok: false, reason: `cannot read the CPM file: ${cpmFilePath}` };
     }
     if (this.editor.findItemElement(cpmContent, "PackageVersion", packageId)) {
       return { ok: true, changed: false };
@@ -268,7 +267,7 @@ export class InstallPackageCommandHandler implements ICommandHandler<
     try {
       fs.writeFileSync(cpmFilePath, cpmEdit.content);
     } catch {
-      return { ok: false, reason: `écriture du fichier CPM impossible : ${cpmFilePath}` };
+      return { ok: false, reason: `cannot write the CPM file: ${cpmFilePath}` };
     }
     return { ok: true, changed: true };
   }
@@ -281,7 +280,7 @@ export class InstallPackageCommandHandler implements ICommandHandler<
     try {
       content = fs.readFileSync(filePath, "utf8");
     } catch {
-      return { ok: false, reason: `lecture impossible : ${filePath}` };
+      return { ok: false, reason: `cannot read: ${filePath}` };
     }
     const result = edit(content);
     if (!result.ok) {
@@ -290,12 +289,12 @@ export class InstallPackageCommandHandler implements ICommandHandler<
     try {
       fs.writeFileSync(filePath, result.content);
     } catch {
-      return { ok: false, reason: `écriture impossible : ${filePath}` };
+      return { ok: false, reason: `cannot write: ${filePath}` };
     }
     return { ok: true };
   }
 
-  /** Frameworks ciblés par la version demandée ; `undefined` si le verdict est indéterminable (→ Unknown → autorisé). */
+  /** Frameworks targeted by the requested version; `undefined` when the verdict cannot be determined (→ Unknown → allowed). */
   private async frameworksOf(packageId: string, version: string): Promise<string[] | undefined> {
     try {
       const leaves = await this.apiClient.getRegistrationLeaves(packageId);
@@ -305,7 +304,7 @@ export class InstallPackageCommandHandler implements ICommandHandler<
       }
       return leaf.dependencyGroups.map((g) => g.targetFramework).filter((t) => t.length > 0);
     } catch (error) {
-      this.logger.Warning("Verdict de compatibilité indisponible (registration inaccessible)", {
+      this.logger.Warning("Compatibility verdict unavailable (registration unreachable)", {
         packageId,
         error,
       });
@@ -314,10 +313,10 @@ export class InstallPackageCommandHandler implements ICommandHandler<
   }
 
   /**
-   * Résout les TFM de chaque projet de la solution, via le cache (même motif
-   * que `GetPackageUpdateInfoQueryHandler.resolveProjectTfms`). Un échec de
-   * résolution locale ne doit jamais faire échouer l'installation : le verdict
-   * retombe alors sur Unknown pour les projets concernés.
+   * Resolves the TFMs of every project in the solution, through the cache (same
+   * pattern as `GetPackageUpdateInfoQueryHandler`). A local resolution failure must
+   * never make the installation fail: the verdict then falls back to Unknown for
+   * the projects concerned.
    */
   private async resolveProjectTfmsSafely(solutionPath: string): Promise<Map<string, string[]>> {
     try {

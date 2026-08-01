@@ -49,7 +49,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Legacy", "Legacy\\Legacy.cs
 EndProject
 `;
 
-// Solution distincte, un seul projet, pour vérifier l'isolation par solutionPath (clé de cache et TFM).
+// A distinct solution with a single project, to check isolation by solutionPath (cache key and TFMs).
 const SLN2 = `Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api", "Api\\Api.csproj", "{33333333-3333-3333-3333-333333333333}"
 EndProject
@@ -141,7 +141,7 @@ describe("GetPackageUpdateInfoQueryHandler", () => {
     });
   });
 
-  it("assemble versions triées, verdicts par projet et métadonnées", async () => {
+  it("assembles sorted versions, per-project verdicts and metadata", async () => {
     const handler = createHandler({
       getRegistrationLeaves: jest.fn().mockResolvedValue(LEAVES),
       searchPackage: jest.fn().mockResolvedValue(SEARCH),
@@ -171,12 +171,12 @@ describe("GetPackageUpdateInfoQueryHandler", () => {
       },
     ]);
 
-    // v1.0.2 (netstandard2.0) : compatible avec les deux
+    // v1.0.2 (netstandard2.0): compatible with both
     const v1 = dto.versions.find((v) => v.version === "1.0.2")!;
     expect(v1.verdictsByProject.every((p) => p.verdict === "Compatible")).toBe(true);
   });
 
-  it("détecte les packages Microsoft via owners", async () => {
+  it("detects Microsoft packages through owners", async () => {
     const handler = createHandler({
       getRegistrationLeaves: jest.fn().mockResolvedValue(LEAVES),
       searchPackage: jest
@@ -189,7 +189,7 @@ describe("GetPackageUpdateInfoQueryHandler", () => {
     expect(dto.isMicrosoft).toBe(true);
   });
 
-  it("ne détecte PAS Microsoft sur simple correspondance de sous-chaîne dans authors ('NotMicrosoft Ltd')", async () => {
+  it("does NOT detect Microsoft on a mere substring match in authors ('NotMicrosoft Ltd')", async () => {
     const handler = createHandler({
       getRegistrationLeaves: jest.fn().mockResolvedValue(LEAVES),
       searchPackage: jest
@@ -202,7 +202,7 @@ describe("GetPackageUpdateInfoQueryHandler", () => {
     expect(dto.isMicrosoft).toBe(false);
   });
 
-  it("détecte Microsoft via authors quand c'est un jeton exact parmi plusieurs ('Microsoft, aspnet')", async () => {
+  it("detects Microsoft through authors when it is an exact token among several ('Microsoft, aspnet')", async () => {
     const handler = createHandler({
       getRegistrationLeaves: jest.fn().mockResolvedValue(LEAVES),
       searchPackage: jest
@@ -219,7 +219,7 @@ describe("GetPackageUpdateInfoQueryHandler", () => {
     ["NotFound", "NotFound"],
     ["RateLimited", "RateLimited"],
     ["Offline", "Offline"],
-  ] as const)("NuGetApiError %s → fetchStatus %s, jamais de rejet", async (kind, status) => {
+  ] as const)("NuGetApiError %s → fetchStatus %s, never rejects", async (kind, status) => {
     const handler = createHandler({
       getRegistrationLeaves: jest.fn().mockRejectedValue(new NuGetApiError(kind, "boom")),
       searchPackage: jest.fn(),
@@ -231,7 +231,7 @@ describe("GetPackageUpdateInfoQueryHandler", () => {
     expect(dto.versions).toEqual([]);
   });
 
-  it("utilise le cache : deux appels, un seul fetch", async () => {
+  it("uses the cache: two calls, a single fetch", async () => {
     const getLeaves = jest.fn().mockResolvedValue(LEAVES);
     const handler = createHandler({
       getRegistrationLeaves: getLeaves,
@@ -243,7 +243,7 @@ describe("GetPackageUpdateInfoQueryHandler", () => {
     expect(getLeaves).toHaveBeenCalledTimes(1);
   });
 
-  it("clé de cache par solution : même package, deux solutions → deux fetches, verdicts propres à chaque solution", async () => {
+  it("cache key per solution: same package, two solutions → two fetches, verdicts specific to each solution", async () => {
     const getLeaves = jest.fn().mockResolvedValue(LEAVES);
     const handler = createHandler({
       getRegistrationLeaves: getLeaves,
@@ -259,19 +259,19 @@ describe("GetPackageUpdateInfoQueryHandler", () => {
 
     expect(getLeaves).toHaveBeenCalledTimes(2);
 
-    // Solution 1 : deux projets (Api + Legacy)
+    // Solution 1: two projects (Api + Legacy)
     const v2_1 = dto1.versions.find((v) => v.version === "2.0.0")!;
     expect(v2_1.verdictsByProject.map((p) => p.projectPath)).toEqual([
       "/Solution/Api/Api.csproj",
       "/Solution/Legacy/Legacy.csproj",
     ]);
 
-    // Solution 2 : un seul projet (Api)
+    // Solution 2: a single project (Api)
     const v2_2 = dto2.versions.find((v) => v.version === "2.0.0")!;
     expect(v2_2.verdictsByProject.map((p) => p.projectPath)).toEqual(["/Solution2/Api/Api.csproj"]);
   });
 
-  it("mémorise les TFM résolus par solution : deux packages, même solution → sln parsé une seule fois", async () => {
+  it("memoises the resolved TFMs per solution: two packages, same solution → the sln is parsed only once", async () => {
     const slnParser = new SlnParser();
     const parseSpy = jest.spyOn(slnParser, "parse");
     const handler = createHandler(
@@ -288,7 +288,7 @@ describe("GetPackageUpdateInfoQueryHandler", () => {
     expect(parseSpy).toHaveBeenCalledTimes(1);
   });
 
-  it("ne rejette jamais quand le fichier solution est introuvable/invalide : continue avec un Map vide", async () => {
+  it("never rejects when the solution file is missing/invalid: carries on with an empty Map", async () => {
     const handler = createHandler({
       getRegistrationLeaves: jest.fn().mockResolvedValue(LEAVES),
       searchPackage: jest.fn().mockResolvedValue(SEARCH),
@@ -306,17 +306,17 @@ describe("GetPackageUpdateInfoQueryHandler", () => {
 });
 
 describe("compareVersionsDesc", () => {
-  it("trie les préversions numériquement (SemVer), pas lexicographiquement", () => {
+  it("sorts prereleases numerically (SemVer), not lexicographically", () => {
     const sorted = ["2.0.0-beta.2", "2.0.0-beta.10"].sort(compareVersionsDesc);
     expect(sorted).toEqual(["2.0.0-beta.10", "2.0.0-beta.2"]);
   });
 
-  it("un identifiant de préversion supplémentaire est plus grand quand les identifiants partagés sont égaux", () => {
+  it("an extra prerelease identifier is greater when the shared identifiers are equal", () => {
     const sorted = ["1.0.0-alpha", "1.0.0-alpha.1"].sort(compareVersionsDesc);
     expect(sorted).toEqual(["1.0.0-alpha.1", "1.0.0-alpha"]);
   });
 
-  it("ignore les métadonnées de build (+) lors de la comparaison, sans produire NaN", () => {
+  it("ignores build metadata (+) during comparison, without producing NaN", () => {
     expect(compareVersionsDesc("1.0.0+abc123", "1.0.1")).toBeGreaterThan(0);
     const sorted = ["1.0.0+meta", "1.0.1", "1.0.0"].sort(compareVersionsDesc);
     expect(sorted[0]).toBe("1.0.1");

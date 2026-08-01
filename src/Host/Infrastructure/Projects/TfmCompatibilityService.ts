@@ -7,8 +7,8 @@ export interface CompatibilityResult {
 }
 
 /**
- * Table de compatibilité pragmatique entre TFM (sous-ensemble des règles NuGet.Client).
- * Tout TFM non couvert produit un verdict Unknown, jamais un verdict inventé.
+ * Pragmatic compatibility table between TFMs (a subset of the NuGet.Client rules).
+ * Any TFM not covered yields an Unknown verdict, never an invented one.
  */
 @singleton()
 export class TfmCompatibilityService {
@@ -37,7 +37,7 @@ export class TfmCompatibilityService {
     if (sawUnknown) {
       return { verdict: "Unknown", reason: "framework(s) du package non reconnus" };
     }
-    // Le TFM du projet n'est pas répété : l'UI l'affiche déjà à côté du verdict.
+    // The project TFM is not repeated: the UI already shows it next to the verdict.
     return {
       verdict: "Incompatible",
       reason: `requiert ${packageFrameworks.join(" ou ")}`,
@@ -45,7 +45,7 @@ export class TfmCompatibilityService {
   }
 
   private accepts(project: NuGetFramework, pkg: NuGetFramework): boolean {
-    // Même famille : version du package ≤ version du projet, plateforme cohérente
+    // Same family: package version ≤ project version, consistent platform
     if (project.family === pkg.family) {
       if (!project.versionAtLeast(pkg)) {
         return false;
@@ -56,7 +56,7 @@ export class TfmCompatibilityService {
       return project.platform === pkg.platform;
     }
 
-    // Le package cible une plateforme spécifique d'une autre famille → jamais compatible
+    // The package targets a platform-specific TFM of another family → never compatible
     if (pkg.platform !== undefined) {
       return false;
     }
@@ -98,7 +98,7 @@ export class TfmCompatibilityService {
     }
   }
 
-  /** Table officielle Microsoft netframework → netstandard maximal supporté. */
+  /** Official Microsoft table: netframework → highest supported netstandard. */
   private maxNetstandardForNetFramework(fw: NuGetFramework): [number, number] | null {
     const v = fw.major * 100 + fw.minor * 10 + fw.patch;
     if (v >= 461) {

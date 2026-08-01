@@ -17,11 +17,11 @@ export interface PackageSearchOutcome {
 }
 
 /**
- * Interroge toutes les sources en parallèle et sert un résultat unique.
+ * Queries every source in parallel and serves a single result.
  *
- * Ne jette jamais : une source qui échoue est journalisée et nommée dans
- * `failedSources`, les autres servent quand même. L'UI peut ainsi distinguer
- * « aucun résultat » de « rien n'a pu être interrogé ».
+ * Never throws: a failing source is logged and named in `failedSources`, the
+ * others still serve. The UI can therefore tell "no results" apart from
+ * "nothing could be queried".
  */
 @singleton()
 export class PackageSearchService {
@@ -50,10 +50,9 @@ export class PackageSearchService {
       (r): r is { name: string; page: PackageSearchPage } => r.page !== undefined,
     );
 
-    // Jugé sur la taille de la page BRUTE (rawCount), avant déduplication ET
-    // avant le filtrage des entrées non installables fait par la source : ni
-    // l'un ni l'autre ne doit pouvoir raccourcir artificiellement le compte et
-    // faire conclure à tort à la fin des résultats.
+    // Judged on the RAW page size (rawCount), before deduplication AND before the
+    // source filters out non-installable entries: neither may artificially shorten
+    // the count and wrongly suggest the results have run out.
     const hasMore = succeeded.some((r) => r.page.rawCount >= options.take);
 
     const seen = new Set<string>();

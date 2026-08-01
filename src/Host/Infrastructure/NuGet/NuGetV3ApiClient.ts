@@ -38,7 +38,7 @@ export interface SearchResult {
   licenseUrl?: string;
   tags: string[];
 }
-/** Résultat brut du SearchQueryService, avant estampillage par une source. */
+/** Raw SearchQueryService result, before a source stamps its origin on it. */
 export interface SearchPackagesEntry {
   id: string;
   version: string;
@@ -50,8 +50,8 @@ export interface SearchPackagesEntry {
 
 export interface SearchPackagesPage {
   entries: SearchPackagesEntry[];
-  /** Longueur du tableau `data` reçu de l'API, avant le filtrage des entrées
-   *  sans `id`/`version` : seul juge de savoir si la page brute est pleine. */
+  /** Length of the `data` array received from the API, before entries without
+   *  `id`/`version` are filtered out: the only judge of whether the raw page is full. */
   rawCount: number;
 }
 
@@ -59,8 +59,8 @@ const SERVICE_INDEX_URL = "https://api.nuget.org/v3/index.json";
 const REQUEST_TIMEOUT_MS = 10_000;
 
 /**
- * Client minimal pour l'API NuGet V3 (nuget.org uniquement en v1).
- * Découvre les URLs des ressources via le service index (contrat officiel V3).
+ * Minimal client for the NuGet V3 API (nuget.org only in v1).
+ * Discovers resource URLs through the service index (official V3 contract).
  */
 @singleton()
 export class NuGetV3ApiClient {
@@ -77,7 +77,7 @@ export class NuGetV3ApiClient {
 
     const leaves: RegistrationLeaf[] = [];
     for (const page of index.items ?? []) {
-      // Les grosses registrations paginent : items absent → charger la page
+      // Large registrations are paginated: items missing → load the page
       const pageItems =
         page.items ??
         (
@@ -114,8 +114,8 @@ export class NuGetV3ApiClient {
   }
 
   /**
-   * Recherche libre paginée. Contrairement à `searchPackage`, qui résout un id
-   * exact, celle-ci sert la liste de résultats de la webview.
+   * Paginated free-text search. Unlike `searchPackage`, which resolves an exact
+   * id, this one feeds the webview result list.
    */
   public async searchPackages(
     terms: string,
@@ -129,10 +129,10 @@ export class NuGetV3ApiClient {
     const body = (await this.fetchJson(url)) as { data?: RawSearchEntry[] };
     const rawEntries = body.data ?? [];
     const entries = rawEntries
-      // Un résultat sans version n'est pas installable : l'écarter ici évite de
-      // propager un hit inutilisable jusqu'aux boutons d'installation. Le compte
-      // AVANT ce filtre est conservé à part (rawCount) : c'est lui qui juge si la
-      // page brute est pleine, pas le nombre d'entrées survivantes.
+      // A result without a version is not installable: dropping it here avoids
+      // propagating an unusable hit all the way to the install buttons. The count
+      // BEFORE this filter is kept separately (rawCount): that is what judges whether
+      // the raw page is full, not the number of surviving entries.
       .filter(
         (entry): entry is RawSearchEntry & { id: string; version: string } =>
           typeof entry.id === "string" && typeof entry.version === "string",
@@ -154,9 +154,9 @@ export class NuGetV3ApiClient {
         resources: Array<{ "@id": string; "@type": string }>;
       };
       const find = (type: string) => body.resources.find((r) => r["@type"] === type)?.["@id"];
-      // Préférer la registration SemVer 2 (3.6.0) : l'endpoint non versionné est
-      // SemVer 1 et renvoie 404 pour les packages dont toutes les versions sont
-      // SemVer 2 (préversions à identifiants pointés comme 1.14.0-beta.1).
+      // Prefer the SemVer 2 registration (3.6.0): the unversioned endpoint is
+      // SemVer 1 and returns 404 for packages whose versions are all SemVer 2
+      // (prereleases with dotted identifiers such as 1.14.0-beta.1).
       const registrationsBaseUrl =
         find("RegistrationsBaseUrl/3.6.0") ??
         find("RegistrationsBaseUrl/3.4.0") ??
@@ -167,7 +167,7 @@ export class NuGetV3ApiClient {
       }
       return { registrationsBaseUrl, searchQueryUrl };
     })();
-    // En cas d'échec, permettre une nouvelle tentative au prochain appel
+    // On failure, allow a fresh attempt on the next call
     this.serviceIndexPromise.catch(() => {
       this.serviceIndexPromise = undefined;
     });

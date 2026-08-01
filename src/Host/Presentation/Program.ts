@@ -8,7 +8,7 @@ import { InfrastructureDependencyInjection } from "../Infrastructure/DependencyI
 import { VscLogger } from "../Infrastructure/Log/VscLogger";
 
 /**
- * Active l'extension et enregistre le WebviewViewProvider pour la vue contribuée dans le panel.
+ * Activates the extension and registers the WebviewViewProvider for the view contributed to the panel.
  * @param context Contexte d'extension fourni par VS Code.
  */
 export function activate(context: vscode.ExtensionContext) {
@@ -39,13 +39,13 @@ export function activate(context: vscode.ExtensionContext) {
   });
   context.subscriptions.push(configChangeDisposable);
 
-  // Commande pour ouvrir le panel NuGet
+  // Command that opens the NuGet panel
   const openPanelCommand = vscode.commands.registerCommand("nuget-explorer.openPanel", async () => {
     await vscode.commands.executeCommand("nuget-explorer.webview.focus");
   });
   context.subscriptions.push(openPanelCommand);
 
-  // Commande de rafraîchissement
+  // Refresh command
   const refreshCommand = vscode.commands.registerCommand("nuget-explorer.refresh", () => {
     vscode.window.showInformationMessage("Actualisation des packages NuGet...");
   });

@@ -68,10 +68,10 @@ const CORE_CSPROJ = `<Project Sdk="Microsoft.NET.Sdk">
 </Project>`;
 
 /**
- * Même socle que `UninstallPackageCommandHandler.test.ts` : les écritures
- * persistent dans le même magasin que les lectures, pour que chaque étape du
- * scénario (install → upgrade → uninstall) reparte de l'état réellement
- * écrit par l'étape précédente, comme le ferait le disque.
+ * Same foundation as `UninstallPackageCommandHandler.test.ts`: writes persist
+ * into the same store as reads, so every step of the scenario
+ * (install → upgrade → uninstall) starts from the state actually written by the
+ * previous step, exactly as the disk would.
  */
 function setFiles(initial: Record<string, string>): Record<string, string> {
   const files: Record<string, string> = { ...initial };
@@ -92,7 +92,7 @@ function setFiles(initial: Record<string, string>): Record<string, string> {
   return files;
 }
 
-describe("Acceptance: écritures de packages (Epic 5)", () => {
+describe("Acceptance: package writes (Epic 5)", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
@@ -101,16 +101,16 @@ describe("Acceptance: écritures de packages (Epic 5)", () => {
 
   afterEach(() => jest.useRealTimers());
 
-  it("installe, met à jour puis désinstalle Serilog sur Core, avec restore débouncé de bout en bout", async () => {
+  it("installs, updates then uninstalls Serilog on Core, with a debounced restore end to end", async () => {
     const files = setFiles({
       "/Solution/My.sln": SLN,
       "/Solution/Api/Api.csproj": API_CSPROJ,
       "/Solution/Core/Core.csproj": CORE_CSPROJ,
     });
 
-    // ProcessRunner factice injecté dans un RestoreScheduler réel : le
-    // débounce, le suivi de statut et la sérialisation des runs sont donc
-    // testés avec le vrai composant, pas une doublure.
+    // A fake ProcessRunner injected into a real RestoreScheduler: the debounce,
+    // the status tracking and the serialisation of runs are therefore tested
+    // with the real component, not a stand-in.
     const processRunner: IProcessRunner = {
       run: jest.fn().mockResolvedValue({ exitCode: 0, output: "", timedOut: false }),
     };
@@ -122,8 +122,8 @@ describe("Acceptance: écritures de packages (Epic 5)", () => {
     const metadataCache = new PackageMetadataCache();
     const tfmCache = new ProjectTfmCache();
     const prompt: IUserPrompt = { confirm: jest.fn().mockResolvedValue(true) };
-    // Registration introuvable → verdict Unknown → jamais bloquant (même motif
-    // que le test "registration inaccessible" d'InstallPackageCommandHandler).
+    // Registration not found → Unknown verdict → never blocking (same pattern
+    // as the "unreachable registration" test of InstallPackageCommandHandler).
     const apiClient = { getRegistrationLeaves: jest.fn().mockResolvedValue([]) };
 
     expect((await restoreStatusHandler.Handle(new GetRestoreStatusQuery())).status).toBe("Idle");
@@ -167,7 +167,7 @@ describe("Acceptance: écritures de packages (Epic 5)", () => {
     expect(files["/Solution/Core/Core.csproj"]).toContain(
       '<PackageReference Include="Serilog" Version="3.1.0" />',
     );
-    // Le restore est programmé mais débouncé : toujours en attente.
+    // The restore is scheduled but debounced: still pending.
     expect((await restoreStatusHandler.Handle(new GetRestoreStatusQuery())).status).toBe("Running");
 
     // ---- Upgrade ----
@@ -228,12 +228,12 @@ describe("Acceptance: écritures de packages (Epic 5)", () => {
     expect(files["/Solution/Core/Core.csproj"]).not.toContain("Serilog");
     expect(files["/Solution/Core/Core.csproj"]).toBe(CORE_CSPROJ);
 
-    // Trois écritures se sont enchaînées, toutes débouncées ensemble : un
-    // seul restore programmé jusqu'ici.
+    // Three writes chained one after the other, all debounced together: a single
+    // restore scheduled so far.
     expect((await restoreStatusHandler.Handle(new GetRestoreStatusQuery())).status).toBe("Running");
     expect(processRunner.run).not.toHaveBeenCalled();
 
-    // ---- Cycle du restore débouncé : Running → Succeeded ----
+    // ---- Debounced restore cycle: Running → Succeeded ----
     await jest.advanceTimersByTimeAsync(300);
 
     expect(processRunner.run).toHaveBeenCalledTimes(1);
@@ -247,24 +247,23 @@ describe("Acceptance: écritures de packages (Epic 5)", () => {
       "Succeeded",
     );
 
-    // Aucune confirmation utilisateur nécessaire : chaque étape ciblait
-    // explicitement le projet Core (un seul candidat).
+    // No user confirmation needed: every step explicitly targeted the Core
+    // project (a single candidate).
     expect(prompt.confirm).not.toHaveBeenCalled();
 
-    // ---- Journal : GetOperationLogQuery voit tout le scénario ----
+    // ---- Journal: GetOperationLogQuery sees the whole scenario ----
     const log = await operationLogHandler.Handle(new GetOperationLogQuery());
 
     const writes = log.entries.filter((e) => e.kind === "write");
-    expect(writes.map((e) => e.operation)).toEqual(["uninstall", "upgrade", "install"]); // anté-chronologique
+    expect(writes.map((e) => e.operation)).toEqual(["uninstall", "upgrade", "install"]); // newest-first
 
     const restores = log.entries.filter((e) => e.kind === "restore");
     expect(restores.length).toBeGreaterThan(0);
     expect(restores.every((e) => e.status === "Succeeded")).toBe(true);
-    // Les trois écritures ont été débouncées ensemble : un seul restore a été
-    // programmé, donc l'entrée la plus récente du journal est CE restore, pas
-    // le dernier write (son rang dans le journal dépend du timing des timers
-    // factices). On vérifie donc l'ordre anté-chronologique par type plutôt
-    // qu'un ordre global entre types d'entrées.
+    // The three writes were debounced together: a single restore was scheduled,
+    // so the most recent journal entry is THAT restore, not the last write (its
+    // rank in the journal depends on fake-timer timing). We therefore check the
+    // newest-first order per entry type rather than a global order across types.
     const restoreRunIds = restores.map((e) => e.runId);
     expect(restoreRunIds).toEqual([...restoreRunIds].sort((a, b) => b - a));
   });

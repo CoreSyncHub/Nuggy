@@ -19,8 +19,8 @@ import {
 export class ProjectInstallations extends LitElement {
   @property({ attribute: false }) installations: PackageInstallationDto[] = [];
   @property({ attribute: false }) selectedVersion?: PackageVersionInfoDto;
-  /** Chemins de projet dont une action d'écriture est en cours (Host non encore répondu) : la carte
-   *  correspondante affiche un spinner et désactive ses boutons. */
+  /** Project paths with a write action in flight (the Host has not answered yet): the
+   *  matching card shows a spinner and disables its buttons. */
   @property({ attribute: false }) busyProjects: Set<string> = new Set();
 
   private i18n!: TranslationService;
@@ -61,8 +61,8 @@ export class ProjectInstallations extends LitElement {
         border-radius: 6px;
         padding: 9px 12px;
       }
-      /* Projet sans le package : présent pour rendre l'installation par projet
-       accessible, mais visuellement secondaire par rapport aux projets équipés. */
+      /* A project without the package: present so per-project installation is
+       reachable, but visually secondary to the equipped projects. */
       .card.candidate {
         background: transparent;
         border-style: dashed;
@@ -130,8 +130,8 @@ export class ProjectInstallations extends LitElement {
     `,
   ];
 
-  /** Émet un événement d'écriture (bubbles+composed, comme package-selected) : seule PackagesView
-   *  écoute et parle au dispatcher — ce composant reste présentation-pure. */
+  /** Emits a write event (bubbles+composed, like package-selected): only PackagesView
+   *  listens and talks to the dispatcher — this component stays presentation-pure. */
   private dispatchWrite(
     type: "install-package" | "upgrade-package" | "uninstall-package",
     detail: { projectPath: string; version?: string },
@@ -144,8 +144,8 @@ export class ProjectInstallations extends LitElement {
     const notInstalled = inst.installedVersion === "unknown";
     const version = this.selectedVersion?.version ?? "";
 
-    // Package non installé sur ce projet : seul ＋ a un sens. PackagesConfig reste entièrement
-    // désactivé (écritures legacy hors périmètre) ; PackageReference et CpmManaged sont actifs.
+    // Package not installed on this project: only ＋ makes sense. PackagesConfig stays fully
+    // disabled (legacy writes are out of scope); PackageReference and CpmManaged are active.
     if (notInstalled && inst.referenceStyle !== "PackagesConfig") {
       return html`<button
         class="install"
@@ -166,8 +166,8 @@ export class ProjectInstallations extends LitElement {
             <button class="uninstall" disabled title=${title}>${trashIcon(14)}</button>`;
     }
 
-    // Installé, PackageReference ou CpmManaged : 🗑 est toujours actif. ⇧ est désactivé sous
-    // CpmManaged (le PackageVersion est géré solution-wide — cf. mise à jour globale du toolbar).
+    // Installed, PackageReference or CpmManaged: 🗑 is always active. ⇧ is disabled under
+    // CpmManaged (the PackageVersion is managed solution-wide — cf. the toolbar's global update).
     const cpm = inst.referenceStyle === "CpmManaged";
     return html`<button
         class="upgrade"
