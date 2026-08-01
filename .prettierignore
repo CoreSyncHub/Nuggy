@@ -1,0 +1,9 @@
+# Prettier walks the filesystem and does not read .gitignore, so build output
+# has to be listed here too. Without this, anyone who has run `dotnet restore`
+# on the test fixtures gets a red `format:check` on generated JSON they never
+# wrote — a failure CI never reproduces, since its checkout is pristine.
+**/obj/
+**/bin/
+dist/
+out/
+coverage/
