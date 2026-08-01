@@ -55,7 +55,7 @@ describe("RestoreScheduler", () => {
     const scheduler = new RestoreScheduler(store, runner, noOpLogger);
     scheduler.schedule("/Solution/My.sln");
     await jest.advanceTimersByTimeAsync(300); // run 1 starts and stays hanging
-    scheduler.schedule("/Solution/My.sln"); // pendant le run
+    scheduler.schedule("/Solution/My.sln"); // during the run
     await jest.advanceTimersByTimeAsync(300);
     expect(runner.run).toHaveBeenCalledTimes(1); // pas de concurrence
     release({ exitCode: 0, output: "", timedOut: false });
@@ -95,7 +95,7 @@ describe("RestoreScheduler", () => {
     expect(scheduler.getStatus().messages[0]).toContain("timeout");
   });
 
-  it("dotnet introuvable → Failed avec message SDK", async () => {
+  it("dotnet not found → Failed with an SDK message", async () => {
     const runner = runnerReturning({ exitCode: null, output: "", timedOut: false });
     const store = new OperationLogStore();
     const scheduler = new RestoreScheduler(store, runner, noOpLogger);
@@ -134,7 +134,7 @@ describe("RestoreScheduler", () => {
     const scheduler = new RestoreScheduler(store, runner, noOpLogger);
     scheduler.schedule("/Solution/My.sln");
     await jest.advanceTimersByTimeAsync(300); // run 1 (runId 1) starts and stays hanging
-    scheduler.schedule("/Solution/My.sln"); // write B arrive pendant le run 1
+    scheduler.schedule("/Solution/My.sln"); // write B lands during run 1
     release({ exitCode: 0, output: "", timedOut: false }); // run 1 finishes (success)
     await jest.advanceTimersByTimeAsync(0); // let run 1's continuation execute
     // Run 1's terminal status must never be published: a second run is pending.
@@ -286,7 +286,7 @@ describe("RestoreScheduler", () => {
     });
   });
 
-  describe("journalisation dans OperationLogStore", () => {
+  describe("journalling into OperationLogStore", () => {
     it("journals a successful run: start Running then complete Succeeded with the output", async () => {
       const store = new OperationLogStore();
       const runner = runnerReturning({
@@ -361,7 +361,7 @@ describe("RestoreScheduler", () => {
       const scheduler = new RestoreScheduler(store, runner, noOpLogger);
       scheduler.schedule("/Solution/My.sln");
       await jest.advanceTimersByTimeAsync(300); // run 1 (runId 1) starts and stays hanging
-      scheduler.schedule("/Solution/My.sln"); // write pendant le run 1
+      scheduler.schedule("/Solution/My.sln"); // write during run 1
       release({ exitCode: 0, output: "", timedOut: false }); // run 1 finishes (success)
       await jest.advanceTimersByTimeAsync(0); // let run 1's continuation execute
       // Run 1's terminal status must never be published: a second run is pending.

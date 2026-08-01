@@ -7,8 +7,8 @@ import swc from 'unplugin-swc';
  * Vite configuration for the VS Code extension (Node.js environment)
  */
 export default defineConfig({
-  // SWC émet les métadonnées de décorateurs (design:paramtypes) requises par
-  // tsyringe au runtime — esbuild ne sait pas les émettre.
+  // SWC emits the decorator metadata (design:paramtypes) that tsyringe requires
+  // at runtime — esbuild cannot emit it.
   plugins: [
     swc.vite({
       jsc: {
