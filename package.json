@@ -3,7 +3,7 @@
   "publisher": "coresync",
   "displayName": "Nuggy",
   "description": "Install, update and audit NuGet packages across a whole .NET solution — CPM, multi-TFM and legacy projects included.",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "engines": {
     "vscode": "^1.106.1"
   },
@@ -118,6 +118,7 @@
     "@types/ws": "^8.18.1",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.9.2",
     "cross-env": "^7.0.3",
     "eslint": "^9.39.1",
     "jest": "^30.2.0",
