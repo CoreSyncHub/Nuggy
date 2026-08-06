@@ -2,7 +2,7 @@
   "name": "nuggy",
   "publisher": "coresync",
   "displayName": "Nuggy",
-  "description": "Install, update and audit NuGet packages across a whole .NET solution — CPM, multi-TFM and legacy projects included.",
+  "description": "Install, update and audit NuGet packages across a whole C# / .NET solution — CPM, multi-TFM and legacy projects included.",
   "version": "0.1.1",
   "engines": {
     "vscode": "^1.106.1"
@@ -151,7 +151,10 @@
     "msbuild",
     "tfm",
     "solution",
-    "restore"
+    "restore",
+    "dependencies",
+    "packages.config",
+    "directory.packages.props"
   ],
   "repository": {
     "type": "git",
