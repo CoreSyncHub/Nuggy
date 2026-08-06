@@ -45,7 +45,7 @@ at a time. Each project card carries its own button, with the compatibility verd
 
 ### Know what you can gain, at a glance
 
-Every installed package carries a badge that answers a single question: "is there something to gain ?"
+Every installed package carries a badge that answers a single question: "is there something to gain?"
 
 | Badge    | Meaning                                                                               |
 | -------- | ------------------------------------------------------------------------------------- |
@@ -103,7 +103,7 @@ The panel opens at the bottom, next to the terminal.
 ### Requirements
 
 - **VS Code** 1.106 or later
-- **.NET SDK** on your `PATH` : required for `dotnet restore` after a write
+- **.NET SDK** on your `PATH`: required for `dotnet restore` after a write
 - Network access to **nuget.org** for versions and compatibility data (the solution analysis itself
   works offline)
 
@@ -116,10 +116,10 @@ The panel opens at the bottom, next to the terminal.
 | `Nuggy: Open Panel`       | Opens the packages panel        |
 | `Nuggy: Refresh Packages` | Re-reads the solution from disk |
 
-| Setting                  | Default | Description                                             |
-| ------------------------ | ------- | ------------------------------------------------------- |
-| `nuggy.language`         | `en`    | Interface language : English, French, Spanish or German |
-| `nuggy.selectedSolution` | none    | Active solution, when the workspace holds several       |
+| Setting                  | Default | Description                                            |
+| ------------------------ | ------- | ------------------------------------------------------ |
+| `nuggy.language`         | `en`    | Interface language: English, French, Spanish or German |
+| `nuggy.selectedSolution` | none    | Active solution, when the workspace holds several      |
 
 ---
 
@@ -127,7 +127,7 @@ The panel opens at the bottom, next to the terminal.
 
 ### Available today
 
-- [x] Solution analysis : `.sln` / `.slnx`, SDK-style and legacy projects, `Directory.Build.props`
+- [x] Solution analysis: `.sln` / `.slnx`, SDK-style and legacy projects, `Directory.Build.props`
       inheritance, effective TFM resolution, `NuGet.Config` hierarchy
 - [x] Per-version, per-project compatibility verdicts
 - [x] Install, update and uninstall — per project or solution-wide, with native CPM semantics
@@ -138,12 +138,12 @@ The panel opens at the bottom, next to the terminal.
 
 ### Next
 
-- [ ] **Private feeds** : Azure Artifacts, GitHub Packages and self-hosted servers, behind the same
+- [ ] **Private feeds**: Azure Artifacts, GitHub Packages and self-hosted servers, behind the same
       source port nuget.org already uses
-- [ ] **CPM migration** : move a solution to Central Package Management, consolidate versions that
+- [ ] **CPM migration**: move a solution to Central Package Management, consolidate versions that
       diverge across projects, migrate `packages.config` to `PackageReference`
-- [ ] **Dependency graph impact** : answer "you want EF 10, but Pomelo has no .NET 10 release yet"
-- [ ] **TFM upgrades** : raise project frameworks on a new .NET release, together with the packages
+- [ ] **Dependency graph impact**: answer "you want EF 10, but Pomelo has no .NET 10 release yet"
+- [ ] **TFM upgrades**: raise project frameworks on a new .NET release, together with the packages
       that keep them compatible
 
 ---

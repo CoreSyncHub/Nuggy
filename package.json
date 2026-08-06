@@ -3,13 +3,12 @@
   "publisher": "coresync",
   "displayName": "Nuggy",
   "description": "Install, update and audit NuGet packages across a whole .NET solution — CPM, multi-TFM and legacy projects included.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "engines": {
     "vscode": "^1.106.1"
   },
   "categories": [
-    "Other",
-    "Testing"
+    "Other"
   ],
   "activationEvents": [
     "workspaceContains:**/*.csproj",
