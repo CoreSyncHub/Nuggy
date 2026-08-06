@@ -1,199 +1,174 @@
-![Nuggy Banner](./assets/Nuggy_banner.png)
+<!-- Absolute URLs on purpose: the Marketplace renders this file outside the repo, where relative image paths do not resolve. -->
+
+![Nuggy](https://raw.githubusercontent.com/CoreSyncHub/Nuggy/main/assets/Nuggy_banner.png)
 
 <div align="center">
 
-**The intelligent NuGet package manager for Visual Studio Code**
+**Manage NuGet packages across a whole .NET solution, from inside VS Code**
 
-_Built for modern .NET developers navigating complex, multi-format solutions_
+_Built for real solutions: Central Package Management, multi-targeting, and legacy projects side by side_
 
-[![Version](https://img.shields.io/badge/version-0.0.1-blue.svg)](https://github.com/coresync/nuggy)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![.NET](https://img.shields.io/badge/.NET-Framework%20%7C%20Core%20%7C%206%2B-purple.svg)](https://dotnet.microsoft.com/)
+[![CI](https://github.com/CoreSyncHub/Nuggy/actions/workflows/ci.yml/badge.svg)](https://github.com/CoreSyncHub/Nuggy/actions/workflows/ci.yml)
+[![Marketplace](https://img.shields.io/visual-studio-marketplace/v/coresync.nuggy?label=marketplace)](https://marketplace.visualstudio.com/items?itemName=coresync.nuggy)
+[![Installs](https://img.shields.io/visual-studio-marketplace/i/coresync.nuggy)](https://marketplace.visualstudio.com/items?itemName=coresync.nuggy)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/CoreSyncHub/Nuggy/blob/main/LICENSE)
 
 </div>
 
----
-
-## 🎯 Why Nuggy?
-
-Managing NuGet packages across large .NET solutions is **painful**. You're dealing with:
-
-- 📦 **Central Package Management (CPM)** - Some projects use it, others don't
-- 🏗️ **MSBuild inheritance** - TFMs and versions scattered across `Directory.Build.props`
-- 🤷 **Invisible dependencies** - No clear view of what's using what
-- 🔀 **Mixed project formats** - Legacy .NET Framework alongside modern .NET 8+
-- 🔄 **Migration chaos** - Transitioning from `packages.config` to `PackageReference`
-
-**Standard tools fail** because they don't understand the **deep structure** of your solution.
-
-**Nuggy changes that.** It's a context-aware diagnostic engine that understands your entire solution architecture, whether you're running a pure modern setup, legacy .NET Framework, or a hybrid in transition.
+![Nuggy in action](https://raw.githubusercontent.com/CoreSyncHub/Nuggy/main/assets/demo.gif)
 
 ---
 
-## ✨ Key Features
+## Why Nuggy
 
-### 🔍 **Intelligent Solution Analysis**
+The built-in tooling shows you a flat list of packages. Real solutions are not flat:
 
-- **Multi-format support**: Analyzes both classic `.sln` and modern **`.slnx`** solution formats
-- **Project type detection**: Automatically identifies SDK-style vs. Legacy .NET Framework projects
-- **Hybrid solution intelligence**: Detects transitional architectures mixing old and new
+- **Central Package Management**: some projects use it, others pin locally, and the two disagree
+- **MSBuild inheritance**: target frameworks and versions scattered across `Directory.Build.props`
+- **Mixed formats**: .NET Framework projects with `packages.config` next to modern SDK projects
+- **Invisible compatibility**: a package version may suit three projects out of five, and nothing tells you which
 
-### 📦 **Central Package Management (CPM)**
-
-- **Automatic CPM detection**: Finds and parses `Directory.Packages.props` files
-- **Hierarchical CPM support**: Handles multiple CPM files across solution directories
-- **Version conflict detection**: Identifies projects with local versions when CPM is enabled
-- **Affected project mapping**: Shows which projects are governed by each CPM file
-
-### 🏗️ **MSBuild Property Resolution**
-
-- **Smart TFM detection**: Resolves Target Framework Monikers from `.csproj`, `Directory.Build.props`, and `Directory.Build.targets`
-- **Property inheritance**: Follows MSBuild's priority chain to find effective values
-- **Variable resolution**: Resolves MSBuild property references like `$(MySharedFramework)` → `net8.0`
-
-### 🔄 **Legacy & Transitional Support**
-
-- **`packages.config`**: Full support for legacy NuGet package format
-- **Mixed-mode detection**: Identifies solutions combining `packages.config` and `PackageReference`
-- **Transitional diagnostics**: Provides insights for teams migrating from .NET Framework to .NET Core/8+
-
-### 🛠️ **Diagnostic Modes**
-
-Nuggy analyzes your solution and categorizes it into one of three management modes:
-
-| Mode           | Description                                                                  | Example                                               |
-| -------------- | ---------------------------------------------------------------------------- | ----------------------------------------------------- |
-| **🔵 Local**   | Each project manages its own package versions independently                  | Modern solution without CPM                           |
-| **🟢 Central** | All projects use Central Package Management (`Directory.Packages.props`)     | Enterprise solution with CPM enabled                  |
-| **🟠 Mixed**   | Combination of Legacy projects (packages.config) + Modern SDK-style projects | Transitional solution during .NET Framework migration |
-
-### 🎨 **NuGet.Config Resolution**
-
-- **Hierarchical config detection**: Finds all `NuGet.Config` files from project to solution root
-- **Source mapping**: Parses package sources and their configurations
-- **Package source mapping**: Supports pattern-based source routing (e.g., `Microsoft.*` → NuGet.org)
-- **Scope detection**: Identifies global vs. solution-scoped configurations
+Nuggy reads the solution the way MSBuild does, then lets you act on it. It answers the question that
+actually matters on an existing codebase: **what can I safely upgrade, and where?**
 
 ---
 
-## 🚀 Getting Started
+## Features
 
-### Installation
+### Search and install, per project
 
-1. Open Visual Studio Code
-2. Go to Extensions (`Ctrl+Shift+X`)
-3. Search for "Nuggy"
-4. Click **Install**
+Search nuget.org straight from the package list. Type anything and the list splits in two: the
+packages already in your solution, then the results from the feed. Install a package on one project
+at a time. Each project card carries its own button, with the compatibility verdict next to it.
 
-### Quick Start
+![Search](https://raw.githubusercontent.com/CoreSyncHub/Nuggy/main/assets/search.png)
 
-1. **Open your .NET solution** in VS Code
-2. **Open Command Palette** (`Ctrl+Shift+P`)
-3. Type: `Nuggy: Open Nuggy Panel`
+### Know what you can gain, at a glance
 
-Nuggy will automatically:
+Every installed package carries a badge that answers a single question: "is there something to gain ?"
 
-- ✅ Detect your solution format (`.sln` / `.slnx`)
-- ✅ Identify all projects (SDK-style / Legacy)
-- ✅ Analyze package management mode (Local / Central / Mixed)
-- ✅ Resolve Target Framework Monikers (TFMs)
-- ✅ Find NuGet configuration files
-- ✅ Detect version conflicts and issues
+| Badge    | Meaning                                                                               |
+| -------- | ------------------------------------------------------------------------------------- |
+| ⬆ green  | A newer version is compatible with every project that carries the package             |
+| ⬆ yellow | A newer version fits some of your projects, not all                                   |
+| ⬆ blue   | Newer versions exist, but none for your target frameworks. Informative, not a problem |
+| ✔ grey   | Up to date                                                                            |
+| ? grey   | Not enough data to decide, offline, or the feed answered for only some projects       |
+
+The list sorts itself with the actionable packages on top, so what you can do is never below the fold.
+
+### Central Package Management, handled natively
+
+Under CPM, Nuggy writes where MSBuild would read. Installing adds a `<PackageReference>` without a
+version and creates the missing `<PackageVersion>`; updating writes the central version once for the
+whole solution; uninstalling removes the reference and cleans up the `<PackageVersion>` when nothing
+references it any more. On a solution holding several `Directory.Packages.props`, each project is
+matched to the one that actually governs it.
+
+### Edits that leave your files alone
+
+Package files are edited by surgical text replacement, never by a parse-and-rewrite round trip.
+Indentation, comments, attribute order, CRLF line endings and the UTF-8 BOM come out byte for byte
+as they went in. Only the value you asked to change, changes.
+
+### Restore, and a real answer when it fails
+
+Every write schedules a debounced `dotnet restore`, ten changes produce one restore, never two at
+once. When it fails on a transitive package, Nuggy runs `dotnet nuget why` for you and shows which
+of _your_ direct dependencies pulls in the offending one.
+
+### A log of everything that happened
+
+The Logs tab keeps a session journal: every restore with its full output, and every write with the
+files it touched and the projects it affected. Click a failed restore in the banner and it takes you
+straight to that run.
+
+![Logs](https://raw.githubusercontent.com/CoreSyncHub/Nuggy/main/assets/logs.png)
+
+### Legacy projects, read but not written
+
+`packages.config` projects are detected, analysed and displayed alongside the rest, with their
+write buttons disabled and the reason spelled out. Nuggy will not silently half-migrate a project.
 
 ---
 
-## 📊 What Nuggy Analyzes
+## Getting started
 
-### Solution-Level Analysis
+1. Install **Nuggy** from the Extensions view (`Ctrl+Shift+X`)
+2. Open a folder containing a `.sln` or `.slnx`
+3. Run **Nuggy: Open Panel** from the Command Palette (`Ctrl+Shift+P`)
 
+The panel opens at the bottom, next to the terminal.
+
+### Requirements
+
+- **VS Code** 1.106 or later
+- **.NET SDK** on your `PATH` : required for `dotnet restore` after a write
+- Network access to **nuget.org** for versions and compatibility data (the solution analysis itself
+  works offline)
+
+---
+
+## Commands and settings
+
+| Command                   | Description                     |
+| ------------------------- | ------------------------------- |
+| `Nuggy: Open Panel`       | Opens the packages panel        |
+| `Nuggy: Refresh Packages` | Re-reads the solution from disk |
+
+| Setting                  | Default | Description                                             |
+| ------------------------ | ------- | ------------------------------------------------------- |
+| `nuggy.language`         | `en`    | Interface language : English, French, Spanish or German |
+| `nuggy.selectedSolution` | none    | Active solution, when the workspace holds several       |
+
+---
+
+## Roadmap
+
+### Available today
+
+- [x] Solution analysis : `.sln` / `.slnx`, SDK-style and legacy projects, `Directory.Build.props`
+      inheritance, effective TFM resolution, `NuGet.Config` hierarchy
+- [x] Per-version, per-project compatibility verdicts
+- [x] Install, update and uninstall — per project or solution-wide, with native CPM semantics
+- [x] Search nuget.org and install packages absent from the solution
+- [x] Debounced automatic restore, with transitive blame on failure
+- [x] Session journal of restores and writes
+- [x] English, French, Spanish and German
+
+### Next
+
+- [ ] **Private feeds** : Azure Artifacts, GitHub Packages and self-hosted servers, behind the same
+      source port nuget.org already uses
+- [ ] **CPM migration** : move a solution to Central Package Management, consolidate versions that
+      diverge across projects, migrate `packages.config` to `PackageReference`
+- [ ] **Dependency graph impact** : answer "you want EF 10, but Pomelo has no .NET 10 release yet"
+- [ ] **TFM upgrades** : raise project frameworks on a new .NET release, together with the packages
+      that keep them compatible
+
+---
+
+## Contributing
+
+Issues and pull requests are welcome. The codebase is TypeScript throughout, with the Host (Node.js)
+and the webview (Lit) talking over a small CQRS bus.
+
+```bash
+npm install
+npm test
+npm run compile   # type-check, lint and build
 ```
-✓ Solution format (.sln / .slnx)
-✓ Project count and types (SDK-style / Legacy)
-✓ Management mode (Local / Central / Mixed)
-✓ Transitional state detection
-✓ NuGet.Config hierarchy
-```
 
-### Project-Level Analysis
-
-```
-✓ Project SDK type (SDK-Style / Legacy / Unknown)
-✓ Target Framework Moniker (TFM) - with MSBuild property resolution
-✓ Package references (PackageReference / packages.config)
-✓ Local vs. central version detection
-✓ Multi-targeting support
-```
-
-### Package-Level Analysis
-
-```
-✓ Central package versions (Directory.Packages.props)
-✓ Local package references (per project)
-✓ Legacy packages (packages.config)
-✓ Version conflicts (local override when CPM enabled)
-✓ Affected projects per package
-```
+Press `F5` in VS Code to launch an Extension Development Host with the extension loaded.
 
 ---
 
-## 🛣️ Roadmap
+## License
 
-### ✅ Completed (Current Version)
+[MIT](https://github.com/CoreSyncHub/Nuggy/blob/main/LICENSE) — © CoreSync
 
-- [x] **EPIC 1**: Semantic Diagnostic Engine & Solution Scanning
-  - [x] Workspace mapping (`SLN` / `SLNX` / `Solution folders`)
-  - [x] Detection of global configuration files (`Props` / `Targets`)
-  - [x] Diagnosis of package management mode (`CPM` vs. `Local`)
-  - [x] Calculation of Effective TFM and MSBuild property resolution
-  - [x] Analysis of legacy files (`packages.config`) and mixed solutions
-  - [x] NuGet configuration resolution (`NuGet.Config`)
+## Support
 
-- [x] **EPIC 2**: Decision Engine and Compatibility Analysis
-  - [x] NuGet.org V3 API client with typed errors (`Offline` / `NotFound` / `RateLimited`) and TTL-based metadata cache
-  - [x] Solution-wide package aggregation and per-version, per-project compatibility verdicts (`GetSolutionPackagesQuery` / `GetPackageUpdateInfoQuery`)
-  - [x] DI wiring and WebMediator registration with end-to-end acceptance coverage
-  - [x] Packages view UI: consolidated list with lazy icon loading, progressive badge loading (batches of 5), and filters
-  - [x] Package detail panel: metadata, collapsible dependencies, per-project verdicts, prerelease toggle
-  - [x] Internationalization (fr/en) of the packages view
-
-### 🚧 In Progress
-
-- [ ] **EPIC 3**: Enhanced CPM & Solution Consistency
-
-### 📋 Planned
-
-- [ ] **EPIC 4**: Advanced Configuration & Runtime Engines
-
-- [ ] **EPIC 5**: Interactive Search and Predictive Installation
-
-- [ ] **EPIC 6**: Maintenance, Diagnostics, and Observability
-
-- [ ] **EPIC 7**: User Interface (UI/UX)
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit issues and pull requests.
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 💬 Support
-
-- 📧 **Email**: support@coresync.dev
-- 🐛 **Issues**: [GitHub Issues](https://github.com/coresync/nuggy/issues)
-- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/coresync/nuggy/discussions)
-
----
-
-<div align="center">
-
-**Made with ❤️ by [Coresync](https://github.com/coresync)**
-
-_Simplifying NuGet management for .NET developers worldwide_
-
-</div>
+- 🐛 [Report a bug](https://github.com/CoreSyncHub/Nuggy/issues)
+- 💡 [Request a feature](https://github.com/CoreSyncHub/Nuggy/issues)
+- 💬 [Discussions](https://github.com/CoreSyncHub/Nuggy/discussions)
