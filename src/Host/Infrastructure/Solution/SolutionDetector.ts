@@ -81,7 +81,7 @@ export class SolutionDetector {
    * Gets the selected solution from workspace settings
    */
   public getSelectedSolution(): string | undefined {
-    const config = vscode.workspace.getConfiguration("nuget-explorer");
+    const config = vscode.workspace.getConfiguration("nuggy");
     return config.get<string>("selectedSolution");
   }
 
@@ -89,7 +89,7 @@ export class SolutionDetector {
    * Sets the selected solution in workspace settings
    */
   public async setSelectedSolution(solutionPath: string): Promise<void> {
-    const config = vscode.workspace.getConfiguration("nuget-explorer");
+    const config = vscode.workspace.getConfiguration("nuggy");
     await config.update("selectedSolution", solutionPath, vscode.ConfigurationTarget.Workspace);
   }
 
@@ -97,7 +97,7 @@ export class SolutionDetector {
    * Clears the selected solution from workspace settings
    */
   public async clearSelectedSolution(): Promise<void> {
-    const config = vscode.workspace.getConfiguration("nuget-explorer");
+    const config = vscode.workspace.getConfiguration("nuggy");
     await config.update("selectedSolution", undefined, vscode.ConfigurationTarget.Workspace);
   }
 }

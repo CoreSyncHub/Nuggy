@@ -5,7 +5,7 @@ const { execSync } = require('child_process');
 const isProduction = process.env.NODE_ENV === 'production';
 const mode = isProduction ? 'production' : 'development';
 
-console.log(`\n🔨 Building NuGet Explorer (${mode.toUpperCase()})\n`);
+console.log(`\n🔨 Building Nuggy (${mode.toUpperCase()})\n`);
 console.log(`   NODE_ENV: ${process.env.NODE_ENV || 'not set'}`);
 console.log(`   Mode: ${mode}\n`);
 

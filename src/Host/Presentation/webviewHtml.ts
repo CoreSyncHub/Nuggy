@@ -25,7 +25,7 @@ export function getHtmlForWebview(extensionUri: vscode.Uri, webview: vscode.Webv
 		<meta charset="UTF-8" />
 		<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} https:; script-src 'nonce-${nonce}' ${webview.cspSource}; connect-src ${webview.cspSource} https: ws://localhost:35729 ws://localhost:5173; style-src ${webview.cspSource} 'unsafe-inline';">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>NuGet Explorer</title>
+		<title>Nuggy</title>
 	</head>
 	<body>
 		<div id="app">

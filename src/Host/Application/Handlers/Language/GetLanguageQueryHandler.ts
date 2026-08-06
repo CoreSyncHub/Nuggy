@@ -17,7 +17,7 @@ export class GetLanguageQueryHandler implements IQueryHandler<GetLanguageQuery, 
 
   async Handle(_: GetLanguageQuery): Promise<string> {
     try {
-      const config = vscode.workspace.getConfiguration("nuget-explorer");
+      const config = vscode.workspace.getConfiguration("nuggy");
       const language = config.get<string>("language", "en");
 
       this._logger.Info(`GetLanguageQueryHandler: Retrieved language setting: ${language}`);

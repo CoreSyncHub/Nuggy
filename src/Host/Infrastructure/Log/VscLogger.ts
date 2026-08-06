@@ -17,7 +17,7 @@ export class VscLogger implements ILogger {
   constructor() {
     // Create the output channel only once (shared across all logger instances)
     if (!VscLogger.outputChannel) {
-      VscLogger.outputChannel = vscode.window.createOutputChannel("NuGet Explorer");
+      VscLogger.outputChannel = vscode.window.createOutputChannel("Nuggy");
     }
     this.isDevelopment = process.env.NODE_ENV !== "production";
   }

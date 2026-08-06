@@ -1,14 +1,15 @@
 {
-  "name": "nuget-explorer",
+  "name": "nuggy",
   "publisher": "coresync",
-  "displayName": "NuGet Explorer",
-  "description": "Explore and manage NuGet packages in your .NET projects",
+  "displayName": "Nuggy",
+  "description": "Install, update and audit NuGet packages across a whole .NET solution — CPM, multi-TFM and legacy projects included.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.106.1"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Testing"
   ],
   "activationEvents": [
     "workspaceContains:**/*.csproj",
@@ -20,48 +21,48 @@
     "viewsContainers": {
       "panel": [
         {
-          "id": "nuget-panel",
-          "title": "NuGet Explorer",
+          "id": "nuggy-panel",
+          "title": "Nuggy",
           "icon": "$(package)"
         }
       ]
     },
     "views": {
-      "nuget-panel": [
+      "nuggy-panel": [
         {
           "icon": "$(package)",
           "type": "webview",
-          "id": "nuget-explorer.webview",
-          "name": "NuGet"
+          "id": "nuggy.webview",
+          "name": "Packages"
         }
       ]
     },
     "commands": [
       {
-        "command": "nuget-explorer.openPanel",
-        "title": "Open NuGet Panel",
-        "category": "NuGet"
+        "command": "nuggy.openPanel",
+        "title": "Open Panel",
+        "category": "Nuggy"
       },
       {
-        "command": "nuget-explorer.refresh",
+        "command": "nuggy.refresh",
         "title": "Refresh Packages",
-        "category": "NuGet",
+        "category": "Nuggy",
         "icon": "$(refresh)"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "nuget-explorer.refresh",
-          "when": "view == nuget-explorer.webview",
+          "command": "nuggy.refresh",
+          "when": "view == nuggy.webview",
           "group": "navigation"
         }
       ]
     },
     "configuration": {
-      "title": "NuGet Explorer",
+      "title": "Nuggy",
       "properties": {
-        "nuget-explorer.language": {
+        "nuggy.language": {
           "type": "string",
           "default": "en",
           "enum": [
@@ -76,9 +77,9 @@
             "Español",
             "Deutsch"
           ],
-          "description": "Display language for NuGet Explorer"
+          "description": "Display language for Nuggy"
         },
-        "nuget-explorer.selectedSolution": {
+        "nuggy.selectedSolution": {
           "type": "string",
           "default": null,
           "description": "Path to the currently selected solution file (.sln or .slnx)"
@@ -135,5 +136,33 @@
     "lit": "^3.3.1",
     "reflect-metadata": "^0.2.2",
     "tsyringe": "^4.10.0"
+  },
+  "license": "MIT",
+  "icon": "assets/Nuggy_Logo.png",
+  "keywords": [
+    "nuget",
+    "dotnet",
+    ".net",
+    "csharp",
+    "packages",
+    "package manager",
+    "cpm",
+    "central package management",
+    "msbuild",
+    "tfm",
+    "solution",
+    "restore"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CoreSyncHub/Nuggy.git"
+  },
+  "homepage": "https://github.com/CoreSyncHub/Nuggy#readme",
+  "bugs": {
+    "url": "https://github.com/CoreSyncHub/Nuggy/issues"
+  },
+  "galleryBanner": {
+    "color": "#1B1B1F",
+    "theme": "dark"
   }
 }

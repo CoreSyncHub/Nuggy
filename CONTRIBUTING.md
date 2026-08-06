@@ -40,7 +40,7 @@ This project adheres to a Code of Conduct that all contributors are expected to 
 
 ### Reporting Bugs
 
-Before creating a bug report, please check the [existing issues](https://github.com/coresync/nuggy/issues) to avoid duplicates.
+Before creating a bug report, please check the [existing issues](https://github.com/CoreSyncHub/Nuggy/issues) to avoid duplicates.
 
 **When submitting a bug report, include:**
 
@@ -87,7 +87,7 @@ Before creating a bug report, please check the [existing issues](https://github.
 We love hearing your ideas! Before suggesting a feature:
 
 1. Check if it's already in the [Roadmap](README.md#-roadmap)
-2. Search [existing discussions](https://github.com/coresync/nuggy/discussions)
+2. Search [existing discussions](https://github.com/CoreSyncHub/Nuggy/discussions)
 3. Consider if it aligns with Nuggy's core mission
 
 **When suggesting a feature, include:**
@@ -521,8 +521,8 @@ Releases are managed by maintainers following semantic versioning:
 
 If you need help:
 
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/coresync/nuggy/discussions)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/coresync/nuggy/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/CoreSyncHub/Nuggy/discussions)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/CoreSyncHub/Nuggy/issues)
 - 📧 **Email**: support@coresync.dev
 
 ---

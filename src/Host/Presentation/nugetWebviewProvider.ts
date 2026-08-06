@@ -20,11 +20,11 @@ import { GetOperationLogQuery } from "@Shared/Features/Queries/GetOperationLogQu
 import { SearchPackagesQuery } from "@Shared/Features/Queries/SearchPackagesQuery";
 
 /**
- * Provider for the NuGet Explorer webview displayed in the bottom panel.
+ * Provider for the Nuggy webview displayed in the bottom panel.
  * All business logic is now handled through WebMediator/Dispatcher pattern.
  */
 export class NuGetWebviewProvider implements vscode.WebviewViewProvider {
-  public static readonly viewType = "nuget-explorer.webview";
+  public static readonly viewType = "nuggy.webview";
 
   private webviewView?: vscode.WebviewView;
   private webMediator?: WebMediator;

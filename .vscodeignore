@@ -1,14 +1,36 @@
+# Everything the extension does not need at runtime. `vsce` ignores .gitignore,
+# so git-ignored scratch directories have to be listed here explicitly or they
+# ship inside the published VSIX.
+
+# Sources and build intermediates — only dist/ is loaded at runtime
+src/**
+out/**
+coverage/**
+node_modules/**
+**/*.ts
+**/*.map
+
+# Tooling and CI
+.github/**
+.superpowers/**
 .vscode/**
 .vscode-test/**
-out/**
-node_modules/**
-src/**
-.gitignore
-.yarnrc
-vite.config.ts
-vsc-extension-quickstart.md
+.vscode-test.mjs
+scripts/**
+jest.config.js
+jest.setup.js
 **/tsconfig.json
 **/eslint.config.mjs
-**/*.map
-**/*.ts
-**/.vscode-test.*
+.prettierrc.json
+.prettierignore
+.gitignore
+.gitattributes
+package-lock.json
+
+# Repository docs — the Marketplace renders README.md and LICENSE only
+CONTRIBUTING.md
+
+# Artwork: README images are served from raw.githubusercontent.com, so the only
+# asset the package actually needs is the icon declared in package.json.
+assets/**
+!assets/Nuggy_Logo.png

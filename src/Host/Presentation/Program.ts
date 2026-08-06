@@ -31,8 +31,8 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Listen for language configuration changes
   const configChangeDisposable = vscode.workspace.onDidChangeConfiguration((event) => {
-    if (event.affectsConfiguration("nuget-explorer.language")) {
-      const config = vscode.workspace.getConfiguration("nuget-explorer");
+    if (event.affectsConfiguration("nuggy.language")) {
+      const config = vscode.workspace.getConfiguration("nuggy");
       const language = config.get<string>("language", "en");
       nugetProvider.notifyLanguageChanged(language);
     }
@@ -40,13 +40,13 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(configChangeDisposable);
 
   // Command that opens the NuGet panel
-  const openPanelCommand = vscode.commands.registerCommand("nuget-explorer.openPanel", async () => {
-    await vscode.commands.executeCommand("nuget-explorer.webview.focus");
+  const openPanelCommand = vscode.commands.registerCommand("nuggy.openPanel", async () => {
+    await vscode.commands.executeCommand("nuggy.webview.focus");
   });
   context.subscriptions.push(openPanelCommand);
 
   // Refresh command
-  const refreshCommand = vscode.commands.registerCommand("nuget-explorer.refresh", () => {
+  const refreshCommand = vscode.commands.registerCommand("nuggy.refresh", () => {
     vscode.window.showInformationMessage("Actualisation des packages NuGet...");
   });
   context.subscriptions.push(refreshCommand);

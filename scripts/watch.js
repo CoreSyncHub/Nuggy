@@ -3,7 +3,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 const { WebSocketServer } = require('ws');
 
-console.log('\n🔄 Starting watch mode for NuGet Explorer...\n');
+console.log('\n🔄 Starting watch mode for Nuggy...\n');
 console.log('⚠️  Note: You must manually reload the extension window (Ctrl+R or F5) after changes.\n');
 
 // Copy i18n files initially

@@ -8,7 +8,7 @@ import { type ILogger } from "@/Host/Application/Abstractions/Log/ILogger";
 @singleton()
 export class WebLogger implements ILogger {
   private readonly isDevelopment: boolean;
-  private readonly prefix: string = "[NuGet Explorer]";
+  private readonly prefix: string = "[Nuggy]";
 
   constructor() {
     this.isDevelopment = true;
