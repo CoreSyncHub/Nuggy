@@ -138,13 +138,29 @@ The panel opens at the bottom, next to the terminal.
 
 ### Next
 
-- [ ] **Private feeds**: Azure Artifacts, GitHub Packages and self-hosted servers, behind the same
-      source port nuget.org already uses
-- [ ] **CPM migration**: move a solution to Central Package Management, consolidate versions that
-      diverge across projects, migrate `packages.config` to `PackageReference`
-- [ ] **Dependency graph impact**: answer "you want EF 10, but Pomelo has no .NET 10 release yet"
-- [ ] **TFM upgrades**: raise project frameworks on a new .NET release, together with the packages
-      that keep them compatible
+#### First priorities
+
+- [ ] **Private feeds**:
+  - Azure Artifacts (via Azure CLI, Azure DevOps PATs, Credential Provider)
+  - GitHub Packages (via Github PATs)
+  - Generic feeds (via Basic Auth, Bearer token and package source credentials)
+  - Secure storage of credentials via VS Code secret storage
+
+- [ ] **Vulnerability audit** with OSV.dev
+  - Dedicated "vulnerability" view with fixed-in versions
+  - Security badge displaying
+  - Integration with upgrade verdict (packages with known CVEs and safe upgrades available get prioritized)
+
+- [ ] **Opt-in telemetry**: anonymous, aggregated usage data to prioritize features (opt-in, GDPR-friendly, easily disabled)
+
+#### Second priorities
+
+- [ ] **CPM migration**: preview and apply migration to Central Package Management, consolidate diverging versions across projects, post-migration report with rollback support.
+- [ ] **TFM upgrades**: raise project target frameworks on a new .NET release with a resolved migration plan, packages to upgrade first, packages to upgrade with the TFM, incompatibility warnings before you commit.
+
+#### Last priorities
+
+- [ ] **Dependency graph impact**: answer "you want EF 10, but Pomelo has no .NET 10 release yet", visualize compatibility chains across your dependency tree.
 
 ---
 
